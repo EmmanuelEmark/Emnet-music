@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Artist Dashboard | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/artist-dashboard.css"
+  >
+</head>
+
+<body>
+
+  <div class="artist-layout">
+
+
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
+
+    <aside class="artist-sidebar">
+
+      <div class="artist-brand">
+
+        <div class="artist-brand-mark">
+          E
+        </div>
+
+        <div>
+
+          <strong>
+            EmnetMusic
+          </strong>
+
+          <small>
+            Artist
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <nav class="artist-navigation">
+
+        <a
+          href="artist-dashboard.html"
+          class="artist-nav-item active"
+        >
+          <span>⌂</span>
+          Dashboard
+        </a>
+
+
+        <a
+          href="artist-releases.html"
+          class="artist-nav-item"
+        >
+          <span>▣</span>
+          Releases
+        </a>
+
+
+        <a
+          href="artist-songs.html"
+          class="artist-nav-item"
+        >
+          <span>♫</span>
+          Songs
+        </a>
+
+
+        <a
+          href="artist-videos.html"
+          class="artist-nav-item"
+        >
+          <span>▶</span>
+          Videos
+        </a>
+
+
+        <a
+          href="artist-profile-manage.html"
+          class="artist-nav-item"
+        >
+          <span>○</span>
+          Artist Profile
+        </a>
+
+
+        <a
+          href="notifications.html"
+          class="artist-nav-item"
+        >
+          <span>◉</span>
+          Notifications
+        </a>
+
+      </nav>
+
+
+      <div class="artist-sidebar-bottom">
+
+        <a
+          href="home.html"
+          class="artist-nav-item"
+        >
+          <span>←</span>
+          EmnetMusic
+        </a>
+
+
+        <button
+          type="button"
+          class="artist-nav-item artist-logout"
+          id="artistLogoutButton"
+        >
+          <span>↗</span>
+          Log out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+
+    <!-- =====================================
+         MAIN
+    ====================================== -->
+
+    <main class="artist-main">
+
+
+      <!-- HEADER -->
+
+      <header class="artist-header">
+
+        <div>
+
+          <p class="artist-eyebrow">
+            ARTIST CENTRE
+          </p>
+
+          <h1>
+            Dashboard
+          </h1>
+
+          <p class="artist-header-description">
+            Manage your music, videos and artist presence on EmnetMusic.
+          </p>
+
+        </div>
+
+
+        <div class="artist-account">
+
+          <div
+            class="artist-account-avatar"
+            id="artistAccountAvatar"
+          >
+            A
+          </div>
+
+
+          <div>
+
+            <strong id="artistAccountName">
+              Artist
+            </strong>
+
+            <small id="artistAccountEmail">
+              EmnetMusic
+            </small>
+
+          </div>
+
+        </div>
+
+      </header>
+
+
+
+      <!-- ERROR -->
+
+      <div
+        class="artist-error"
+        id="artistDashboardError"
+      ></div>
+
+
+
+      <!-- LOADING -->
+
+      <div
+        class="artist-loading"
+        id="artistDashboardLoading"
+      >
+        Loading artist dashboard...
+      </div>
+
+
+
+      <!-- DASHBOARD CONTENT -->
+
+      <div
+        class="artist-dashboard-content"
+        id="artistDashboardContent"
+      >
+
+
+        <!-- ARTIST PROFILE HERO -->
+
+        <section class="artist-profile-hero">
+
+          <div
+            class="artist-cover"
+            id="artistCover"
+          ></div>
+
+
+          <div class="artist-profile-content">
+
+            <div
+              class="artist-profile-image"
+              id="artistProfileImage"
+            >
+              A
+            </div>
+
+
+            <div class="artist-profile-info">
+
+              <p class="artist-profile-label">
+                YOUR ARTIST PROFILE
+              </p>
+
+              <h2 id="artistStageName">
+                Artist
+              </h2>
+
+              <p id="artistCountry">
+                —
+              </p>
+
+            </div>
+
+
+            <span
+              class="artist-approved-badge"
+              id="artistApprovalBadge"
+            >
+              Approved
+            </span>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- QUICK ACTION -->
+
+        <section class="artist-section">
+
+          <div class="artist-section-heading">
+
+            <p class="artist-section-label">
+              QUICK ACTIONS
+            </p>
+
+            <h2>
+              Manage your music
+            </h2>
+
+          </div>
+
+
+          <div class="artist-action-grid">
+
+
+            <a
+              href="artist-create-release.html"
+              class="artist-action-card primary"
+            >
+
+              <div class="artist-action-icon">
+                +
+              </div>
+
+              <div>
+
+                <h3>
+                  Create Release
+                </h3>
+
+                <p>
+                  Create a new single, EP or album.
+                </p>
+
+              </div>
+
+              <span class="artist-action-arrow">
+                →
+              </span>
+
+            </a>
+
+
+
+            <a
+              href="artist-releases.html"
+              class="artist-action-card"
+            >
+
+              <div class="artist-action-icon">
+                ▣
+              </div>
+
+              <div>
+
+                <h3>
+                  My Releases
+                </h3>
+
+                <p>
+                  Manage drafts and submitted releases.
+                </p>
+
+              </div>
+
+              <span class="artist-action-arrow">
+                →
+              </span>
+
+            </a>
+
+
+
+            <a
+              href="artist-songs.html"
+              class="artist-action-card"
+            >
+
+              <div class="artist-action-icon">
+                ♫
+              </div>
+
+              <div>
+
+                <h3>
+                  My Songs
+                </h3>
+
+                <p>
+                  Add and manage songs inside your releases.
+                </p>
+
+              </div>
+
+              <span class="artist-action-arrow">
+                →
+              </span>
+
+            </a>
+
+
+
+            <a
+              href="artist-videos.html"
+              class="artist-action-card"
+            >
+
+              <div class="artist-action-icon">
+                ▶
+              </div>
+
+              <div>
+
+                <h3>
+                  My Videos
+                </h3>
+
+                <p>
+                  Create and submit music videos.
+                </p>
+
+              </div>
+
+              <span class="artist-action-arrow">
+                →
+              </span>
+
+            </a>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- PROFILE -->
+
+        <section class="artist-section">
+
+          <div class="artist-section-heading">
+
+            <p class="artist-section-label">
+              PROFILE
+            </p>
+
+            <h2>
+              Artist information
+            </h2>
+
+          </div>
+
+
+          <div class="artist-info-grid">
+
+            <div class="artist-info-card">
+
+              <small>
+                Stage name
+              </small>
+
+              <strong id="artistInfoStageName">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="artist-info-card">
+
+              <small>
+                Country
+              </small>
+
+              <strong id="artistInfoCountry">
+                —
+              </strong>
+
+            </div>
+
+
+            <div class="artist-info-card">
+
+              <small>
+                Account status
+              </small>
+
+              <strong id="artistInfoStatus">
+                Approved
+              </strong>
+
+            </div>
+
+
+            <div class="artist-info-card">
+
+              <small>
+                Featured
+              </small>
+
+              <strong id="artistInfoFeatured">
+                No
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="artist-bio-card">
+
+            <small>
+              BIO
+            </small>
+
+            <p id="artistBio">
+              No bio available.
+            </p>
+
+          </div>
+
+        </section>
+
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/artist-dashboard.js"></script>
+
+</body>
+</html>

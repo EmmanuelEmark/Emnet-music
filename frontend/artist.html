@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Artist | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/artist.css" />
+  <link rel="stylesheet" href="css/player.css" />
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          E
+        </div>
+
+        <div class="brand-text">
+
+          <span class="brand-title">
+            EmnetMusic
+          </span>
+
+          <span class="brand-slogan">
+            Excitement Starts Here
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+        <a
+          href="home.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </a>
+
+
+        <a
+          href="search.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">⌕</span>
+          <span>Search</span>
+        </a>
+
+
+        <a
+          href="videos.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">▶</span>
+          <span>Videos</span>
+        </a>
+
+
+        <a
+          href="library.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">▤</span>
+          <span>Library</span>
+        </a>
+
+
+        <a
+          href="playlists.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">＋</span>
+          <span>Playlists</span>
+        </a>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <a
+          href="profile.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">○</span>
+          <span>Profile</span>
+        </a>
+
+
+        <button
+          type="button"
+          class="nav-item logout-button"
+          id="logoutButton"
+        >
+          <span class="nav-icon">↗</span>
+          <span>Log out</span>
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="main-content artist-page">
+
+      <div
+        class="artist-loading"
+        id="artistLoading"
+      >
+        Loading artist...
+      </div>
+
+
+      <div
+        class="artist-error"
+        id="artistError"
+      ></div>
+
+
+      <div
+        class="artist-content"
+        id="artistContent"
+      >
+
+        <!-- ARTIST HERO -->
+
+        <section class="artist-hero">
+
+          <div
+            class="artist-cover-background"
+            id="artistCoverBackground"
+          ></div>
+
+
+          <div class="artist-hero-overlay"></div>
+
+
+          <div class="artist-hero-content">
+
+            <img
+              src=""
+              alt="Artist"
+              class="artist-profile-image"
+              id="artistProfileImage"
+            >
+
+
+            <div class="artist-main-info">
+
+              <div class="artist-status-row">
+
+                <span
+                  class="verified-badge"
+                  id="verifiedBadge"
+                >
+                  ✓ VERIFIED ARTIST
+                </span>
+
+              </div>
+
+
+              <h1 id="artistStageName">
+                Artist
+              </h1>
+
+
+              <div class="artist-stats">
+
+                <span>
+                  <strong id="artistFollowers">
+                    0
+                  </strong>
+                  followers
+                </span>
+
+              </div>
+
+
+              <div class="artist-actions">
+
+                <button
+                  type="button"
+                  class="artist-play-button"
+                  id="playArtistButton"
+                >
+                  ▶ Play
+                </button>
+
+
+                <button
+                  type="button"
+                  class="artist-follow-button"
+                  id="followArtistButton"
+                >
+                  Follow
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- POPULAR SONGS -->
+
+        <section
+          class="artist-section"
+          id="artistSongsSection"
+        >
+
+          <div class="artist-section-header">
+
+            <div>
+
+              <p class="artist-section-label">
+                MUSIC
+              </p>
+
+              <h2>
+                Popular
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="artist-song-list"
+            id="artistSongList"
+          ></div>
+
+        </section>
+
+
+
+        <!-- RELEASES -->
+
+        <section
+          class="artist-section"
+          id="artistReleasesSection"
+        >
+
+          <div class="artist-section-header">
+
+            <div>
+
+              <p class="artist-section-label">
+                DISCOGRAPHY
+              </p>
+
+              <h2>
+                Releases
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="artist-release-grid"
+            id="artistReleaseGrid"
+          ></div>
+
+        </section>
+
+
+
+        <!-- VIDEOS -->
+
+        <section
+          class="artist-section"
+          id="artistVideosSection"
+        >
+
+          <div class="artist-section-header">
+
+            <div>
+
+              <p class="artist-section-label">
+                WATCH
+              </p>
+
+              <h2>
+                Videos
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="artist-video-grid"
+            id="artistVideoGrid"
+          ></div>
+
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <!-- MOBILE NAV -->
+
+  <nav class="mobile-nav">
+
+    <a
+      href="home.html"
+      class="mobile-nav-item"
+    >
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+
+    <a
+      href="videos.html"
+      class="mobile-nav-item"
+    >
+      <span>▶</span>
+      <small>Videos</small>
+    </a>
+
+
+    <a
+      href="search.html"
+      class="mobile-nav-item"
+    >
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+
+
+    <a
+      href="library.html"
+      class="mobile-nav-item"
+    >
+      <span>▤</span>
+      <small>Library</small>
+    </a>
+
+
+    <a
+      href="profile.html"
+      class="mobile-nav-item"
+    >
+      <span>○</span>
+      <small>Profile</small>
+    </a>
+
+  </nav>
+
+
+  <div id="playerContainer"></div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/artist.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,529 @@
+/* ========================================
+   HEADER
+======================================== */
+
+.review-header {
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 25px;
+
+  margin-bottom: 28px;
+}
+
+
+.review-header h1 {
+  margin: 6px 0 0;
+
+  font-size: clamp(
+    32px,
+    5vw,
+    50px
+  );
+
+  letter-spacing: -0.05em;
+}
+
+
+.review-header p:last-child {
+  max-width: 600px;
+
+  margin: 8px 0 0;
+
+  color: #7d867e;
+
+  font-size: 10px;
+
+  line-height: 1.6;
+}
+
+
+.review-refresh-button {
+  min-height: 40px;
+
+  padding: 0 15px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius: 10px;
+
+  background: #111612;
+
+  color: white;
+
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.review-refresh-button:hover {
+  border-color: #35e67a;
+}
+
+
+/* ========================================
+   SUMMARY
+======================================== */
+
+.review-summary {
+  margin-bottom: 25px;
+
+  padding: 20px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.07);
+
+  border-radius: 16px;
+
+  background: #101511;
+}
+
+
+.review-summary strong {
+  display: inline-block;
+
+  margin-top: 7px;
+
+  color: white;
+
+  font-size: 27px;
+}
+
+
+.review-summary span {
+  margin-left: 6px;
+
+  color: #7d867e;
+
+  font-size: 9px;
+}
+
+
+/* ========================================
+   STATUS
+======================================== */
+
+.review-loading {
+  color: #7d867e;
+
+  font-size: 11px;
+}
+
+
+.review-error {
+  display: none;
+
+  margin-bottom: 20px;
+
+  padding: 14px;
+
+  border:
+    1px solid
+    rgba(255,100,100,0.25);
+
+  border-radius: 12px;
+
+  background:
+    rgba(255,100,100,0.07);
+
+  color: #ff9999;
+
+  font-size: 10px;
+}
+
+
+.review-empty {
+  display: none;
+
+  padding: 45px 20px;
+
+  border:
+    1px dashed
+    rgba(255,255,255,0.08);
+
+  border-radius: 17px;
+
+  color: #7d867e;
+
+  text-align: center;
+
+  font-size: 11px;
+}
+
+
+/* ========================================
+   ARTIST CARDS
+======================================== */
+
+.artist-review-list {
+  display: grid;
+
+  gap: 18px;
+}
+
+
+.artist-review-card {
+  overflow: hidden;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.07);
+
+  border-radius: 20px;
+
+  background: #101511;
+}
+
+
+.artist-review-cover {
+  position: relative;
+
+  height: 180px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(53,230,122,0.12),
+      #111611
+    );
+}
+
+
+.artist-review-cover img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+.artist-review-cover-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+
+  place-items: center;
+
+  color: #35e67a;
+
+  font-size: 40px;
+}
+
+
+.artist-review-body {
+  padding: 22px;
+}
+
+
+.artist-review-top {
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+
+.artist-review-identity {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  min-width: 0;
+}
+
+
+.artist-review-avatar {
+  width: 70px;
+  height: 70px;
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  display: grid;
+
+  place-items: center;
+
+  border:
+    2px solid
+    rgba(53,230,122,0.22);
+
+  border-radius: 50%;
+
+  background: #161c17;
+
+  color: #35e67a;
+
+  font-size: 23px;
+  font-weight: 800;
+}
+
+
+.artist-review-avatar img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+.artist-review-name {
+  min-width: 0;
+}
+
+
+.artist-review-name h2 {
+  margin: 0;
+
+  overflow: hidden;
+
+  font-size: 20px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.artist-review-applicant {
+  margin: 5px 0 0;
+
+  color: #8b948c;
+
+  font-size: 9px;
+}
+
+
+.pending-badge {
+  flex-shrink: 0;
+
+  padding: 7px 10px;
+
+  border:
+    1px solid
+    rgba(255,175,72,0.26);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255,175,72,0.07);
+
+  color: #ffb05e;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+}
+
+
+/* ========================================
+   INFO
+======================================== */
+
+.artist-review-info {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 12px;
+
+  margin-top: 22px;
+}
+
+
+.artist-info-box {
+  padding: 13px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.06);
+
+  border-radius: 12px;
+
+  background: #151a16;
+}
+
+
+.artist-info-box small {
+  display: block;
+
+  color: #687269;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+}
+
+
+.artist-info-box strong {
+  display: block;
+
+  margin-top: 5px;
+
+  overflow-wrap: anywhere;
+
+  color: #dce1dd;
+
+  font-size: 9px;
+}
+
+
+.artist-review-bio {
+  margin-top: 17px;
+
+  padding: 15px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.06);
+
+  border-radius: 13px;
+
+  background: #151a16;
+}
+
+
+.artist-review-bio small {
+  color: #687269;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+}
+
+
+.artist-review-bio p {
+  margin: 7px 0 0;
+
+  color: #a0a8a1;
+
+  font-size: 10px;
+
+  line-height: 1.7;
+
+  white-space: pre-wrap;
+}
+
+
+/* ========================================
+   ACTIONS
+======================================== */
+
+.artist-review-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 9px;
+
+  margin-top: 20px;
+}
+
+
+.artist-review-button {
+  min-height: 40px;
+
+  padding: 0 17px;
+
+  border-radius: 11px;
+
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.artist-review-button.approve {
+  border: 0;
+
+  background: #35e67a;
+
+  color: #071009;
+}
+
+
+.artist-review-button.reject {
+  border:
+    1px solid
+    rgba(255,100,100,0.25);
+
+  background:
+    rgba(255,100,100,0.07);
+
+  color: #ff9999;
+}
+
+
+.artist-review-button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 650px) {
+
+  .review-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .review-refresh-button {
+    width: 100%;
+  }
+
+
+  .artist-review-top {
+    flex-direction: column;
+  }
+
+
+  .artist-review-info {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .artist-review-actions {
+    flex-direction: column;
+  }
+
+
+  .artist-review-button {
+    width: 100%;
+  }
+
+}

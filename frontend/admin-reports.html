@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Reports | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/admin-dashboard.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/admin-reports.css"
+  >
+</head>
+
+<body>
+
+  <div class="admin-layout">
+
+    <aside class="admin-sidebar">
+
+      <div class="admin-brand">
+
+        <div class="admin-brand-mark">
+          E
+        </div>
+
+        <div>
+          <strong>
+            EmnetMusic
+          </strong>
+
+          <small>
+            Admin
+          </small>
+        </div>
+
+      </div>
+
+
+      <nav class="admin-navigation">
+
+        <a
+          href="admin-dashboard.html"
+          class="admin-nav-item"
+        >
+          <span>⌂</span>
+          Dashboard
+        </a>
+
+
+        <a
+          href="admin-review-artists.html"
+          class="admin-nav-item"
+        >
+          <span>♫</span>
+          Artists
+        </a>
+
+
+        <a
+          href="admin-review-releases.html"
+          class="admin-nav-item"
+        >
+          <span>▣</span>
+          Releases
+        </a>
+
+
+        <a
+          href="admin-review-videos.html"
+          class="admin-nav-item"
+        >
+          <span>▶</span>
+          Videos
+        </a>
+
+
+        <a
+          href="admin-reports.html"
+          class="admin-nav-item active"
+        >
+          <span>!</span>
+          Reports
+        </a>
+
+
+        <a
+          href="notifications.html"
+          class="admin-nav-item"
+        >
+          <span>◉</span>
+          Notifications
+        </a>
+
+
+        <a
+          href="profile.html"
+          class="admin-nav-item"
+        >
+          <span>○</span>
+          Profile
+        </a>
+
+      </nav>
+
+
+      <div class="admin-sidebar-bottom">
+
+        <a
+          href="home.html"
+          class="admin-nav-item"
+        >
+          <span>←</span>
+          EmnetMusic
+        </a>
+
+
+        <button
+          type="button"
+          class="admin-nav-item admin-logout"
+          id="adminLogoutButton"
+        >
+          <span>↗</span>
+          Log out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+
+    <main class="admin-main">
+
+      <header class="reports-header">
+
+        <div>
+
+          <p class="admin-eyebrow">
+            TRUST & SAFETY
+          </p>
+
+          <h1>
+            Reports
+          </h1>
+
+          <p>
+            Investigate reported content and take moderation action where necessary.
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="reports-refresh-button"
+          id="refreshReportsButton"
+        >
+          ↻ Refresh
+        </button>
+
+      </header>
+
+
+      <!-- SUMMARY -->
+
+      <section class="reports-stats">
+
+        <div class="report-stat-card">
+
+          <small>
+            TOTAL
+          </small>
+
+          <strong id="totalReportsCount">
+            0
+          </strong>
+
+        </div>
+
+
+        <div class="report-stat-card">
+
+          <small>
+            PENDING
+          </small>
+
+          <strong id="pendingReportsCount">
+            0
+          </strong>
+
+        </div>
+
+
+        <div class="report-stat-card">
+
+          <small>
+            REVIEWING
+          </small>
+
+          <strong id="reviewingReportsCount">
+            0
+          </strong>
+
+        </div>
+
+
+        <div class="report-stat-card">
+
+          <small>
+            CLOSED
+          </small>
+
+          <strong id="closedReportsCount">
+            0
+          </strong>
+
+        </div>
+
+      </section>
+
+
+      <!-- FILTERS -->
+
+      <section class="reports-toolbar">
+
+        <div class="reports-filter-group">
+
+          <button
+            type="button"
+            class="report-filter active"
+            data-status="all"
+          >
+            All
+          </button>
+
+
+          <button
+            type="button"
+            class="report-filter"
+            data-status="pending"
+          >
+            Pending
+          </button>
+
+
+          <button
+            type="button"
+            class="report-filter"
+            data-status="reviewing"
+          >
+            Reviewing
+          </button>
+
+
+          <button
+            type="button"
+            class="report-filter"
+            data-status="resolved"
+          >
+            Resolved
+          </button>
+
+
+          <button
+            type="button"
+            class="report-filter"
+            data-status="dismissed"
+          >
+            Dismissed
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <div
+        class="reports-error"
+        id="reportsError"
+      ></div>
+
+
+      <div
+        class="reports-loading"
+        id="reportsLoading"
+      >
+        Loading reports...
+      </div>
+
+
+      <div
+        class="reports-list"
+        id="reportsList"
+      ></div>
+
+
+      <div
+        class="reports-empty"
+        id="reportsEmpty"
+      >
+        No reports found.
+      </div>
+
+    </main>
+
+  </div>
+
+
+
+  <!-- =====================================
+       MODERATION MODAL
+  ====================================== -->
+
+  <div
+    class="moderation-modal"
+    id="moderationModal"
+  >
+
+    <div class="moderation-card">
+
+      <button
+        type="button"
+        class="moderation-close"
+        id="closeModerationButton"
+      >
+        ×
+      </button>
+
+
+      <p class="admin-section-label">
+        CONTENT MODERATION
+      </p>
+
+
+      <h2 id="moderationTitle">
+        Moderate content
+      </h2>
+
+
+      <p class="moderation-description">
+        Choose what should happen to the reported content.
+      </p>
+
+
+      <div class="moderation-target">
+
+        <small>
+          CONTENT
+        </small>
+
+        <strong id="moderationTargetText">
+          —
+        </strong>
+
+      </div>
+
+
+      <div class="moderation-actions">
+
+        <button
+          type="button"
+          class="moderation-option restore"
+          data-moderation-action="visible"
+        >
+          Keep / Restore Visible
+        </button>
+
+
+        <button
+          type="button"
+          class="moderation-option hide"
+          data-moderation-action="hidden"
+        >
+          Hide Content
+        </button>
+
+
+        <button
+          type="button"
+          class="moderation-option takedown"
+          data-moderation-action="takedown"
+        >
+          Take Down Content
+        </button>
+
+      </div>
+
+
+      <div
+        class="moderation-reason-area"
+        id="moderationReasonArea"
+      >
+
+        <label for="moderationReason">
+          Moderation reason
+        </label>
+
+        <textarea
+          id="moderationReason"
+          rows="4"
+          placeholder="Explain why this content is being hidden or taken down..."
+        ></textarea>
+
+      </div>
+
+
+      <div
+        class="moderation-message"
+        id="moderationMessage"
+      ></div>
+
+
+      <button
+        type="button"
+        class="moderation-submit"
+        id="submitModerationButton"
+        disabled
+      >
+        Apply moderation
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin-reports.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,248 @@
+.users-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.users-header h1 {
+  margin: 6px 0 0;
+  font-size: clamp(32px, 5vw, 50px);
+  letter-spacing: -0.05em;
+}
+
+.users-header p:last-child {
+  margin: 8px 0 0;
+  color: #7d867e;
+  font-size: 10px;
+}
+
+.users-refresh-button {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  background: #111612;
+  color: white;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.users-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.users-summary-card {
+  padding: 17px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  background: #101511;
+}
+
+.users-summary-card small {
+  display: block;
+  color: #737c74;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.users-summary-card strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 25px;
+}
+
+.users-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 170px 170px;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.users-toolbar input,
+.users-toolbar select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  outline: none;
+  background: #101511;
+  color: white;
+  font-family: inherit;
+  font-size: 9px;
+}
+
+.users-toolbar input:focus,
+.users-toolbar select:focus {
+  border-color: #35e67a;
+}
+
+.users-loading {
+  color: #7d867e;
+  font-size: 11px;
+}
+
+.users-error {
+  display: none;
+  margin-bottom: 16px;
+  padding: 13px;
+  border: 1px solid rgba(255,100,100,0.25);
+  border-radius: 11px;
+  background: rgba(255,100,100,0.07);
+  color: #ff9999;
+  font-size: 9px;
+}
+
+.users-empty {
+  display: none;
+  padding: 45px 20px;
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 16px;
+  color: #7c857d;
+  text-align: center;
+  font-size: 10px;
+}
+
+.users-list {
+  display: grid;
+  gap: 12px;
+}
+
+.user-card {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1.5fr) 1fr 120px 120px;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 15px;
+  background: #101511;
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(53,230,122,0.09);
+  color: #35e67a;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.user-main {
+  min-width: 0;
+}
+
+.user-main strong {
+  display: block;
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-main small {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #7d867e;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-role,
+.user-status {
+  font-size: 8px;
+  text-transform: capitalize;
+}
+
+.user-status {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.user-status.active {
+  background: rgba(53,230,122,0.07);
+  color: #35e67a;
+}
+
+.user-status.suspended {
+  background: rgba(255,100,100,0.07);
+  color: #ff9999;
+}
+
+.user-status.disabled {
+  background: rgba(180,180,180,0.06);
+  color: #a4aaa5;
+}
+
+.user-action-button {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.user-action-button.suspend {
+  border: 1px solid rgba(255,100,100,0.22);
+  background: rgba(255,100,100,0.06);
+  color: #ff9999;
+}
+
+.user-action-button.reactivate {
+  border: 1px solid rgba(53,230,122,0.22);
+  background: rgba(53,230,122,0.06);
+  color: #35e67a;
+}
+
+.user-action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .user-card {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .user-role,
+  .user-status,
+  .user-action-button {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .users-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .users-refresh-button {
+    width: 100%;
+  }
+
+  .users-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .users-toolbar {
+    grid-template-columns: 1fr;
+  }
+}

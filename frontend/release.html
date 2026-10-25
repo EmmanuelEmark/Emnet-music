@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Release | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/release.css" />
+  <link rel="stylesheet" href="css/player.css" />
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <aside class="sidebar">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          E
+        </div>
+
+        <div class="brand-text">
+
+          <span class="brand-title">
+            EmnetMusic
+          </span>
+
+          <span class="brand-slogan">
+            Excitement Starts Here
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+        <a
+          href="home.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </a>
+
+        <a
+          href="search.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">⌕</span>
+          <span>Search</span>
+        </a>
+
+        <a
+          href="videos.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">▶</span>
+          <span>Videos</span>
+        </a>
+
+        <a
+          href="library.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">▤</span>
+          <span>Library</span>
+        </a>
+
+        <a
+          href="playlists.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">＋</span>
+          <span>Playlists</span>
+        </a>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <a
+          href="profile.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">○</span>
+          <span>Profile</span>
+        </a>
+
+        <button
+          type="button"
+          class="nav-item logout-button"
+          id="logoutButton"
+        >
+          <span class="nav-icon">↗</span>
+          <span>Log out</span>
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <main class="main-content release-page">
+
+      <div
+        class="release-loading"
+        id="releaseLoading"
+      >
+        Loading release...
+      </div>
+
+
+      <div
+        class="release-error"
+        id="releaseError"
+      ></div>
+
+
+      <div
+        class="release-content"
+        id="releaseContent"
+      >
+
+        <section class="release-hero">
+
+          <div
+            class="release-hero-bg"
+            id="releaseHeroBg"
+          ></div>
+
+          <div class="release-hero-overlay"></div>
+
+
+          <div class="release-hero-content">
+
+            <img
+              src=""
+              alt="Release cover"
+              class="release-main-cover"
+              id="releaseCover"
+            >
+
+
+            <div class="release-main-info">
+
+              <p
+                class="release-type-label"
+                id="releaseType"
+              >
+                RELEASE
+              </p>
+
+              <h1 id="releaseTitle">
+                Release
+              </h1>
+
+              <button
+                type="button"
+                class="release-artist-name"
+                id="releaseArtistName"
+              >
+                Artist
+              </button>
+
+              <div class="release-meta">
+
+                <span id="releaseDate">
+                  —
+                </span>
+
+                <span>•</span>
+
+                <span id="releaseTrackCount">
+                  0 tracks
+                </span>
+
+              </div>
+
+
+              <div class="release-actions">
+
+                <button
+                  type="button"
+                  class="release-play-all"
+                  id="playReleaseButton"
+                >
+                  ▶ Play
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <section class="release-track-section">
+
+          <div class="release-section-heading">
+
+            <div>
+
+              <p class="release-section-label">
+                TRACKLIST
+              </p>
+
+              <h2>
+                Songs
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="release-track-list"
+            id="releaseTrackList"
+          ></div>
+
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <nav class="mobile-nav">
+
+    <a
+      href="home.html"
+      class="mobile-nav-item"
+    >
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+    <a
+      href="videos.html"
+      class="mobile-nav-item"
+    >
+      <span>▶</span>
+      <small>Videos</small>
+    </a>
+
+    <a
+      href="search.html"
+      class="mobile-nav-item"
+    >
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+
+    <a
+      href="library.html"
+      class="mobile-nav-item"
+    >
+      <span>▤</span>
+      <small>Library</small>
+    </a>
+
+    <a
+      href="profile.html"
+      class="mobile-nav-item"
+    >
+      <span>○</span>
+      <small>Profile</small>
+    </a>
+
+  </nav>
+
+
+  <div id="playerContainer"></div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/release.js"></script>
+
+</body>
+</html>

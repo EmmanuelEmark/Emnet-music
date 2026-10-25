@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Admin Signup | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/admin-signup.css"
+  >
+</head>
+
+<body>
+
+  <main class="admin-signup-page">
+
+    <section class="admin-signup-card">
+
+      <div class="signup-brand">
+
+        <div class="signup-brand-mark">
+          E
+        </div>
+
+        <div>
+          <strong>EmnetMusic</strong>
+          <small>Admin invitation</small>
+        </div>
+
+      </div>
+
+
+      <div
+        class="invite-checking"
+        id="inviteChecking"
+      >
+        Checking invitation...
+      </div>
+
+
+      <div
+        class="invite-invalid"
+        id="inviteInvalid"
+      ></div>
+
+
+      <div
+        class="admin-signup-content"
+        id="adminSignupContent"
+      >
+
+        <p class="signup-label">
+          ADMIN ACCESS
+        </p>
+
+        <h1>
+          Create your admin account
+        </h1>
+
+        <p class="signup-description">
+          You've been invited to join the EmnetMusic administration team.
+        </p>
+
+
+        <div class="invite-person">
+
+          <strong id="invitedName"></strong>
+
+          <span id="invitedEmail"></span>
+
+        </div>
+
+
+        <div class="invite-expiry">
+
+          Invitation expires in
+
+          <strong id="inviteCountdown">
+            10:00
+          </strong>
+
+        </div>
+
+
+        <form id="adminSignupForm">
+
+          <div class="signup-field">
+
+            <label for="adminDateOfBirth">
+              Date of birth
+            </label>
+
+            <input
+              type="date"
+              id="adminDateOfBirth"
+              required
+            >
+
+          </div>
+
+
+          <div class="signup-field">
+
+            <label for="adminPassword">
+              Create password
+            </label>
+
+            <input
+              type="password"
+              id="adminPassword"
+              minlength="8"
+              required
+            >
+
+            <small>
+              At least 8 characters.
+            </small>
+
+          </div>
+
+
+          <div class="signup-field">
+
+            <label for="adminConfirmPassword">
+              Confirm password
+            </label>
+
+            <input
+              type="password"
+              id="adminConfirmPassword"
+              minlength="8"
+              required
+            >
+
+          </div>
+
+
+          <div
+            class="signup-message"
+            id="signupMessage"
+          ></div>
+
+
+          <button
+            type="submit"
+            class="signup-button"
+            id="adminSignupButton"
+          >
+            Create admin account
+          </button>
+
+        </form>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/admin-signup.js"></script>
+
+</body>
+</html>

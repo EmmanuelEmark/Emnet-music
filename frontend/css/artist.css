@@ -1,0 +1,647 @@
+.artist-page {
+  padding-bottom: 130px;
+}
+
+
+/* ========================================
+   LOADING / ERROR
+======================================== */
+
+.artist-loading {
+  padding: 50px 0;
+
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+
+.artist-error {
+  display: none;
+
+  margin-top: 30px;
+
+  padding: 25px;
+
+  border: 1px solid #4a2424;
+  border-radius: 16px;
+
+  background: #1d1010;
+
+  color: #ff9d9d;
+
+  font-size: 13px;
+}
+
+
+.artist-content {
+  display: none;
+}
+
+
+.artist-content.active {
+  display: block;
+}
+
+
+/* ========================================
+   HERO
+======================================== */
+
+.artist-hero {
+  position: relative;
+
+  min-height: 470px;
+
+  overflow: hidden;
+
+  border-radius: 26px;
+
+  border: 1px solid var(--border);
+
+  background: #0d120f;
+}
+
+
+.artist-cover-background {
+  position: absolute;
+
+  inset: 0;
+
+  background-size: cover;
+  background-position: center;
+
+  filter: blur(2px);
+
+  transform: scale(1.03);
+}
+
+
+.artist-hero-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      to top,
+      rgba(5, 8, 6, 0.98) 8%,
+      rgba(5, 8, 6, 0.65) 55%,
+      rgba(5, 8, 6, 0.30)
+    );
+}
+
+
+.artist-hero-content {
+  position: relative;
+
+  z-index: 2;
+
+  min-height: 470px;
+
+  display: flex;
+
+  align-items: flex-end;
+
+  gap: 28px;
+
+  padding: 40px;
+}
+
+
+.artist-profile-image {
+  width: 180px;
+  height: 180px;
+
+  flex-shrink: 0;
+
+  object-fit: cover;
+
+  border-radius: 50%;
+
+  border: 4px solid rgba(255, 255, 255, 0.08);
+
+  background: #121713;
+
+  box-shadow:
+    0 30px 60px
+    rgba(0, 0, 0, 0.35);
+}
+
+
+.artist-main-info {
+  min-width: 0;
+
+  padding-bottom: 8px;
+}
+
+
+.artist-status-row {
+  min-height: 18px;
+}
+
+
+.verified-badge {
+  color: var(--green);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.13em;
+}
+
+
+.artist-main-info h1 {
+  margin-top: 10px;
+
+  font-size:
+    clamp(42px, 7vw, 82px);
+
+  line-height: 0.96;
+
+  letter-spacing: -0.06em;
+}
+
+
+.artist-stats {
+  margin-top: 16px;
+
+  color: #a7afa9;
+
+  font-size: 11px;
+}
+
+
+.artist-stats strong {
+  color: white;
+}
+
+
+.artist-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 24px;
+}
+
+
+.artist-play-button,
+.artist-follow-button {
+  min-height: 45px;
+
+  padding: 0 22px;
+
+  border-radius: 14px;
+
+  font-family: inherit;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.artist-play-button {
+  border: 0;
+
+  background: var(--green);
+
+  color: #061008;
+}
+
+
+.artist-follow-button {
+  border: 1px solid #353d37;
+
+  background: rgba(15, 20, 17, 0.78);
+
+  color: white;
+}
+
+
+.artist-play-button:hover,
+.artist-follow-button:hover {
+  transform: translateY(-1px);
+}
+
+
+.artist-follow-button.following {
+  border-color:
+    rgba(53, 230, 122, 0.35);
+
+  color: var(--green);
+}
+
+
+/* ========================================
+   SECTIONS
+======================================== */
+
+.artist-section {
+  margin-top: 52px;
+}
+
+
+.artist-section-header {
+  margin-bottom: 20px;
+}
+
+
+.artist-section-label {
+  color: var(--green);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.15em;
+}
+
+
+.artist-section-header h2 {
+  margin-top: 5px;
+
+  font-size: 25px;
+
+  letter-spacing: -0.04em;
+}
+
+
+/* ========================================
+   SONGS
+======================================== */
+
+.artist-song-list {
+  overflow: hidden;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 18px;
+
+  background: var(--surface);
+}
+
+
+.artist-song-row {
+  min-height: 72px;
+
+  display: grid;
+
+  grid-template-columns:
+    30px
+    50px
+    minmax(0, 1fr)
+    minmax(100px, 0.6fr)
+    42px;
+
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 11px 15px;
+
+  border-bottom:
+    1px solid
+    var(--border);
+}
+
+
+.artist-song-row:last-child {
+  border-bottom: 0;
+}
+
+
+.artist-song-number {
+  color: var(--muted);
+
+  font-size: 10px;
+
+  text-align: center;
+}
+
+
+.artist-song-cover {
+  width: 50px;
+  height: 50px;
+
+  object-fit: cover;
+
+  border-radius: 11px;
+
+  background: #151a16;
+}
+
+
+.artist-song-meta {
+  min-width: 0;
+}
+
+
+.artist-song-meta h3 {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 13px;
+}
+
+
+.artist-song-meta p {
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+
+.artist-song-release {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+
+.artist-song-play {
+  width: 38px;
+  height: 38px;
+
+  border: 1px solid var(--border);
+  border-radius: 50%;
+
+  background: #171c18;
+
+  color: white;
+
+  cursor: pointer;
+}
+
+
+.artist-song-play:hover {
+  background: var(--green);
+
+  color: #061008;
+}
+
+
+/* ========================================
+   RELEASES
+======================================== */
+
+.artist-release-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+
+.artist-release-card {
+  color: inherit;
+
+  text-decoration: none;
+}
+
+
+.artist-release-card img {
+  width: 100%;
+
+  aspect-ratio: 1 / 1;
+
+  display: block;
+
+  object-fit: cover;
+
+  border-radius: 17px;
+
+  border: 1px solid var(--border);
+
+  background: var(--surface);
+}
+
+
+.artist-release-card h3 {
+  margin-top: 11px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 13px;
+}
+
+
+.artist-release-card p {
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+
+  text-transform: capitalize;
+}
+
+
+/* ========================================
+   VIDEOS
+======================================== */
+
+.artist-video-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+
+.artist-video-card {
+  color: inherit;
+
+  text-decoration: none;
+}
+
+
+.artist-video-thumbnail {
+  position: relative;
+
+  overflow: hidden;
+
+  aspect-ratio: 16 / 9;
+
+  border-radius: 17px;
+
+  border: 1px solid var(--border);
+
+  background: var(--surface);
+}
+
+
+.artist-video-thumbnail img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+.artist-video-play {
+  position: absolute;
+
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  background: rgba(0, 0, 0, 0.15);
+}
+
+
+.artist-video-play span {
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(0, 0, 0, 0.75);
+
+  color: white;
+}
+
+
+.artist-video-card h3 {
+  margin-top: 11px;
+
+  font-size: 13px;
+}
+
+
+.artist-video-card p {
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 1000px) {
+
+  .artist-release-grid {
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
+
+
+  .artist-hero-content {
+    padding: 30px;
+  }
+
+}
+
+
+@media (max-width: 700px) {
+
+  .artist-hero {
+    min-height: 480px;
+  }
+
+
+  .artist-hero-content {
+    min-height: 480px;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+    justify-content: flex-end;
+
+    gap: 18px;
+
+    padding: 24px;
+  }
+
+
+  .artist-profile-image {
+    width: 125px;
+    height: 125px;
+  }
+
+
+  .artist-main-info h1 {
+    font-size: 45px;
+  }
+
+
+  .artist-song-row {
+    grid-template-columns:
+      24px
+      46px
+      minmax(0, 1fr)
+      38px;
+  }
+
+
+  .artist-song-release {
+    display: none;
+  }
+
+
+  .artist-release-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+
+  .artist-video-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+@media (max-width: 430px) {
+
+  .artist-main-info h1 {
+    font-size: 38px;
+  }
+
+
+  .artist-actions {
+    width: 100%;
+  }
+
+
+  .artist-play-button,
+  .artist-follow-button {
+    flex: 1;
+  }
+
+}

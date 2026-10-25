@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Search | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/search.css" />
+  <link rel="stylesheet" href="css/player.css" />
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <aside class="sidebar">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          E
+        </div>
+
+        <div class="brand-text">
+
+          <span class="brand-title">
+            EmnetMusic
+          </span>
+
+          <span class="brand-slogan">
+            Excitement Starts Here
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+        <a
+          href="home.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </a>
+
+
+        <a
+          href="search.html"
+          class="nav-item active"
+        >
+          <span class="nav-icon">⌕</span>
+          <span>Search</span>
+        </a>
+
+
+        <a
+          href="videos.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">▶</span>
+          <span>Videos</span>
+        </a>
+
+
+        <a
+          href="library.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">▤</span>
+          <span>Library</span>
+        </a>
+
+
+        <a
+          href="playlists.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">＋</span>
+          <span>Playlists</span>
+        </a>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <a
+          href="profile.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">○</span>
+          <span>Profile</span>
+        </a>
+
+
+        <button
+          class="nav-item logout-button"
+          id="logoutButton"
+        >
+          <span class="nav-icon">↗</span>
+          <span>Log out</span>
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <main class="main-content search-page">
+
+      <header class="search-header">
+
+        <div>
+
+          <p class="search-label">
+            DISCOVER EMNETMUSIC
+          </p>
+
+          <h1>
+            Search
+          </h1>
+
+        </div>
+
+
+        <a
+          href="profile.html"
+          class="search-profile"
+        >
+
+          <div
+            class="profile-avatar"
+            id="profileInitial"
+          >
+            E
+          </div>
+
+        </a>
+
+      </header>
+
+
+      <section class="search-box-section">
+
+        <div class="search-box">
+
+          <span class="search-icon">
+            ⌕
+          </span>
+
+          <input
+            type="search"
+            id="searchInput"
+            placeholder="Search songs, artists, releases or videos"
+            autocomplete="off"
+          >
+
+          <button
+            type="button"
+            id="clearSearchButton"
+            class="clear-search-button"
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <p
+          class="search-helper"
+          id="searchHelper"
+        >
+          Find music, artists and videos across EmnetMusic.
+        </p>
+
+      </section>
+
+
+      <section
+        class="search-empty-screen"
+        id="searchEmptyScreen"
+      >
+
+        <div class="search-empty-icon">
+          ♪
+        </div>
+
+        <h2>
+          Start discovering
+        </h2>
+
+        <p>
+          Search for a song, artist, release or video.
+        </p>
+
+      </section>
+
+
+      <div
+        class="search-results"
+        id="searchResults"
+      >
+
+
+        <!-- SONG RESULTS -->
+
+        <section
+          class="search-result-section"
+          id="songResultsSection"
+        >
+
+          <div class="search-section-heading">
+
+            <div>
+
+              <p class="search-section-label">
+                MUSIC
+              </p>
+
+              <h2>
+                Songs
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="search-song-list"
+            id="songResults"
+          ></div>
+
+        </section>
+
+
+
+        <!-- ARTIST RESULTS -->
+
+        <section
+          class="search-result-section"
+          id="artistResultsSection"
+        >
+
+          <div class="search-section-heading">
+
+            <div>
+
+              <p class="search-section-label">
+                ARTISTS
+              </p>
+
+              <h2>
+                Artists
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="search-artist-grid"
+            id="artistResults"
+          ></div>
+
+        </section>
+
+
+
+        <!-- RELEASE RESULTS -->
+
+        <section
+          class="search-result-section"
+          id="releaseResultsSection"
+        >
+
+          <div class="search-section-heading">
+
+            <div>
+
+              <p class="search-section-label">
+                RELEASES
+              </p>
+
+              <h2>
+                Releases
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="search-release-grid"
+            id="releaseResults"
+          ></div>
+
+        </section>
+
+
+
+        <!-- VIDEO RESULTS -->
+
+        <section
+          class="search-result-section"
+          id="videoResultsSection"
+        >
+
+          <div class="search-section-heading">
+
+            <div>
+
+              <p class="search-section-label">
+                WATCH
+              </p>
+
+              <h2>
+                Videos
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="search-video-grid"
+            id="videoResults"
+          ></div>
+
+        </section>
+
+
+        <div
+          class="no-search-results"
+          id="noSearchResults"
+        >
+          No results found.
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <nav class="mobile-nav">
+
+    <a
+      href="home.html"
+      class="mobile-nav-item"
+    >
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+
+    <a
+      href="videos.html"
+      class="mobile-nav-item"
+    >
+      <span>▶</span>
+      <small>Videos</small>
+    </a>
+
+
+    <a
+      href="search.html"
+      class="mobile-nav-item active"
+    >
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+
+
+    <a
+      href="library.html"
+      class="mobile-nav-item"
+    >
+      <span>▤</span>
+      <small>Library</small>
+    </a>
+
+
+    <a
+      href="profile.html"
+      class="mobile-nav-item"
+    >
+      <span>○</span>
+      <small>Profile</small>
+    </a>
+
+  </nav>
+
+
+  <div id="playerContainer"></div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/search.js"></script>
+
+</body>
+</html>

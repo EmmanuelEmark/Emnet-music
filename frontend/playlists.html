@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Playlists | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/playlists.css" />
+  <link rel="stylesheet" href="css/player.css" />
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <aside class="sidebar">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          E
+        </div>
+
+        <div class="brand-text">
+
+          <span class="brand-title">
+            EmnetMusic
+          </span>
+
+          <span class="brand-slogan">
+            Excitement Starts Here
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+        <a href="home.html" class="nav-item">
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </a>
+
+        <a href="search.html" class="nav-item">
+          <span class="nav-icon">⌕</span>
+          <span>Search</span>
+        </a>
+
+        <a href="videos.html" class="nav-item">
+          <span class="nav-icon">▶</span>
+          <span>Videos</span>
+        </a>
+
+        <a href="library.html" class="nav-item">
+          <span class="nav-icon">▤</span>
+          <span>Library</span>
+        </a>
+
+        <a
+          href="playlists.html"
+          class="nav-item active"
+        >
+          <span class="nav-icon">＋</span>
+          <span>Playlists</span>
+        </a>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <a href="profile.html" class="nav-item">
+          <span class="nav-icon">○</span>
+          <span>Profile</span>
+        </a>
+
+        <button
+          type="button"
+          class="nav-item logout-button"
+          id="logoutButton"
+        >
+          <span class="nav-icon">↗</span>
+          <span>Log out</span>
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <main class="main-content playlists-page">
+
+      <section class="playlists-header">
+
+        <div>
+
+          <p class="playlists-label">
+            YOUR COLLECTIONS
+          </p>
+
+          <h1>
+            Playlists
+          </h1>
+
+          <p class="playlists-description">
+            Create collections of the songs you love.
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="create-playlist-button"
+          id="openCreatePlaylist"
+        >
+          + New playlist
+        </button>
+
+      </section>
+
+
+      <div
+        class="playlists-message"
+        id="playlistsMessage"
+      >
+        Loading playlists...
+      </div>
+
+
+      <div
+        class="playlists-grid"
+        id="playlistsGrid"
+      ></div>
+
+
+      <div
+        class="playlists-empty"
+        id="playlistsEmpty"
+      >
+        You haven't created any playlists yet.
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <!-- CREATE PLAYLIST MODAL -->
+
+  <div
+    class="playlist-modal"
+    id="playlistModal"
+  >
+
+    <div class="playlist-modal-card">
+
+      <button
+        type="button"
+        class="playlist-modal-close"
+        id="closePlaylistModal"
+      >
+        ×
+      </button>
+
+
+      <p class="playlist-modal-label">
+        NEW COLLECTION
+      </p>
+
+      <h2>
+        Create playlist
+      </h2>
+
+
+      <form id="createPlaylistForm">
+
+        <div class="playlist-form-group">
+
+          <label for="playlistName">
+            Playlist name
+          </label>
+
+          <input
+            type="text"
+            id="playlistName"
+            maxlength="100"
+            required
+            placeholder="My playlist"
+          >
+
+        </div>
+
+
+        <div class="playlist-form-group">
+
+          <label for="playlistDescription">
+            Description
+          </label>
+
+          <textarea
+            id="playlistDescription"
+            rows="4"
+            placeholder="Tell us about this playlist"
+          ></textarea>
+
+        </div>
+
+
+        <label class="playlist-public-option">
+
+          <input
+            type="checkbox"
+            id="playlistPublic"
+          >
+
+          <span>
+            Make this playlist public
+          </span>
+
+        </label>
+
+
+        <div
+          class="playlist-form-message"
+          id="playlistFormMessage"
+        ></div>
+
+
+        <button
+          type="submit"
+          class="playlist-submit-button"
+          id="createPlaylistButton"
+        >
+          Create playlist
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <nav class="mobile-nav">
+
+    <a href="home.html" class="mobile-nav-item">
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+    <a href="videos.html" class="mobile-nav-item">
+      <span>▶</span>
+      <small>Videos</small>
+    </a>
+
+    <a href="search.html" class="mobile-nav-item">
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+
+    <a href="library.html" class="mobile-nav-item">
+      <span>▤</span>
+      <small>Library</small>
+    </a>
+
+    <a href="profile.html" class="mobile-nav-item">
+      <span>○</span>
+      <small>Profile</small>
+    </a>
+
+  </nav>
+
+
+  <div id="playerContainer"></div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/playlists.js"></script>
+
+</body>
+</html>

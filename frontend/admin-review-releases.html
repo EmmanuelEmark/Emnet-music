@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Release Review | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/admin-dashboard.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/admin-review-releases.css"
+  >
+</head>
+
+<body>
+
+  <div class="admin-layout">
+
+    <aside class="admin-sidebar">
+
+      <div class="admin-brand">
+
+        <div class="admin-brand-mark">
+          E
+        </div>
+
+        <div>
+          <strong>EmnetMusic</strong>
+          <small>Admin</small>
+        </div>
+
+      </div>
+
+
+      <nav class="admin-navigation">
+
+        <a
+          href="admin-dashboard.html"
+          class="admin-nav-item"
+        >
+          <span>⌂</span>
+          Dashboard
+        </a>
+
+
+        <a
+          href="admin-review-artists.html"
+          class="admin-nav-item"
+        >
+          <span>♫</span>
+          Artists
+        </a>
+
+
+        <a
+          href="admin-review-releases.html"
+          class="admin-nav-item active"
+        >
+          <span>▣</span>
+          Releases
+        </a>
+
+
+        <a
+          href="admin-review-videos.html"
+          class="admin-nav-item"
+        >
+          <span>▶</span>
+          Videos
+        </a>
+
+
+        <a
+          href="admin-reports.html"
+          class="admin-nav-item"
+        >
+          <span>!</span>
+          Reports
+        </a>
+
+
+        <a
+          href="notifications.html"
+          class="admin-nav-item"
+        >
+          <span>◉</span>
+          Notifications
+        </a>
+
+
+        <a
+          href="profile.html"
+          class="admin-nav-item"
+        >
+          <span>○</span>
+          Profile
+        </a>
+
+      </nav>
+
+
+      <div class="admin-sidebar-bottom">
+
+        <a
+          href="home.html"
+          class="admin-nav-item"
+        >
+          <span>←</span>
+          EmnetMusic
+        </a>
+
+
+        <button
+          type="button"
+          class="admin-nav-item admin-logout"
+          id="adminLogoutButton"
+        >
+          <span>↗</span>
+          Log out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+
+    <main class="admin-main">
+
+      <header class="release-review-header">
+
+        <div>
+
+          <p class="admin-eyebrow">
+            RELEASE MANAGEMENT
+          </p>
+
+          <h1>
+            Pending Releases
+          </h1>
+
+          <p>
+            Review music releases submitted by artists before they become public.
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="release-refresh-button"
+          id="refreshReleasesButton"
+        >
+          ↻ Refresh
+        </button>
+
+      </header>
+
+
+      <section class="release-summary">
+
+        <div>
+
+          <p class="admin-section-label">
+            WAITING FOR REVIEW
+          </p>
+
+          <strong id="pendingReleaseCount">
+            0
+          </strong>
+
+          <span>
+            pending releases
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <div
+        class="release-review-error"
+        id="releasesError"
+      ></div>
+
+
+      <div
+        class="release-review-loading"
+        id="releasesLoading"
+      >
+        Loading pending releases...
+      </div>
+
+
+      <div
+        class="release-review-list"
+        id="releaseReviewList"
+      ></div>
+
+
+      <div
+        class="release-review-empty"
+        id="releasesEmpty"
+      >
+        There are no pending releases.
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin-review-releases.js"></script>
+
+</body>
+</html>

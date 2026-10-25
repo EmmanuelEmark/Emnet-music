@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Sign In | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+
+<body>
+
+  <main class="auth-page">
+
+    <section class="brand-panel">
+
+      <div class="brand-content">
+
+        <div class="brand-name">
+          <span class="brand-mark">E</span>
+          <span>EmnetMusic</span>
+        </div>
+
+        <div class="brand-message">
+
+          <span class="eyebrow">WELCOME BACK</span>
+
+          <h1>
+            Your music world
+            <span>continues here.</span>
+          </h1>
+
+          <p>
+            Sign in to discover music, follow artists,
+            manage your playlists and continue listening
+            from where you stopped.
+          </p>
+
+        </div>
+
+        <div class="brand-footer">
+          Excitement Starts Here
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <section class="form-panel">
+
+      <div class="form-container">
+
+        <div class="mobile-brand">
+          <span class="brand-mark">E</span>
+          <span>EmnetMusic</span>
+        </div>
+
+        <div class="form-heading">
+
+          <p class="form-eyebrow">
+            SIGN IN
+          </p>
+
+          <h2>Welcome back</h2>
+
+          <p>
+            Enter your account details to continue.
+          </p>
+
+        </div>
+
+
+        <form id="loginForm">
+
+          <div class="form-group">
+
+            <label for="email">
+              Email address
+            </label>
+
+            <input
+              type="email"
+              id="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="password">
+              Password
+            </label>
+
+            <div class="password-field">
+
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              />
+
+              <button
+                type="button"
+                class="password-toggle"
+                id="passwordToggle"
+              >
+                Show
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div id="formMessage" class="form-message"></div>
+
+
+          <button
+            type="submit"
+            class="primary-button"
+            id="loginButton"
+          >
+            Sign in
+          </button>
+
+        </form>
+
+
+        <p class="auth-switch">
+          Don't have an account?
+          <a href="register.html">Create account</a>
+        </p>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/login.js"></script>
+
+</body>
+</html>

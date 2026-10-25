@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Add Song | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/artist-dashboard.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/artist-add-song.css"
+  >
+</head>
+
+<body>
+
+  <div class="artist-layout">
+
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+
+    <aside class="artist-sidebar">
+
+      <div class="artist-brand">
+
+        <div class="artist-brand-mark">
+          E
+        </div>
+
+        <div>
+
+          <strong>
+            EmnetMusic
+          </strong>
+
+          <small>
+            Artist
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <nav class="artist-navigation">
+
+        <a
+          href="artist-dashboard.html"
+          class="artist-nav-item"
+        >
+          <span>⌂</span>
+          Dashboard
+        </a>
+
+
+        <a
+          href="artist-releases.html"
+          class="artist-nav-item"
+        >
+          <span>▣</span>
+          Releases
+        </a>
+
+
+        <a
+          href="artist-songs.html"
+          class="artist-nav-item active"
+        >
+          <span>♫</span>
+          Songs
+        </a>
+
+
+        <a
+          href="artist-videos.html"
+          class="artist-nav-item"
+        >
+          <span>▶</span>
+          Videos
+        </a>
+
+
+        <a
+          href="artist-profile-manage.html"
+          class="artist-nav-item"
+        >
+          <span>○</span>
+          Artist Profile
+        </a>
+
+
+        <a
+          href="notifications.html"
+          class="artist-nav-item"
+        >
+          <span>◉</span>
+          Notifications
+        </a>
+
+      </nav>
+
+
+      <div class="artist-sidebar-bottom">
+
+        <a
+          href="home.html"
+          class="artist-nav-item"
+        >
+          <span>←</span>
+          EmnetMusic
+        </a>
+
+
+        <button
+          type="button"
+          class="artist-nav-item artist-logout"
+          id="artistLogoutButton"
+        >
+          <span>↗</span>
+          Log out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN
+    ========================== -->
+
+    <main class="artist-main">
+
+      <header class="add-song-header">
+
+        <div>
+
+          <a
+            href="artist-dashboard.html"
+            class="back-link"
+          >
+            ← Dashboard
+          </a>
+
+
+          <p class="artist-eyebrow">
+            SONG MANAGEMENT
+          </p>
+
+
+          <h1>
+            Add song to release
+          </h1>
+
+
+          <p>
+            Add a track to your draft release.
+          </p>
+
+        </div>
+
+      </header>
+
+
+      <!-- PAGE ERROR -->
+
+      <div
+        class="song-page-error"
+        id="songPageError"
+      ></div>
+
+
+      <!-- SELECTED RELEASE -->
+
+      <section class="selected-release-card">
+
+        <div>
+
+          <small>
+            SELECTED RELEASE
+          </small>
+
+          <strong id="selectedReleaseId">
+            No release selected
+          </strong>
+
+        </div>
+
+      </section>
+
+
+      <div class="add-song-layout">
+
+
+        <!-- =========================
+             SONG FORM
+        ========================== -->
+
+        <section class="song-form-card">
+
+          <form id="addSongForm">
+
+
+            <!-- SONG TITLE -->
+
+            <div class="song-form-group">
+
+              <label for="songTitle">
+                Song title
+              </label>
+
+              <input
+                type="text"
+                id="songTitle"
+                placeholder="e.g. Midnight"
+                required
+              >
+
+            </div>
+
+
+            <!-- GENRE -->
+
+            <div class="song-form-group">
+
+              <label for="songGenre">
+                Genre
+              </label>
+
+              <input
+                type="text"
+                id="songGenre"
+                placeholder="e.g. Afrobeats"
+                required
+              >
+
+            </div>
+
+
+            <!-- AUDIO URL -->
+
+            <div class="song-form-group">
+
+              <label for="songAudioUrl">
+                Audio URL
+              </label>
+
+              <input
+                type="url"
+                id="songAudioUrl"
+                placeholder="https://example.com/song.mp3"
+                required
+              >
+
+              <small>
+                For now, paste a direct audio URL.
+                Actual audio upload will be added later.
+              </small>
+
+            </div>
+
+
+            <!-- DURATION + TRACK -->
+
+            <div class="song-form-row">
+
+              <div class="song-form-group">
+
+                <label for="songDuration">
+                  Duration
+                </label>
+
+                <input
+                  type="number"
+                  id="songDuration"
+                  min="1"
+                  placeholder="240"
+                  required
+                >
+
+                <small>
+                  Duration is entered in seconds.
+                  Example: 240 = 4 minutes.
+                </small>
+
+              </div>
+
+
+              <div class="song-form-group">
+
+                <label for="trackNumber">
+                  Track number
+                </label>
+
+                <input
+                  type="number"
+                  id="trackNumber"
+                  min="1"
+                  value="1"
+                  required
+                >
+
+              </div>
+
+            </div>
+
+
+            <!-- ISRC -->
+
+            <div class="song-form-group">
+
+              <label for="songIsrc">
+                ISRC
+              </label>
+
+              <input
+                type="text"
+                id="songIsrc"
+                placeholder="Optional"
+              >
+
+              <small>
+                Leave this empty if the song does not have an ISRC yet.
+              </small>
+
+            </div>
+
+
+            <!-- MESSAGE -->
+
+            <div
+              class="song-form-message"
+              id="songFormMessage"
+            ></div>
+
+
+            <!-- BUTTON -->
+
+            <button
+              type="submit"
+              class="add-song-button"
+              id="addSongButton"
+            >
+              Add song
+            </button>
+
+          </form>
+
+        </section>
+
+
+        <!-- =========================
+             PREVIEW
+        ========================== -->
+
+        <aside class="song-preview-card">
+
+          <p class="artist-section-label">
+            TRACK PREVIEW
+          </p>
+
+
+          <h2 id="previewSongTitle">
+            Your song
+          </h2>
+
+
+          <div class="song-preview-icon">
+            ♫
+          </div>
+
+
+          <div class="song-preview-details">
+
+            <div>
+
+              <small>
+                Genre
+              </small>
+
+              <strong id="previewGenre">
+                —
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <small>
+                Duration
+              </small>
+
+              <strong id="previewDuration">
+                --:--
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <small>
+                Track
+              </small>
+
+              <strong id="previewTrackNumber">
+                1
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div class="song-preview-note">
+
+            <strong>
+              Draft only
+            </strong>
+
+            <p>
+              Adding a song does not publish it.
+              The song remains a draft until the
+              release is submitted and approved.
+            </p>
+
+          </div>
+
+        </aside>
+
+      </div>
+
+
+      <!-- =========================
+           SUCCESS
+      ========================== -->
+
+      <section
+        class="song-created-card"
+        id="songCreatedCard"
+      >
+
+        <div class="song-created-icon">
+          ✓
+        </div>
+
+
+        <div>
+
+          <p class="artist-section-label">
+            SONG ADDED
+          </p>
+
+
+          <h2 id="createdSongTitle">
+            Song added successfully
+          </h2>
+
+
+          <p>
+            The song has been added to your draft release.
+          </p>
+
+
+          <small id="createdSongId"></small>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <!-- =========================
+       JAVASCRIPT
+  ========================== -->
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/artist-add-song.js"></script>
+
+</body>
+</html>

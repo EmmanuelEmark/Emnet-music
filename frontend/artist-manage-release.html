@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Release | Emnet Music</title>
+
+    <link rel="stylesheet" href="css/artist-manage-release.css">
+
+    <script src="js/config.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/artist-manage-release.js" defer></script>
+</head>
+<body>
+    <header class="topbar">
+        <a href="artist-dashboard.html" class="brand">
+            <span class="brand-icon">▶</span>
+            <span>EMNET <strong>MUSIC</strong></span>
+        </a>
+
+        <nav class="topbar-actions">
+            <a href="artist-my-releases.html" class="back-link">
+                My Releases
+            </a>
+            <button id="artistLogoutButton" class="logout-button" type="button">
+                Log out
+            </button>
+        </nav>
+    </header>
+
+    <main class="page-container">
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">ARTIST STUDIO</p>
+                <h1>Manage Release</h1>
+                <p class="subtitle">
+                    Manage your music release, tracks and review status.
+                </p>
+            </div>
+        </div>
+
+        <div id="releaseLoading" class="message-card">
+            Loading release details...
+        </div>
+
+        <div id="releaseError" class="message-card error-message" hidden></div>
+
+        <section id="releaseContent" hidden>
+            <div class="release-card">
+                <div class="cover-container">
+                    <img id="releaseCover" src="" alt="Release cover artwork" hidden>
+                    <div id="coverFallback" class="cover-fallback">♪</div>
+                </div>
+
+                <div class="release-details">
+                    <p class="eyebrow">RELEASE INFORMATION</p>
+                    <h2 id="releaseTitle">Release title</h2>
+
+                    <div class="release-meta">
+                        <span id="releaseType" class="meta-chip"></span>
+                        <span id="releaseStatus" class="status-chip"></span>
+                    </div>
+
+                    <p class="release-date">
+                        Release date: <span id="releaseDate">Not specified</span>
+                    </p>
+
+                    <p id="releaseDescription" class="release-description">
+                        Your release information will appear here.
+                    </p>
+                </div>
+            </div>
+
+            <section class="tracks-section">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">YOUR MUSIC</p>
+                        <h2>Tracks</h2>
+                        <p class="subtitle">Your tracks appear in track-number order.</p>
+                    </div>
+
+                    <span id="trackCount" class="track-count">0 tracks</span>
+                </div>
+
+                <div id="tracksContainer" class="tracks-container"></div>
+
+                <div id="emptyTracks" class="empty-state" hidden>
+                    <div class="empty-icon">♫</div>
+                    <h3>No tracks added yet</h3>
+                    <p>Add music to this release before submitting it for review.</p>
+                </div>
+            </section>
+
+            <section class="release-actions">
+                <div>
+                    <h3>Ready for review?</h3>
+                    <p id="actionDescription">
+                        Make sure your release information and tracks are correct.
+                    </p>
+                </div>
+
+                <div class="action-buttons">
+                    <a id="addTrackButton" class="secondary-button" href="#">
+                        + Add Track
+                    </a>
+
+                    <button id="submitReleaseButton" class="primary-button" type="button">
+                        Submit for Review
+                    </button>
+                </div>
+            </section>
+
+            <div id="releaseFormMessage" class="message-card" hidden></div>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Profile | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/home.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/profile.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/player.css"
+  >
+</head>
+
+<body>
+
+
+  <div class="app-shell">
+
+
+    <!-- =====================================
+         SIDEBAR
+    ====================================== -->
+
+    <aside class="sidebar">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          E
+        </div>
+
+        <div class="brand-text">
+
+          <span class="brand-title">
+            EmnetMusic
+          </span>
+
+          <span class="brand-slogan">
+            Excitement Starts Here
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+        <a
+          href="home.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">
+            ⌂
+          </span>
+
+          <span>
+            Home
+          </span>
+        </a>
+
+
+        <a
+          href="search.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">
+            ⌕
+          </span>
+
+          <span>
+            Search
+          </span>
+        </a>
+
+
+        <a
+          href="videos.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">
+            ▶
+          </span>
+
+          <span>
+            Videos
+          </span>
+        </a>
+
+
+        <a
+          href="library.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">
+            ▤
+          </span>
+
+          <span>
+            Library
+          </span>
+        </a>
+
+
+        <a
+          href="playlists.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">
+            ＋
+          </span>
+
+          <span>
+            Playlists
+          </span>
+        </a>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <a
+          href="profile.html"
+          class="nav-item active"
+        >
+          <span class="nav-icon">
+            ○
+          </span>
+
+          <span>
+            Profile
+          </span>
+        </a>
+
+
+        <button
+          type="button"
+          class="nav-item logout-button"
+          id="logoutButton"
+        >
+          <span class="nav-icon">
+            ↗
+          </span>
+
+          <span>
+            Log out
+          </span>
+        </button>
+
+      </div>
+
+    </aside>
+
+
+
+    <!-- =====================================
+         PROFILE
+    ====================================== -->
+
+    <main class="main-content profile-page">
+
+
+      <div
+        class="profile-loading"
+        id="profileLoading"
+      >
+        Loading your account...
+      </div>
+
+
+      <div
+        class="profile-error"
+        id="profileError"
+      ></div>
+
+
+      <div
+        class="profile-content"
+        id="profileContent"
+      >
+
+
+        <!-- PROFILE HERO -->
+
+        <section class="profile-hero">
+
+
+          <div class="profile-avatar-wrap">
+
+            <img
+              src=""
+              alt="Profile"
+              class="profile-avatar"
+              id="profileAvatar"
+            >
+
+            <div
+              class="profile-avatar-placeholder"
+              id="profileAvatarPlaceholder"
+            >
+              E
+            </div>
+
+          </div>
+
+
+          <div class="profile-main-info">
+
+            <p class="profile-label">
+              YOUR ACCOUNT
+            </p>
+
+
+            <h1 id="profileName">
+              User
+            </h1>
+
+
+            <p
+              class="profile-email"
+              id="profileEmail"
+            ></p>
+
+
+            <div class="profile-badges">
+
+              <span
+                class="profile-badge"
+                id="profileRole"
+              >
+                Listener
+              </span>
+
+
+              <span
+                class="profile-badge verification-badge"
+                id="verificationBadge"
+              >
+                Email status
+              </span>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- ACCOUNT DETAILS -->
+
+        <section class="profile-section">
+
+          <div class="profile-section-heading">
+
+            <div>
+
+              <p class="profile-section-label">
+                PERSONAL INFORMATION
+              </p>
+
+              <h2>
+                Profile details
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <form
+            class="profile-form"
+            id="profileForm"
+          >
+
+
+            <div class="profile-field">
+
+              <label for="fullName">
+                Full name
+              </label>
+
+              <input
+                type="text"
+                id="fullName"
+                required
+              >
+
+            </div>
+
+
+            <div class="profile-field">
+
+              <label for="profileEmailField">
+                Email
+              </label>
+
+              <input
+                type="email"
+                id="profileEmailField"
+                disabled
+              >
+
+              <small>
+                Your email cannot be changed here.
+              </small>
+
+            </div>
+
+
+            <div class="profile-field">
+
+              <label for="dateOfBirth">
+                Date of birth
+              </label>
+
+              <input
+                type="date"
+                id="dateOfBirth"
+              >
+
+            </div>
+
+
+            <div class="profile-field">
+
+              <label for="profileImage">
+                Profile image URL
+              </label>
+
+              <input
+                type="url"
+                id="profileImage"
+                placeholder="https://..."
+              >
+
+              <small>
+                Real image upload will be added when we connect media storage.
+              </small>
+
+            </div>
+
+
+            <div
+              class="profile-form-message"
+              id="profileFormMessage"
+            ></div>
+
+
+            <button
+              type="submit"
+              class="profile-primary-button"
+              id="saveProfileButton"
+            >
+              Save profile
+            </button>
+
+          </form>
+
+        </section>
+
+
+
+        <!-- PASSWORD -->
+
+        <section class="profile-section">
+
+          <div class="profile-section-heading">
+
+            <div>
+
+              <p class="profile-section-label">
+                SECURITY
+              </p>
+
+              <h2>
+                Change password
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <form
+            class="profile-form"
+            id="passwordForm"
+          >
+
+
+            <div class="profile-field">
+
+              <label for="currentPassword">
+                Current password
+              </label>
+
+              <input
+                type="password"
+                id="currentPassword"
+                required
+                autocomplete="current-password"
+              >
+
+            </div>
+
+
+            <div class="profile-field">
+
+              <label for="newPassword">
+                New password
+              </label>
+
+              <input
+                type="password"
+                id="newPassword"
+                required
+                minlength="8"
+                autocomplete="new-password"
+              >
+
+              <small>
+                Your new password must contain at least 8 characters.
+              </small>
+
+            </div>
+
+
+            <div class="profile-field">
+
+              <label for="confirmNewPassword">
+                Confirm new password
+              </label>
+
+              <input
+                type="password"
+                id="confirmNewPassword"
+                required
+                minlength="8"
+                autocomplete="new-password"
+              >
+
+            </div>
+
+
+            <div
+              class="profile-form-message"
+              id="passwordFormMessage"
+            ></div>
+
+
+            <button
+              type="submit"
+              class="profile-secondary-button"
+              id="changePasswordButton"
+            >
+              Change password
+            </button>
+
+          </form>
+
+        </section>
+
+
+
+        <!-- ACCOUNT -->
+
+        <section class="profile-section account-section">
+
+          <div>
+
+            <p class="profile-section-label">
+              ACCOUNT
+            </p>
+
+            <h2>
+              Account actions
+            </h2>
+
+            <p class="account-description">
+              Manage your current EmnetMusic session.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="profile-logout-button"
+            id="profileLogoutButton"
+          >
+            Log out
+          </button>
+
+        </section>
+
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+
+  <!-- MOBILE NAVIGATION -->
+
+  <nav class="mobile-nav">
+
+    <a
+      href="home.html"
+      class="mobile-nav-item"
+    >
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+
+    <a
+      href="videos.html"
+      class="mobile-nav-item"
+    >
+      <span>▶</span>
+      <small>Videos</small>
+    </a>
+
+
+    <a
+      href="search.html"
+      class="mobile-nav-item"
+    >
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+
+
+    <a
+      href="library.html"
+      class="mobile-nav-item"
+    >
+      <span>▤</span>
+      <small>Library</small>
+    </a>
+
+
+    <a
+      href="profile.html"
+      class="mobile-nav-item active"
+    >
+      <span>○</span>
+      <small>Profile</small>
+    </a>
+
+  </nav>
+
+
+
+  <div id="playerContainer"></div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/profile.js"></script>
+
+</body>
+</html>

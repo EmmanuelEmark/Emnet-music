@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Users | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/admin-dashboard.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/admin-users.css"
+  >
+</head>
+
+<body>
+
+  <div class="admin-layout">
+
+    <aside class="admin-sidebar">
+
+      <div class="admin-brand">
+
+        <div class="admin-brand-mark">
+          E
+        </div>
+
+        <div>
+          <strong>
+            EmnetMusic
+          </strong>
+
+          <small id="adminRoleLabel">
+            Admin
+          </small>
+        </div>
+
+      </div>
+
+
+      <nav class="admin-navigation">
+
+        <a
+          href="admin-dashboard.html"
+          class="admin-nav-item"
+          id="dashboardLink"
+        >
+          <span>⌂</span>
+          Dashboard
+        </a>
+
+
+        <a
+          href="admin-users.html"
+          class="admin-nav-item active"
+        >
+          <span>○</span>
+          Users
+        </a>
+
+
+        <a
+          href="admin-review-artists.html"
+          class="admin-nav-item"
+        >
+          <span>♫</span>
+          Artists
+        </a>
+
+
+        <a
+          href="admin-review-releases.html"
+          class="admin-nav-item"
+        >
+          <span>▣</span>
+          Releases
+        </a>
+
+
+        <a
+          href="admin-review-videos.html"
+          class="admin-nav-item"
+        >
+          <span>▶</span>
+          Videos
+        </a>
+
+
+        <a
+          href="admin-reports.html"
+          class="admin-nav-item"
+        >
+          <span>!</span>
+          Reports
+        </a>
+
+
+        <a
+          href="admin-admins.html"
+          class="admin-nav-item"
+          id="manageAdminsLink"
+        >
+          <span>★</span>
+          Admins
+        </a>
+
+      </nav>
+
+
+      <div class="admin-sidebar-bottom">
+
+        <a
+          href="home.html"
+          class="admin-nav-item"
+        >
+          <span>←</span>
+          EmnetMusic
+        </a>
+
+
+        <button
+          type="button"
+          class="admin-nav-item admin-logout"
+          id="adminLogoutButton"
+        >
+          <span>↗</span>
+          Log out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <main class="admin-main">
+
+      <header class="users-header">
+
+        <div>
+
+          <p class="admin-eyebrow">
+            ACCOUNT MANAGEMENT
+          </p>
+
+          <h1>
+            Users
+          </h1>
+
+          <p>
+            Manage listener, artist and distributor accounts.
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="users-refresh-button"
+          id="refreshUsersButton"
+        >
+          ↻ Refresh
+        </button>
+
+      </header>
+
+
+      <section class="users-summary">
+
+        <div class="users-summary-card">
+          <small>TOTAL USERS</small>
+          <strong id="totalUsersCount">0</strong>
+        </div>
+
+        <div class="users-summary-card">
+          <small>ACTIVE</small>
+          <strong id="activeUsersCount">0</strong>
+        </div>
+
+        <div class="users-summary-card">
+          <small>SUSPENDED</small>
+          <strong id="suspendedUsersCount">0</strong>
+        </div>
+
+      </section>
+
+
+      <section class="users-toolbar">
+
+        <input
+          type="search"
+          id="userSearchInput"
+          placeholder="Search by name or email..."
+        >
+
+
+        <select id="roleFilter">
+          <option value="all">
+            All roles
+          </option>
+
+          <option value="listener">
+            Listener
+          </option>
+
+          <option value="artist">
+            Artist
+          </option>
+
+          <option value="distributor">
+            Distributor
+          </option>
+        </select>
+
+
+        <select id="statusFilter">
+          <option value="all">
+            All statuses
+          </option>
+
+          <option value="active">
+            Active
+          </option>
+
+          <option value="suspended">
+            Suspended
+          </option>
+
+          <option value="disabled">
+            Disabled
+          </option>
+        </select>
+
+      </section>
+
+
+      <div
+        class="users-error"
+        id="usersError"
+      ></div>
+
+
+      <div
+        class="users-loading"
+        id="usersLoading"
+      >
+        Loading users...
+      </div>
+
+
+      <div
+        class="users-list"
+        id="usersList"
+      ></div>
+
+
+      <div
+        class="users-empty"
+        id="usersEmpty"
+      >
+        No users found.
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin-users.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,689 @@
+<!-- =========================================
+     EMNETMUSIC PLAYER COMPONENT
+========================================= -->
+
+<div class="player-system" id="playerSystem">
+
+
+  <!-- =====================================
+       MINI PLAYER
+  ====================================== -->
+
+  <div class="music-player" id="musicPlayer">
+
+
+    <!-- SONG INFORMATION -->
+
+    <button
+      type="button"
+      class="player-song-info player-expand-trigger"
+      id="playerExpandButton"
+      aria-label="Open Now Playing"
+    >
+
+      <img
+        src=""
+        alt="Song cover"
+        class="player-cover"
+        id="playerCover"
+      >
+
+
+      <div class="player-song-text">
+
+        <div
+          class="player-song-title"
+          id="playerSongTitle"
+        >
+          Select a song
+        </div>
+
+        <div
+          class="player-artist"
+          id="playerArtist"
+        >
+          EmnetMusic
+        </div>
+
+      </div>
+
+    </button>
+
+
+    <!-- MINI PLAYER CONTROLS -->
+
+    <div class="player-center">
+
+      <div class="player-controls">
+
+        <button
+          class="player-control"
+          id="previousButton"
+          type="button"
+          aria-label="Previous song"
+        >
+          ◀
+        </button>
+
+
+        <button
+          class="player-control player-main-button"
+          id="playPauseButton"
+          type="button"
+          aria-label="Play or pause"
+        >
+          ▶
+        </button>
+
+
+        <button
+          class="player-control"
+          id="nextButton"
+          type="button"
+          aria-label="Next song"
+        >
+          ▶▶
+        </button>
+
+      </div>
+
+
+      <div class="player-progress-row">
+
+        <span
+          class="player-time"
+          id="currentTime"
+        >
+          0:00
+        </span>
+
+
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value="0"
+          class="player-progress"
+          id="playerProgress"
+          aria-label="Song progress"
+        >
+
+
+        <span
+          class="player-time"
+          id="durationTime"
+        >
+          0:00
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- RIGHT CONTROLS -->
+
+    <div class="player-right">
+
+      <button
+        type="button"
+        class="mini-action-button"
+        id="miniLikeButton"
+        aria-label="Like song"
+      >
+        ♡
+      </button>
+
+
+      <div class="mini-volume">
+
+        <span class="volume-icon">
+          🔊
+        </span>
+
+        <input
+          type="range"
+          min="0"
+          max="1"
+          value="0.8"
+          step="0.01"
+          class="volume-slider"
+          id="volumeSlider"
+          aria-label="Volume"
+        >
+
+      </div>
+
+
+      <button
+        type="button"
+        class="mini-action-button expand-icon-button"
+        id="playerExpandIconButton"
+        aria-label="Expand player"
+      >
+        ↗
+      </button>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================
+       EXPANDED NOW PLAYING
+  ====================================== -->
+
+  <section
+    class="now-playing-overlay"
+    id="nowPlayingOverlay"
+    aria-hidden="true"
+  >
+
+    <div class="now-playing-shell">
+
+
+      <!-- HEADER -->
+
+      <header class="now-playing-header">
+
+        <div>
+
+          <p class="now-playing-label">
+            NOW PLAYING
+          </p>
+
+          <p class="now-playing-brand">
+            EmnetMusic
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="now-playing-close"
+          id="closeNowPlayingButton"
+          aria-label="Close Now Playing"
+        >
+          ↓
+        </button>
+
+      </header>
+
+
+
+      <!-- MAIN NOW PLAYING AREA -->
+
+      <div class="now-playing-content">
+
+
+        <!-- ARTWORK SIDE -->
+
+        <div class="now-playing-artwork-section">
+
+          <div class="now-playing-artwork-wrap">
+
+            <div class="artwork-glow"></div>
+
+            <img
+              src=""
+              alt="Current song artwork"
+              class="now-playing-artwork"
+              id="expandedPlayerCover"
+            >
+
+          </div>
+
+        </div>
+
+
+
+        <!-- SONG DETAILS SIDE -->
+
+        <div class="now-playing-details">
+
+
+          <div class="now-playing-song-meta">
+
+            <p class="now-playing-context">
+              Playing from EmnetMusic
+            </p>
+
+
+            <h1 id="expandedSongTitle">
+              Select a song
+            </h1>
+
+
+            <button
+              type="button"
+              class="expanded-artist-name"
+              id="expandedArtistName"
+            >
+              EmnetMusic
+            </button>
+
+          </div>
+
+
+
+          <!-- ACTION BUTTONS -->
+
+          <div class="now-playing-actions">
+
+            <button
+              type="button"
+              class="now-playing-action"
+              id="expandedLikeButton"
+            >
+              <span>♡</span>
+              <small>Like</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="now-playing-action"
+              id="queueToggleButton"
+            >
+              <span>☷</span>
+              <small>Queue</small>
+            </button>
+
+
+            <button
+              type="button"
+              class="now-playing-action"
+              id="moreSongButton"
+            >
+              <span>•••</span>
+              <small>More</small>
+            </button>
+
+          </div>
+
+
+
+          <!-- EXPANDED PROGRESS -->
+
+          <div class="expanded-progress">
+
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value="0"
+              class="expanded-progress-slider"
+              id="expandedProgress"
+              aria-label="Song progress"
+            >
+
+
+            <div class="expanded-time-row">
+
+              <span id="expandedCurrentTime">
+                0:00
+              </span>
+
+              <span id="expandedDurationTime">
+                0:00
+              </span>
+
+            </div>
+
+          </div>
+
+
+
+          <!-- EXPANDED CONTROLS -->
+
+          <div class="expanded-controls">
+
+            <button
+              type="button"
+              class="expanded-secondary-control"
+              id="shuffleButton"
+              aria-label="Shuffle"
+            >
+              ⤨
+            </button>
+
+
+            <button
+              type="button"
+              class="expanded-skip-button"
+              id="expandedPreviousButton"
+              aria-label="Previous song"
+            >
+              ◀
+            </button>
+
+
+            <button
+              type="button"
+              class="expanded-main-control"
+              id="expandedPlayPauseButton"
+              aria-label="Play or pause"
+            >
+              ▶
+            </button>
+
+
+            <button
+              type="button"
+              class="expanded-skip-button"
+              id="expandedNextButton"
+              aria-label="Next song"
+            >
+              ▶
+            </button>
+
+
+            <button
+              type="button"
+              class="expanded-secondary-control"
+              id="repeatButton"
+              aria-label="Repeat"
+            >
+              ↻
+            </button>
+
+          </div>
+
+
+
+          <!-- EXPANDED VOLUME -->
+
+          <div class="expanded-volume">
+
+            <span>🔊</span>
+
+            <input
+              type="range"
+              min="0"
+              max="1"
+              value="0.8"
+              step="0.01"
+              id="expandedVolumeSlider"
+              aria-label="Volume"
+            >
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- QUEUE PANEL -->
+
+      <aside
+        class="queue-panel"
+        id="queuePanel"
+      >
+
+        <div class="queue-header">
+
+          <div>
+
+            <p class="queue-label">
+              NEXT UP
+            </p>
+
+            <h2>Queue</h2>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="closeQueueButton"
+            class="queue-close-button"
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <div
+          class="queue-list"
+          id="queueList"
+        >
+
+          <div class="queue-empty">
+            Your queue will appear here.
+          </div>
+
+        </div>
+
+      </aside>
+
+
+    </div>
+
+  </section>
+
+  <!-- =====================================
+     MORE SONG OPTIONS
+====================================== -->
+
+<div
+  class="song-more-modal"
+  id="songMoreModal"
+  aria-hidden="true"
+>
+
+  <div class="song-more-card">
+
+    <div class="song-more-header">
+
+      <div>
+        <p class="song-more-label">
+          SONG OPTIONS
+        </p>
+
+        <h2 id="songMoreTitle">
+          Song
+        </h2>
+      </div>
+
+
+      <button
+        type="button"
+        class="song-more-close"
+        id="closeSongMoreModal"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <div class="song-more-options">
+
+
+      <button
+        type="button"
+        class="song-more-option"
+        id="moreAddToPlaylist"
+      >
+
+        <span class="song-more-icon">
+          ＋
+        </span>
+
+        <div>
+          <strong>
+            Add to playlist
+          </strong>
+
+          <small>
+            Save this song to one of your playlists
+          </small>
+        </div>
+
+      </button>
+
+
+      <button
+        type="button"
+        class="song-more-option"
+        id="moreGoToArtist"
+      >
+
+        <span class="song-more-icon">
+          ♫
+        </span>
+
+        <div>
+          <strong>
+            Go to artist
+          </strong>
+
+          <small>
+            View the artist profile
+          </small>
+        </div>
+
+      </button>
+
+
+      <button
+        type="button"
+        class="song-more-option"
+        id="moreGoToRelease"
+      >
+
+        <span class="song-more-icon">
+          ▣
+        </span>
+
+        <div>
+          <strong>
+            Go to release
+          </strong>
+
+          <small>
+            View the album, EP or single
+          </small>
+        </div>
+
+      </button>
+
+
+      <button
+        type="button"
+        class="song-more-option"
+        id="moreShareSong"
+      >
+
+        <span class="song-more-icon">
+          ↗
+        </span>
+
+        <div>
+          <strong>
+            Share
+          </strong>
+
+          <small>
+            Share this song
+          </small>
+        </div>
+
+      </button>
+
+
+    </div>
+
+
+    <div
+      class="song-more-message"
+      id="songMoreMessage"
+    ></div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================
+     ADD TO PLAYLIST MODAL
+====================================== -->
+
+<div
+  class="player-playlist-modal"
+  id="playerPlaylistModal"
+  aria-hidden="true"
+>
+
+  <div class="player-playlist-card">
+
+    <div class="player-playlist-header">
+
+      <div>
+
+        <p class="player-playlist-label">
+          SAVE SONG
+        </p>
+
+        <h2>
+          Add to playlist
+        </h2>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="player-playlist-close"
+        id="closePlayerPlaylistModal"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <p
+      class="player-playlist-song"
+      id="playerPlaylistSongName"
+    >
+      Select a song
+    </p>
+
+
+    <div
+      class="player-playlist-message"
+      id="playerPlaylistMessage"
+    ></div>
+
+
+    <div
+      class="player-playlist-list"
+      id="playerPlaylistList"
+    >
+
+      <div class="player-playlist-loading">
+        Loading playlists...
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+  <!-- =====================================
+       ONE AUDIO ENGINE FOR BOTH VIEWS
+  ====================================== -->
+
+  <audio id="audioPlayer"></audio>
+
+
+</div>

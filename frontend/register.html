@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Create Account | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+
+<body>
+
+  <main class="auth-page">
+
+    <section class="brand-panel">
+      <div class="brand-content">
+
+        <div class="brand-name">
+          <span class="brand-mark">E</span>
+          <span>EmnetMusic</span>
+        </div>
+
+        <div class="brand-message">
+          <span class="eyebrow">YOUR MUSIC. YOUR SPACE.</span>
+
+          <h1>
+            Discover sound that
+            <span>feels personal.</span>
+          </h1>
+
+          <p>
+            Join EmnetMusic and discover artists, releases,
+            videos and music experiences built around you.
+          </p>
+        </div>
+
+        <div class="brand-footer">
+          Excitement Starts Here
+        </div>
+
+      </div>
+    </section>
+
+
+    <section class="form-panel">
+
+      <div class="form-container">
+
+        <div class="mobile-brand">
+          <span class="brand-mark">E</span>
+          <span>EmnetMusic</span>
+        </div>
+
+        <div class="form-heading">
+          <p class="form-eyebrow">CREATE YOUR ACCOUNT</p>
+
+          <h2>Join EmnetMusic</h2>
+
+          <p>
+            Create your account and start building your music world.
+          </p>
+        </div>
+
+
+        <form id="registerForm">
+
+          <div class="form-group">
+            <label for="fullName">Full name</label>
+
+            <input
+              type="text"
+              id="fullName"
+              placeholder="Enter your full name"
+              autocomplete="name"
+              required
+            />
+          </div>
+
+
+          <div class="form-group">
+            <label for="email">Email address</label>
+
+            <input
+              type="email"
+              id="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+
+          <div class="form-group">
+            <label for="dateOfBirth">Date of birth</label>
+
+            <input
+              type="date"
+              id="dateOfBirth"
+              required
+            />
+          </div>
+
+
+          <div class="form-group">
+            <label for="password">Password</label>
+
+            <div class="password-field">
+
+              <input
+                type="password"
+                id="password"
+                placeholder="Create a password"
+                autocomplete="new-password"
+                minlength="6"
+                required
+              />
+
+              <button
+                type="button"
+                class="password-toggle"
+                id="passwordToggle"
+              >
+                Show
+              </button>
+
+            </div>
+          </div>
+
+
+          <div id="formMessage" class="form-message"></div>
+
+
+          <button
+            type="submit"
+            class="primary-button"
+            id="registerButton"
+          >
+            Create account
+          </button>
+
+        </form>
+
+
+        <p class="auth-switch">
+          Already have an account?
+          <a href="login.html">Sign in</a>
+        </p>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/register.js"></script>
+
+</body>
+</html>

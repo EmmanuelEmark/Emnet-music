@@ -1,0 +1,425 @@
+.library-page {
+  padding-bottom: 140px;
+}
+
+
+/* ========================================
+   HEADER
+======================================== */
+
+.library-header {
+  max-width: 700px;
+
+  padding-top: 15px;
+}
+
+
+.library-label {
+  color: var(--green);
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.16em;
+}
+
+
+.library-header h1 {
+  margin-top: 8px;
+
+  font-size: clamp(
+    38px,
+    6vw,
+    68px
+  );
+
+  letter-spacing: -0.055em;
+}
+
+
+.library-description {
+  margin-top: 13px;
+
+  max-width: 520px;
+
+  color: var(--muted);
+
+  font-size: 13px;
+
+  line-height: 1.7;
+}
+
+
+.library-message {
+  margin-top: 35px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+}
+
+
+/* ========================================
+   SECTIONS
+======================================== */
+
+.library-section {
+  margin-top: 50px;
+}
+
+
+.library-section-header {
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 20px;
+}
+
+
+.library-section-label {
+  color: var(--green);
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+}
+
+
+.library-section-header h2 {
+  margin-top: 5px;
+
+  font-size: 24px;
+
+  letter-spacing: -0.04em;
+}
+
+
+.library-see-all {
+  color: var(--muted);
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+
+.library-see-all:hover {
+  color: white;
+}
+
+
+/* ========================================
+   LIKED SONGS
+======================================== */
+
+.library-song-list {
+  overflow: hidden;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 18px;
+
+  background: var(--surface);
+}
+
+
+.library-song-row {
+  min-height: 72px;
+
+  display: grid;
+
+  grid-template-columns:
+    48px
+    minmax(0, 1fr)
+    minmax(100px, 0.4fr)
+    44px;
+
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 10px 14px;
+
+  border-bottom:
+    1px solid
+    var(--border);
+}
+
+
+.library-song-row:last-child {
+  border-bottom: 0;
+}
+
+
+.library-song-cover {
+  width: 48px;
+  height: 48px;
+
+  object-fit: cover;
+
+  border-radius: 9px;
+
+  background: #121712;
+}
+
+
+.library-song-main {
+  min-width: 0;
+}
+
+
+.library-song-main h3 {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 12px;
+}
+
+
+.library-song-main p {
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+
+.library-song-release {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+
+.library-song-play {
+  width: 38px;
+  height: 38px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 50%;
+
+  background: #171c18;
+
+  color: white;
+
+  cursor: pointer;
+}
+
+
+.library-song-play:hover {
+  background: var(--green);
+
+  color: #061008;
+}
+
+
+/* ========================================
+   ARTISTS
+======================================== */
+
+.library-artist-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(150px, 1fr)
+    );
+
+  gap: 20px;
+}
+
+
+.library-artist-card {
+  cursor: pointer;
+}
+
+
+.library-artist-card img {
+  width: 100%;
+
+  aspect-ratio: 1 / 1;
+
+  object-fit: cover;
+
+  border-radius: 50%;
+
+  border:
+    1px solid
+    var(--border);
+
+  background: var(--surface);
+}
+
+
+.library-artist-card h3 {
+  margin-top: 12px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 12px;
+
+  text-align: center;
+}
+
+
+.library-artist-card p {
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 9px;
+
+  text-align: center;
+}
+
+
+/* ========================================
+   PLAYLISTS
+======================================== */
+
+.library-playlist-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(165px, 1fr)
+    );
+
+  gap: 22px;
+}
+
+
+.library-playlist-card {
+  cursor: pointer;
+}
+
+
+.library-playlist-cover {
+  aspect-ratio: 1 / 1;
+
+  display: grid;
+
+  place-items: center;
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 17px;
+
+  background:
+    radial-gradient(
+      circle at 30% 30%,
+      rgba(53, 230, 122, 0.18),
+      transparent 45%
+    ),
+    var(--surface);
+}
+
+
+.library-playlist-cover span {
+  color: var(--green);
+
+  font-size: 34px;
+}
+
+
+.library-playlist-card h3 {
+  margin-top: 11px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 12px;
+}
+
+
+.library-playlist-card p {
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 9px;
+}
+
+
+/* ========================================
+   EMPTY
+======================================== */
+
+.library-empty {
+  padding: 30px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+
+  text-align: center;
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 650px) {
+
+  .library-song-row {
+    grid-template-columns:
+      45px
+      minmax(0, 1fr)
+      40px;
+  }
+
+
+  .library-song-release {
+    display: none;
+  }
+
+
+  .library-artist-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+
+  .library-playlist-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+}

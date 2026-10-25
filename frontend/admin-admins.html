@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Manage Admins | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/admin-admins.css">
+</head>
+
+<body>
+
+  <div class="admin-layout">
+
+    <aside class="admin-sidebar">
+
+      <div class="admin-brand">
+
+        <div class="admin-brand-mark">
+          E
+        </div>
+
+        <div>
+          <strong>EmnetMusic</strong>
+          <small>Superadmin</small>
+        </div>
+
+      </div>
+
+
+      <nav class="admin-navigation">
+
+        <a
+          href="admin.html"
+          class="admin-nav-item"
+        >
+          <span>⌂</span>
+          Dashboard
+        </a>
+
+        <a
+          href="admin-artists.html"
+          class="admin-nav-item"
+        >
+          <span>♫</span>
+          Artists
+        </a>
+
+        <a
+          href="admin-releases.html"
+          class="admin-nav-item"
+        >
+          <span>▣</span>
+          Releases
+        </a>
+
+        <a
+          href="admin-videos.html"
+          class="admin-nav-item"
+        >
+          <span>▶</span>
+          Videos
+        </a>
+
+        <a
+          href="admin-users.html"
+          class="admin-nav-item"
+        >
+          <span>○</span>
+          Users
+        </a>
+
+        <a
+          href="admin-admins.html"
+          class="admin-nav-item active"
+        >
+          <span>★</span>
+          Admins
+        </a>
+
+        <a
+          href="admin-reports.html"
+          class="admin-nav-item"
+        >
+          <span>!</span>
+          Reports
+        </a>
+
+      </nav>
+
+
+      <div class="admin-sidebar-bottom">
+
+        <a
+          href="home.html"
+          class="admin-nav-item"
+        >
+          <span>←</span>
+          Listener site
+        </a>
+
+        <button
+          type="button"
+          class="admin-nav-item admin-logout"
+          id="adminLogoutButton"
+        >
+          <span>↗</span>
+          Log out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <main class="admin-main">
+
+      <header class="admin-header">
+
+        <div>
+
+          <p class="admin-eyebrow">
+            ADMINISTRATIVE ACCESS
+          </p>
+
+          <h1>
+            Manage Admins
+          </h1>
+
+          <p class="admin-header-description">
+            Control administrator access to EmnetMusic.
+          </p>
+
+        </div>
+
+      </header>
+
+
+      <div
+        class="admin-error"
+        id="adminsError"
+      ></div>
+
+
+      <div class="admins-toolbar">
+
+  <div>
+
+    <p class="admin-section-label">
+      ADMIN ACCOUNTS
+    </p>
+
+    <h2>
+      Current admins
+    </h2>
+
+  </div>
+
+
+  <div class="admins-toolbar-actions">
+
+    <button
+      type="button"
+      class="invite-admin-button"
+      id="openInviteAdminButton"
+    >
+      + Invite Admin
+    </button>
+
+
+    <button
+      type="button"
+      class="admin-refresh-button"
+      id="refreshAdminsButton"
+    >
+      ↻ Refresh
+    </button>
+
+  </div>
+
+</div>
+
+      </div>
+
+
+      <div
+        class="admins-loading"
+        id="adminsLoading"
+      >
+        Loading admins...
+      </div>
+
+
+      <div
+        class="admins-empty"
+        id="adminsEmpty"
+      >
+        No admin accounts found.
+      </div>
+
+
+      <div
+        class="admins-list"
+        id="adminsList"
+      ></div>
+
+    </main>
+
+  </div>
+
+  <!-- =====================================
+     INVITE ADMIN MODAL
+====================================== -->
+
+<div
+  class="invite-admin-modal"
+  id="inviteAdminModal"
+>
+
+  <div class="invite-admin-card">
+
+    <button
+      type="button"
+      class="invite-admin-close"
+      id="closeInviteAdminButton"
+    >
+      ×
+    </button>
+
+
+    <p class="admin-section-label">
+      NEW ADMIN
+    </p>
+
+    <h2>
+      Create admin invitation
+    </h2>
+
+
+    <p class="invite-admin-description">
+      The invitation link will expire after 10 minutes.
+    </p>
+
+
+    <form id="inviteAdminForm">
+
+      <div class="invite-admin-field">
+
+        <label for="inviteAdminName">
+          Full name
+        </label>
+
+        <input
+          type="text"
+          id="inviteAdminName"
+          required
+          placeholder="Admin full name"
+        >
+
+      </div>
+
+
+      <div class="invite-admin-field">
+
+        <label for="inviteAdminEmail">
+          Email address
+        </label>
+
+        <input
+          type="email"
+          id="inviteAdminEmail"
+          required
+          placeholder="admin@example.com"
+        >
+
+      </div>
+
+
+      <div
+        class="invite-admin-message"
+        id="inviteAdminMessage"
+      ></div>
+
+
+      <button
+        type="submit"
+        class="invite-admin-submit"
+        id="createInviteButton"
+      >
+        Create invitation
+      </button>
+
+    </form>
+
+
+    <div
+      class="invite-result"
+      id="inviteResult"
+    >
+
+      <p>
+        Invitation created
+      </p>
+
+
+      <div class="invite-link-box">
+
+        <input
+          type="text"
+          id="generatedInviteLink"
+          readonly
+        >
+
+
+        <button
+          type="button"
+          id="copyInviteLinkButton"
+        >
+          Copy
+        </button>
+
+      </div>
+
+
+      <small id="inviteExpiryText">
+        Expires in 10 minutes.
+      </small>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin-admins.js"></script>
+
+</body>
+</html>

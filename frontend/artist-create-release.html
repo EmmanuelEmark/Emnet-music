@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Upload Music | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/artist-dashboard.css">
+  <link rel="stylesheet" href="css/artist-create-release.css">
+</head>
+
+<body>
+  <div class="artist-layout">
+
+    <aside class="artist-sidebar">
+      <div class="artist-brand">
+        <div class="artist-brand-mark">E</div>
+        <div>
+          <strong>EmnetMusic</strong>
+          <small>Artist</small>
+        </div>
+      </div>
+
+      <nav class="artist-navigation">
+        <a href="artist-dashboard.html" class="artist-nav-item">
+          <span>⌂</span> Dashboard
+        </a>
+
+        <a href="artist-releases.html" class="artist-nav-item">
+          <span>▣</span> Releases
+        </a>
+
+        <a href="artist-songs.html" class="artist-nav-item">
+          <span>♫</span> Songs
+        </a>
+
+        <a href="artist-videos.html" class="artist-nav-item">
+          <span>▶</span> Videos
+        </a>
+
+        <a href="artist-profile-manage.html" class="artist-nav-item">
+          <span>○</span> Artist Profile
+        </a>
+
+        <a href="notifications.html" class="artist-nav-item">
+          <span>◉</span> Notifications
+        </a>
+      </nav>
+
+      <div class="artist-sidebar-bottom">
+        <a href="home.html" class="artist-nav-item">
+          <span>←</span> EmnetMusic
+        </a>
+
+        <button
+          type="button"
+          class="artist-nav-item artist-logout"
+          id="artistLogoutButton"
+        >
+          <span>↗</span> Log out
+        </button>
+      </div>
+    </aside>
+
+    <main class="artist-main">
+
+      <header class="create-release-header">
+        <div>
+          <a href="artist-dashboard.html" class="back-link">
+            ← Dashboard
+          </a>
+
+          <p class="artist-eyebrow">MUSIC DISTRIBUTION</p>
+
+          <h1>Upload your music</h1>
+
+          <p>
+            Upload a single, EP or album. Add your songs, choose their genres,
+            and let EmnetMusic detect their durations automatically.
+          </p>
+        </div>
+      </header>
+
+      <div
+        class="create-release-error hidden"
+        id="createReleaseError"
+        role="alert"
+      ></div>
+
+      <div class="create-release-layout">
+
+        <section class="release-form-card">
+
+          <form id="createReleaseForm">
+
+            <div class="form-section-heading">
+              <span class="section-number">01</span>
+              <div>
+                <h2>Release information</h2>
+                <p>Choose what you want to upload.</p>
+              </div>
+            </div>
+
+            <div class="release-form-group">
+              <label for="releaseType">What are you uploading?</label>
+
+              <select id="releaseType" required>
+                <option value="">Select release type</option>
+                <option value="single">Single</option>
+                <option value="ep">EP</option>
+                <option value="album">Album</option>
+              </select>
+
+              <small>
+                A single contains one song. An EP or album can contain multiple songs.
+              </small>
+            </div>
+
+            <div
+              class="release-form-group full-width hidden"
+              id="releaseTitleGroup"
+            >
+              <label for="releaseTitle" id="releaseTitleLabel">
+                EP name
+              </label>
+
+              <input
+                type="text"
+                id="releaseTitle"
+                maxlength="150"
+                placeholder="Enter EP name"
+              >
+
+              <small id="releaseTitleHelp">
+                Enter the name of your EP.
+              </small>
+            </div>
+
+            <div class="release-form-group">
+              <label for="releaseDate">Release date</label>
+
+              <input
+                type="date"
+                id="releaseDate"
+                required
+              >
+
+              <small>
+                Choose the date associated with this release.
+              </small>
+            </div>
+
+            <div class="release-form-group">
+              <label for="coverImage">Cover artwork URL</label>
+
+              <input
+                type="url"
+                id="coverImage"
+                placeholder="https://example.com/cover.jpg"
+                required
+              >
+
+              <small>
+                Enter a direct link to your cover image. File uploads will be added later.
+              </small>
+            </div>
+
+            <div class="form-divider"></div>
+
+            <div class="form-section-heading">
+              <span class="section-number">02</span>
+              <div>
+                <h2>Your songs</h2>
+                <p>
+                  Add each song's title, genre and audio URL.
+                  Duration will be detected automatically.
+                </p>
+              </div>
+            </div>
+
+            <div id="tracksContainer"></div>
+
+            <button
+              type="button"
+              class="add-track-button"
+              id="addTrackButton"
+            >
+              + Add another song
+            </button>
+
+            <div
+              class="release-form-message"
+              id="releaseFormMessage"
+              role="status"
+            ></div>
+
+            <div class="release-form-actions">
+              <button
+                type="submit"
+                class="create-release-button"
+                id="saveDraftButton"
+              >
+                Save draft and songs
+              </button>
+
+              <button
+                type="button"
+                class="submit-release-button hidden"
+                id="submitReleaseButton"
+              >
+                Submit for review
+              </button>
+            </div>
+
+            <p class="form-bottom-note">
+              Your music will not be published immediately.
+              It must be submitted for review.
+            </p>
+
+          </form>
+
+        </section>
+
+        <aside class="release-preview-card">
+
+          <p class="artist-section-label">PREVIEW</p>
+
+          <h2>Release preview</h2>
+
+          <div class="release-preview-cover">
+
+            <img
+              id="releaseCoverPreview"
+              class="hidden"
+              alt="Release cover artwork"
+            >
+
+            <div
+              class="release-cover-placeholder"
+              id="releaseCoverPlaceholder"
+            >
+              ♫
+            </div>
+
+          </div>
+
+          <div class="release-preview-info">
+            <span id="previewReleaseType">RELEASE</span>
+
+            <h3 id="previewReleaseTitle">
+              Your music title
+            </h3>
+
+            <p id="previewReleaseDate">Release date</p>
+          </div>
+
+          <div class="release-preview-note">
+            <strong>Before you submit</strong>
+
+            <ul>
+              <li>Use the correct song titles.</li>
+              <li>Select the correct genre for each song.</li>
+              <li>Check that every audio URL works.</li>
+              <li>Use the same cover for the entire release.</li>
+            </ul>
+          </div>
+
+        </aside>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/artist-create-release.js"></script>
+</body>
+</html>

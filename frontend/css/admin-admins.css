@@ -1,0 +1,608 @@
+/* ========================================
+   TOOLBAR
+======================================== */
+
+.admins-toolbar {
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 22px;
+}
+
+
+.admins-toolbar h2 {
+  margin: 6px 0 0;
+
+  font-size: 20px;
+}
+
+
+/* ========================================
+   STATUS
+======================================== */
+
+.admins-loading {
+  color: #788178;
+
+  font-size: 11px;
+}
+
+
+.admins-empty {
+  display: none;
+
+  padding: 40px 20px;
+
+  border:
+    1px dashed
+    rgba(255,255,255,0.08);
+
+  border-radius: 16px;
+
+  color: #788178;
+
+  text-align: center;
+
+  font-size: 11px;
+}
+
+
+/* ========================================
+   ADMIN LIST
+======================================== */
+
+.admins-list {
+  display: grid;
+
+  gap: 13px;
+}
+
+
+.admin-account-card {
+  display: grid;
+
+  grid-template-columns:
+    55px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 18px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.07);
+
+  border-radius: 17px;
+
+  background: #101511;
+}
+
+
+.admin-account-avatar {
+  width: 55px;
+  height: 55px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(53,230,122,0.1);
+
+  color: #35e67a;
+
+  font-size: 18px;
+  font-weight: 800;
+}
+
+
+.admin-account-details {
+  min-width: 0;
+}
+
+
+.admin-account-details h3 {
+  margin: 0;
+
+  overflow: hidden;
+
+  font-size: 12px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.admin-account-email {
+  margin: 5px 0 0;
+
+  color: #7d867e;
+
+  font-size: 9px;
+}
+
+
+.admin-account-meta {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-top: 10px;
+}
+
+
+.admin-badge {
+  padding: 6px 9px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius: 999px;
+
+  color: #a9b1aa;
+
+  font-size: 7px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+}
+
+
+.admin-badge.active {
+  border-color:
+    rgba(53,230,122,0.25);
+
+  background:
+    rgba(53,230,122,0.07);
+
+  color: #35e67a;
+}
+
+
+.admin-badge.suspended {
+  border-color:
+    rgba(255,128,128,0.25);
+
+  background:
+    rgba(255,128,128,0.07);
+
+  color: #ff9393;
+}
+
+
+/* ========================================
+   ACTIONS
+======================================== */
+
+.admin-account-actions {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  justify-content: flex-end;
+
+  gap: 8px;
+}
+
+
+.admin-action-button {
+  min-height: 37px;
+
+  padding: 0 12px;
+
+  border-radius: 10px;
+
+  font-family: inherit;
+  font-size: 8px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.admin-action-button.suspend {
+  border:
+    1px solid
+    rgba(255,169,82,0.25);
+
+  background:
+    rgba(255,169,82,0.07);
+
+  color: #ffaa61;
+}
+
+
+.admin-action-button.reactivate {
+  border:
+    1px solid
+    rgba(53,230,122,0.25);
+
+  background:
+    rgba(53,230,122,0.07);
+
+  color: #35e67a;
+}
+
+
+.admin-action-button.remove {
+  border:
+    1px solid
+    rgba(255,100,100,0.25);
+
+  background:
+    rgba(255,100,100,0.07);
+
+  color: #ff8f8f;
+}
+
+
+.admin-action-button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 750px) {
+
+  .admin-account-card {
+    grid-template-columns:
+      48px
+      minmax(0, 1fr);
+
+    align-items: start;
+  }
+
+
+  .admin-account-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+
+  .admin-account-actions {
+    grid-column:
+      1 / -1;
+
+    justify-content: flex-start;
+
+    padding-top: 5px;
+  }
+
+}
+
+
+
+/* ========================================
+   INVITE ADMIN
+======================================== */
+
+.admins-toolbar-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+
+.invite-admin-button {
+  min-height: 38px;
+
+  padding: 0 15px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: #35e67a;
+
+  color: #071009;
+
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.invite-admin-modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 10000;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(0, 0, 0, 0.78);
+
+  backdrop-filter:
+    blur(12px);
+}
+
+
+.invite-admin-modal.active {
+  display: flex;
+}
+
+
+.invite-admin-card {
+  position: relative;
+
+  width: 100%;
+  max-width: 470px;
+
+  padding: 30px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius: 22px;
+
+  background: #101511;
+}
+
+
+.invite-admin-card h2 {
+  margin:
+    7px 0 0;
+
+  font-size: 24px;
+}
+
+
+.invite-admin-description {
+  margin-top: 9px;
+
+  color: #7d867e;
+
+  font-size: 9px;
+
+  line-height: 1.6;
+}
+
+
+.invite-admin-close {
+  position: absolute;
+
+  top: 14px;
+  right: 15px;
+
+  width: 35px;
+  height: 35px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  color: white;
+
+  font-size: 21px;
+
+  cursor: pointer;
+}
+
+
+.invite-admin-field {
+  margin-top: 20px;
+}
+
+
+.invite-admin-field label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #b9c0ba;
+
+  font-size: 9px;
+}
+
+
+.invite-admin-field input {
+  width: 100%;
+
+  min-height: 45px;
+
+  padding: 0 13px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius: 11px;
+
+  outline: none;
+
+  background: #151a16;
+
+  color: white;
+
+  font-family: inherit;
+}
+
+
+.invite-admin-field input:focus {
+  border-color: #35e67a;
+}
+
+
+.invite-admin-submit {
+  width: 100%;
+
+  min-height: 44px;
+
+  margin-top: 20px;
+
+  border: 0;
+  border-radius: 11px;
+
+  background: #35e67a;
+
+  color: #071009;
+
+  font-family: inherit;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.invite-admin-message {
+  display: none;
+
+  margin-top: 16px;
+
+  padding: 10px;
+
+  border-radius: 10px;
+
+  font-size: 9px;
+}
+
+
+.invite-admin-message.error {
+  display: block;
+
+  background:
+    rgba(255,100,100,0.08);
+
+  color: #ff9999;
+}
+
+
+.invite-result {
+  display: none;
+
+  margin-top: 22px;
+
+  padding-top: 20px;
+
+  border-top:
+    1px solid
+    rgba(255,255,255,0.07);
+}
+
+
+.invite-result.active {
+  display: block;
+}
+
+
+.invite-result p {
+  margin: 0 0 10px;
+
+  color: #35e67a;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+
+.invite-link-box {
+  display: flex;
+
+  gap: 8px;
+}
+
+
+.invite-link-box input {
+  min-width: 0;
+
+  flex: 1;
+
+  height: 42px;
+
+  padding: 0 10px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius: 10px;
+
+  background: #151a16;
+
+  color: white;
+
+  font-size: 9px;
+}
+
+
+.invite-link-box button {
+  padding: 0 15px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background:
+    rgba(53,230,122,0.1);
+
+  color: #35e67a;
+
+  font-family: inherit;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.invite-result small {
+  display: block;
+
+  margin-top: 9px;
+
+  color: #7d867e;
+
+  font-size: 8px;
+}
+
+
+@media (max-width: 600px) {
+
+  .admins-toolbar {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .admins-toolbar-actions {
+    width: 100%;
+  }
+
+
+  .invite-admin-button,
+  .admins-toolbar-actions
+  .admin-refresh-button {
+    flex: 1;
+  }
+
+}

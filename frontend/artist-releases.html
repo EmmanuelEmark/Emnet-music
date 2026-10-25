@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>My Releases | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/artist-dashboard.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/artist-releases.css"
+  >
+
+</head>
+
+<body>
+
+<div class="artist-layout">
+
+
+  <!-- =====================================
+       SIDEBAR
+  ====================================== -->
+
+  <aside class="artist-sidebar">
+
+    <div class="artist-brand">
+
+      <div class="artist-brand-mark">
+        E
+      </div>
+
+      <div>
+
+        <strong>
+          EmnetMusic
+        </strong>
+
+        <small>
+          Artist
+        </small>
+
+      </div>
+
+    </div>
+
+
+    <nav class="artist-navigation">
+
+      <a
+        href="artist-dashboard"
+        class="artist-nav-item"
+      >
+        <span>⌂</span>
+        Dashboard
+      </a>
+
+
+      <a
+        href="artist-releases"
+        class="artist-nav-item active"
+      >
+        <span>▣</span>
+        Releases
+      </a>
+
+
+      <a
+        href="artist-songs"
+        class="artist-nav-item"
+      >
+        <span>♫</span>
+        Songs
+      </a>
+
+
+      <a
+        href="artist-videos"
+        class="artist-nav-item"
+      >
+        <span>▶</span>
+        Videos
+      </a>
+
+
+      <a
+        href="artist-profile-manage"
+        class="artist-nav-item"
+      >
+        <span>○</span>
+        Artist Profile
+      </a>
+
+
+      <a
+        href="notifications"
+        class="artist-nav-item"
+      >
+        <span>◉</span>
+        Notifications
+      </a>
+
+    </nav>
+
+
+    <div class="artist-sidebar-bottom">
+
+      <a
+        href="home"
+        class="artist-nav-item"
+      >
+        <span>←</span>
+        EmnetMusic
+      </a>
+
+
+      <button
+        type="button"
+        class="artist-nav-item artist-logout"
+        id="artistLogoutButton"
+      >
+        <span>↗</span>
+        Log out
+      </button>
+
+    </div>
+
+  </aside>
+
+
+
+  <!-- =====================================
+       MAIN
+  ====================================== -->
+
+  <main class="artist-main">
+
+
+    <header class="releases-header">
+
+      <div>
+
+        <p class="artist-eyebrow">
+          RELEASE MANAGEMENT
+        </p>
+
+        <h1>
+          My Releases
+        </h1>
+
+        <p>
+          Manage your drafts, pending submissions
+          and approved releases.
+        </p>
+
+      </div>
+
+
+      <a
+        href="artist-create-release"
+        class="create-release-link"
+      >
+        + Create Release
+      </a>
+
+    </header>
+
+
+
+    <!-- =====================================
+         STATS
+    ====================================== -->
+
+    <section class="release-stats">
+
+      <div>
+
+        <small>
+          ALL
+        </small>
+
+        <strong id="allReleaseCount">
+          0
+        </strong>
+
+      </div>
+
+
+      <div>
+
+        <small>
+          DRAFT
+        </small>
+
+        <strong id="draftReleaseCount">
+          0
+        </strong>
+
+      </div>
+
+
+      <div>
+
+        <small>
+          PENDING
+        </small>
+
+        <strong id="pendingReleaseCount">
+          0
+        </strong>
+
+      </div>
+
+
+      <div>
+
+        <small>
+          APPROVED
+        </small>
+
+        <strong id="approvedReleaseCount">
+          0
+        </strong>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         PAGE MESSAGE
+    ====================================== -->
+
+    <div
+      class="release-page-message"
+      id="releasePageMessage"
+    ></div>
+
+
+
+    <!-- =====================================
+         LOADING
+    ====================================== -->
+
+    <div
+      class="release-loading"
+      id="releaseLoading"
+    >
+      Loading releases...
+    </div>
+
+
+
+    <!-- =====================================
+         EMPTY
+    ====================================== -->
+
+    <div
+      class="release-empty"
+      id="releaseEmpty"
+    >
+
+      <h2>
+        No releases yet
+      </h2>
+
+      <p>
+        Create your first single, EP or album.
+      </p>
+
+      <a href="artist-create-release">
+        Create release
+      </a>
+
+    </div>
+
+
+
+    <!-- =====================================
+         RELEASE GRID
+    ====================================== -->
+
+    <section
+      class="artist-release-grid"
+      id="artistReleaseGrid"
+    ></section>
+
+
+  </main>
+
+</div>
+
+
+
+<!-- ========================================
+     SUBMIT MODAL
+======================================== -->
+
+<div
+  class="submit-modal"
+  id="submitModal"
+>
+
+  <div class="submit-modal-card">
+
+    <button
+      type="button"
+      class="submit-modal-close"
+      id="submitModalClose"
+    >
+      ×
+    </button>
+
+
+    <p class="artist-section-label">
+      SUBMIT RELEASE
+    </p>
+
+
+    <h2 id="submitReleaseTitle">
+      Submit release
+    </h2>
+
+
+    <p class="submit-warning">
+
+      Once submitted, this release and its songs
+      will move to pending review.
+
+    </p>
+
+
+    <label class="rights-confirmation">
+
+      <input
+        type="checkbox"
+        id="rightsConfirmed"
+      >
+
+      <span>
+
+        I confirm that I own this content
+        or have permission to distribute it
+        on EmnetMusic.
+
+      </span>
+
+    </label>
+
+
+    <div
+      class="submit-message"
+      id="submitMessage"
+    ></div>
+
+
+    <button
+      type="button"
+      class="submit-release-button"
+      id="submitReleaseButton"
+    >
+      Submit for Review
+    </button>
+
+  </div>
+
+</div>
+
+
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/artist-releases.js"></script>
+
+</body>
+</html>

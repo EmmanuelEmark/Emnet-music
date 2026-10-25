@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Home | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+<link rel="stylesheet" href="css/home.css" />
+<link rel="stylesheet" href="css/player.css" />
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="brand">
+        <div class="brand-mark">E</div>
+
+        <div class="brand-text">
+          <span class="brand-title">Emnetmusic</span>
+          <span class="brand-slogan">Excitement Starts Here</span>
+        </div>
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+        <a href="home.html" class="nav-item active">
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </a>
+
+        <a href="search.html" class="nav-item">
+          <span class="nav-icon">⌕</span>
+          <span>Search</span>
+        </a>
+
+        <a href="videos.html" class="nav-item">
+          <span class="nav-icon">▶</span>
+          <span>Videos</span>
+        </a>
+
+        <a href="library.html" class="nav-item">
+          <span class="nav-icon">▤</span>
+          <span>Library</span>
+        </a>
+
+        <a href="playlists.html" class="nav-item">
+          <span class="nav-icon">＋</span>
+          <span>Playlists</span>
+        </a>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <a href="profile.html" class="nav-item">
+          <span class="nav-icon">○</span>
+          <span>Profile</span>
+        </a>
+
+        <button class="nav-item logout-button" id="logoutButton">
+          <span class="nav-icon">↗</span>
+          <span>Log out</span>
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <!-- TOP HEADER -->
+      <header class="topbar">
+
+        <div>
+          <p class="welcome-label">WELCOME BACK</p>
+
+          <h1 id="welcomeName">
+            Welcome to EmnetMusic
+          </h1>
+        </div>
+
+
+        <div class="topbar-actions">
+
+          <a
+            href="search.html"
+            class="search-shortcut"
+            aria-label="Search"
+          >
+            ⌕
+          </a>
+
+          <a
+            href="notifications.html"
+            class="notification-button"
+            aria-label="Notifications"
+          >
+            ♢
+          </a>
+
+          <a href="profile.html" class="profile-chip">
+            <div class="profile-avatar" id="profileInitial">
+              E
+            </div>
+
+            <div class="profile-info">
+              <span id="profileName">Account</span>
+              <small id="profileRole">listener</small>
+            </div>
+          </a>
+
+        </div>
+
+      </header>
+
+
+      <!-- HERO -->
+      <section class="hero">
+
+        <div class="hero-glow"></div>
+
+        <div class="hero-content">
+
+          <p class="hero-label">
+            DISCOVER YOUR NEXT SOUND
+          </p>
+
+          <h2>
+            Music for every
+            <span>moment.</span>
+          </h2>
+
+          <p class="hero-description">
+            Discover new voices, new releases and music videos
+            from artists creating the soundtrack to your day.
+          </p>
+
+          <div class="hero-actions">
+
+            <a href="#newReleases" class="primary-cta">
+              Explore releases
+            </a>
+
+            <a href="videos.html" class="secondary-cta">
+              Watch videos
+            </a>
+
+          </div>
+
+        </div>
+
+        <div class="hero-art">
+
+          <div class="sound-ring ring-one"></div>
+          <div class="sound-ring ring-two"></div>
+          <div class="sound-ring ring-three"></div>
+
+          <div class="hero-symbol">
+            ♪
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- NEW RELEASES -->
+      <section class="content-section" id="newReleases">
+
+        <div class="section-heading">
+
+          <div>
+            <p class="section-label">
+              FRESH ON EMNETMUSIC
+            </p>
+
+            <h2>New releases</h2>
+          </div>
+
+          <a href="releases.html" class="section-link">
+            See all
+          </a>
+
+        </div>
+
+        <div
+          class="card-grid release-grid"
+          id="newReleasesGrid"
+        >
+          <div class="loading-card"></div>
+          <div class="loading-card"></div>
+          <div class="loading-card"></div>
+          <div class="loading-card"></div>
+        </div>
+
+      </section>
+
+
+      <!-- LATEST SONGS -->
+      <section class="content-section">
+
+        <div class="section-heading">
+
+          <div>
+            <p class="section-label">
+              START LISTENING
+            </p>
+
+            <h2>Latest songs</h2>
+          </div>
+
+          <a href="search.html" class="section-link">
+            Discover more
+          </a>
+
+        </div>
+
+        <div
+          class="song-list"
+          id="latestSongsList"
+        >
+          <div class="song-skeleton"></div>
+          <div class="song-skeleton"></div>
+          <div class="song-skeleton"></div>
+        </div>
+
+      </section>
+
+
+      <!-- FEATURED ARTISTS -->
+      <section class="content-section">
+
+        <div class="section-heading">
+
+          <div>
+            <p class="section-label">
+              VOICES TO KNOW
+            </p>
+
+            <h2>Featured artists</h2>
+          </div>
+
+          <a href="search.html" class="section-link">
+            Find artists
+          </a>
+
+        </div>
+
+        <div
+          class="artist-grid"
+          id="featuredArtistsGrid"
+        >
+          <div class="artist-skeleton"></div>
+          <div class="artist-skeleton"></div>
+          <div class="artist-skeleton"></div>
+          <div class="artist-skeleton"></div>
+        </div>
+
+      </section>
+
+
+      <!-- LATEST VIDEOS -->
+      <section class="content-section">
+
+        <div class="section-heading">
+
+          <div>
+            <p class="section-label">
+              WATCH NOW
+            </p>
+
+            <h2>Latest videos</h2>
+          </div>
+
+          <a href="videos.html" class="section-link">
+            See all videos
+          </a>
+
+        </div>
+
+        <div
+          class="video-grid"
+          id="latestVideosGrid"
+        >
+          <div class="video-skeleton"></div>
+          <div class="video-skeleton"></div>
+          <div class="video-skeleton"></div>
+        </div>
+
+      </section>
+
+
+      <div id="homeMessage" class="home-message"></div>
+
+    </main>
+
+  </div>
+
+
+  <!-- MOBILE NAVIGATION -->
+  <nav class="mobile-nav">
+
+    <a href="home.html" class="mobile-nav-item active">
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+    <a href="videos.html" class="mobile-nav-item">
+      <span>▶</span>
+      <small>Videos</small>
+    </a>
+
+    <a href="search.html" class="mobile-nav-item">
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+
+    <a href="library.html" class="mobile-nav-item">
+      <span>▤</span>
+      <small>Library</small>
+    </a>
+
+    <a href="profile.html" class="mobile-nav-item">
+      <span>○</span>
+      <small>Profile</small>
+    </a>
+
+  </nav>
+
+
+  
+<div id="playerContainer"></div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/player.js"></script>
+<script src="js/home.js"></script>
+
+</body>
+</html>

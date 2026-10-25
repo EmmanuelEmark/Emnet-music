@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Playlist | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/playlist.css" />
+  <link rel="stylesheet" href="css/player.css" />
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <aside class="sidebar">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          E
+        </div>
+
+        <div class="brand-text">
+
+          <span class="brand-title">
+            EmnetMusic
+          </span>
+
+          <span class="brand-slogan">
+            Excitement Starts Here
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+        <a href="home.html" class="nav-item">
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </a>
+
+        <a href="search.html" class="nav-item">
+          <span class="nav-icon">⌕</span>
+          <span>Search</span>
+        </a>
+
+        <a href="videos.html" class="nav-item">
+          <span class="nav-icon">▶</span>
+          <span>Videos</span>
+        </a>
+
+        <a href="library.html" class="nav-item">
+          <span class="nav-icon">▤</span>
+          <span>Library</span>
+        </a>
+
+        <a
+          href="playlists.html"
+          class="nav-item active"
+        >
+          <span class="nav-icon">＋</span>
+          <span>Playlists</span>
+        </a>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <a href="profile.html" class="nav-item">
+          <span class="nav-icon">○</span>
+          <span>Profile</span>
+        </a>
+
+        <button
+          type="button"
+          class="nav-item logout-button"
+          id="logoutButton"
+        >
+          <span class="nav-icon">↗</span>
+          <span>Log out</span>
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <main class="main-content playlist-page">
+
+      <div
+        class="playlist-loading"
+        id="playlistLoading"
+      >
+        Loading playlist...
+      </div>
+
+
+      <div
+        class="playlist-error"
+        id="playlistError"
+      ></div>
+
+
+      <div
+        class="playlist-content"
+        id="playlistContent"
+      >
+
+        <section class="playlist-hero">
+
+          <div class="playlist-cover">
+            ♪
+          </div>
+
+
+          <div class="playlist-info">
+
+            <p class="playlist-label">
+              PLAYLIST
+            </p>
+
+            <h1 id="playlistTitle">
+              Playlist
+            </h1>
+
+            <p
+              class="playlist-description"
+              id="playlistDescription"
+            ></p>
+
+            <div class="playlist-meta">
+
+              <span id="playlistVisibility">
+                Private
+              </span>
+
+              <span>•</span>
+
+              <span id="playlistSongCount">
+                0 songs
+              </span>
+
+            </div>
+
+
+            <div class="playlist-actions">
+
+              <button
+                type="button"
+                class="playlist-play-button"
+                id="playPlaylistButton"
+              >
+                ▶ Play
+              </button>
+
+              <button
+                type="button"
+                class="playlist-secondary-button"
+                id="editPlaylistButton"
+              >
+                Edit
+              </button>
+
+              <button
+                type="button"
+                class="playlist-delete-button"
+                id="deletePlaylistButton"
+              >
+                Delete
+              </button>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <section class="playlist-tracks-section">
+
+          <div class="playlist-section-header">
+
+            <div>
+
+              <p class="playlist-section-label">
+                TRACKLIST
+              </p>
+
+              <h2>
+                Songs
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            class="playlist-track-list"
+            id="playlistTrackList"
+          ></div>
+
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+  <!-- EDIT MODAL -->
+
+  <div
+    class="playlist-modal"
+    id="editPlaylistModal"
+  >
+
+    <div class="playlist-modal-card">
+
+      <button
+        type="button"
+        class="playlist-modal-close"
+        id="closeEditPlaylistModal"
+      >
+        ×
+      </button>
+
+      <p class="playlist-modal-label">
+        EDIT PLAYLIST
+      </p>
+
+      <h2>
+        Update playlist
+      </h2>
+
+
+      <form id="editPlaylistForm">
+
+        <div class="playlist-form-group">
+
+          <label for="editPlaylistName">
+            Playlist name
+          </label>
+
+          <input
+            type="text"
+            id="editPlaylistName"
+            required
+          >
+
+        </div>
+
+
+        <div class="playlist-form-group">
+
+          <label for="editPlaylistDescription">
+            Description
+          </label>
+
+          <textarea
+            id="editPlaylistDescription"
+            rows="4"
+          ></textarea>
+
+        </div>
+
+
+        <label class="playlist-public-option">
+
+          <input
+            type="checkbox"
+            id="editPlaylistPublic"
+          >
+
+          <span>
+            Make this playlist public
+          </span>
+
+        </label>
+
+
+        <div
+          class="playlist-form-message"
+          id="editPlaylistMessage"
+        ></div>
+
+
+        <button
+          type="submit"
+          class="playlist-submit-button"
+          id="savePlaylistButton"
+        >
+          Save changes
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <nav class="mobile-nav">
+
+    <a href="home.html" class="mobile-nav-item">
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+    <a href="videos.html" class="mobile-nav-item">
+      <span>▶</span>
+      <small>Videos</small>
+    </a>
+
+    <a href="search.html" class="mobile-nav-item">
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+
+    <a href="library.html" class="mobile-nav-item">
+      <span>▤</span>
+      <small>Library</small>
+    </a>
+
+    <a href="profile.html" class="mobile-nav-item">
+      <span>○</span>
+      <small>Profile</small>
+    </a>
+
+  </nav>
+
+
+  <div id="playerContainer"></div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/playlist.js"></script>
+
+</body>
+</html>

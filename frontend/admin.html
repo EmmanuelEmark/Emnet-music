@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Superadmin Dashboard | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/home.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="css/admin.css"
+  >
+</head>
+
+<body>
+
+
+  <div class="admin-layout">
+
+
+    <!-- =====================================
+         ADMIN SIDEBAR
+    ====================================== -->
+
+    <aside class="admin-sidebar">
+
+      <div class="admin-brand">
+
+        <div class="admin-brand-mark">
+          E
+        </div>
+
+        <div>
+
+          <strong>
+            EmnetMusic
+          </strong>
+
+          <small>
+            Superadmin
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <nav class="admin-navigation">
+
+        <a
+          href="admin.html"
+          class="admin-nav-item active"
+        >
+          <span>⌂</span>
+          Dashboard
+        </a>
+
+
+        <a
+          href="admin-artists.html"
+          class="admin-nav-item"
+        >
+          <span>♫</span>
+          Artists
+        </a>
+
+
+        <a
+          href="admin-releases.html"
+          class="admin-nav-item"
+        >
+          <span>▣</span>
+          Releases
+        </a>
+
+
+        <a
+          href="admin-videos.html"
+          class="admin-nav-item"
+        >
+          <span>▶</span>
+          Videos
+        </a>
+
+
+        <a
+          href="admin-users.html"
+          class="admin-nav-item"
+        >
+          <span>○</span>
+          Users
+        </a>
+
+
+        <a
+          href="admin-admins.html"
+          class="admin-nav-item"
+        >
+          <span>★</span>
+          Admins
+        </a>
+
+
+        <a
+          href="admin-reports.html"
+          class="admin-nav-item"
+        >
+          <span>!</span>
+          Reports
+        </a>
+
+      </nav>
+
+
+      <div class="admin-sidebar-bottom">
+
+        <a
+          href="home.html"
+          class="admin-nav-item"
+        >
+          <span>←</span>
+          Listener site
+        </a>
+
+
+        <button
+          type="button"
+          class="admin-nav-item admin-logout"
+          id="adminLogoutButton"
+        >
+          <span>↗</span>
+          Log out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+
+    <!-- =====================================
+         MAIN DASHBOARD
+    ====================================== -->
+
+    <main class="admin-main">
+
+
+      <!-- HEADER -->
+
+      <header class="admin-header">
+
+        <div>
+
+          <p class="admin-eyebrow">
+            PLATFORM CONTROL
+          </p>
+
+          <h1>
+            Dashboard
+          </h1>
+
+          <p class="admin-header-description">
+            Monitor and manage EmnetMusic.
+          </p>
+
+        </div>
+
+
+        <div class="admin-profile">
+
+          <div class="admin-profile-avatar">
+            E
+          </div>
+
+          <div>
+
+            <strong id="adminUserName">
+              Superadmin
+            </strong>
+
+            <small id="adminUserEmail">
+              EmnetMusic
+            </small>
+
+          </div>
+
+        </div>
+
+      </header>
+
+
+
+      <!-- ERROR -->
+
+      <div
+        class="admin-error"
+        id="adminError"
+      ></div>
+
+
+
+      <!-- LOADING -->
+
+      <div
+        class="admin-loading"
+        id="adminLoading"
+      >
+        Loading dashboard...
+      </div>
+
+
+
+      <!-- DASHBOARD CONTENT -->
+
+      <div
+        class="admin-dashboard-content"
+        id="adminDashboardContent"
+      >
+
+
+        <!-- STATS -->
+
+        <section class="admin-section">
+
+          <div class="admin-section-header">
+
+            <div>
+
+              <p class="admin-section-label">
+                OVERVIEW
+              </p>
+
+              <h2>
+                Platform statistics
+              </h2>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="admin-refresh-button"
+              id="refreshDashboardButton"
+            >
+              ↻ Refresh
+            </button>
+
+          </div>
+
+
+          <div class="admin-stats-grid">
+
+
+            <div class="admin-stat-card">
+
+              <span class="admin-stat-icon">
+                ○
+              </span>
+
+              <p>
+                Total users
+              </p>
+
+              <strong id="totalUsers">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="admin-stat-card">
+
+              <span class="admin-stat-icon">
+                ♫
+              </span>
+
+              <p>
+                Listeners
+              </p>
+
+              <strong id="totalListeners">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="admin-stat-card">
+
+              <span class="admin-stat-icon">
+                ★
+              </span>
+
+              <p>
+                Artists
+              </p>
+
+              <strong id="totalArtists">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="admin-stat-card">
+
+              <span class="admin-stat-icon">
+                ⚙
+              </span>
+
+              <p>
+                Admins
+              </p>
+
+              <strong id="totalAdmins">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="admin-stat-card">
+
+              <span class="admin-stat-icon">
+                ◆
+              </span>
+
+              <p>
+                Superadmins
+              </p>
+
+              <strong id="totalSuperadmins">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="admin-stat-card warning">
+
+              <span class="admin-stat-icon">
+                !
+              </span>
+
+              <p>
+                Suspended users
+              </p>
+
+              <strong id="suspendedUsers">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="admin-stat-card">
+
+              <span class="admin-stat-icon">
+                ♪
+              </span>
+
+              <p>
+                Songs
+              </p>
+
+              <strong id="totalSongs">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="admin-stat-card">
+
+              <span class="admin-stat-icon">
+                ▣
+              </span>
+
+              <p>
+                Releases
+              </p>
+
+              <strong id="totalReleases">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="admin-stat-card">
+
+              <span class="admin-stat-icon">
+                ▶
+              </span>
+
+              <p>
+                Videos
+              </p>
+
+              <strong id="totalVideos">
+                0
+              </strong>
+
+            </div>
+
+
+          </div>
+
+        </section>
+
+
+
+        <!-- MANAGEMENT -->
+
+        <section class="admin-section">
+
+          <div class="admin-section-header">
+
+            <div>
+
+              <p class="admin-section-label">
+                MANAGEMENT
+              </p>
+
+              <h2>
+                Control centre
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div class="admin-management-grid">
+
+
+            <a
+              href="admin-review-artists.html"
+              class="admin-management-card"
+            >
+
+              <span class="admin-management-icon">
+                ♫
+              </span>
+
+              <div>
+
+                <h3>
+                  Artists
+                </h3>
+
+                <p>
+                  Review and manage artist accounts.
+                </p>
+
+              </div>
+
+              <span class="admin-management-arrow">
+                →
+              </span>
+
+            </a>
+
+
+            <a
+              href="admin-review-releases.html"
+              class="admin-management-card"
+            >
+
+              <span class="admin-management-icon">
+                ▣
+              </span>
+
+              <div>
+
+                <h3>
+                  Releases
+                </h3>
+
+                <p>
+                  Review albums, EPs and singles.
+                </p>
+
+              </div>
+
+              <span class="admin-management-arrow">
+                →
+              </span>
+
+            </a>
+
+
+            <a
+             href="admin-review-videos.html"
+              class="admin-management-card"
+            >
+
+              <span class="admin-management-icon">
+                ▶
+              </span>
+
+              <div>
+
+                <h3>
+                  Videos
+                </h3>
+
+                <p>
+                  Review submitted music videos.
+                </p>
+
+              </div>
+
+              <span class="admin-management-arrow">
+                →
+              </span>
+
+            </a>
+
+
+            <a
+              href="admin-users.html"
+              class="admin-management-card"
+            >
+
+              <span class="admin-management-icon">
+                ○
+              </span>
+
+              <div>
+
+                <h3>
+                  Users
+                </h3>
+
+                <p>
+                  Manage listener and artist accounts.
+                </p>
+
+              </div>
+
+              <span class="admin-management-arrow">
+                →
+              </span>
+
+            </a>
+
+
+            <a
+              href="admin-admins.html"
+              class="admin-management-card"
+            >
+
+              <span class="admin-management-icon">
+                ★
+              </span>
+
+              <div>
+
+                <h3>
+                  Admins
+                </h3>
+
+                <p>
+                  Manage administrative access.
+                </p>
+
+              </div>
+
+              <span class="admin-management-arrow">
+                →
+              </span>
+
+            </a>
+
+
+            <a
+              href="admin-reports.html"
+              class="admin-management-card"
+            >
+
+              <span class="admin-management-icon">
+                !
+              </span>
+
+              <div>
+
+                <h3>
+                  Reports
+                </h3>
+
+                <p>
+                  Review content and user reports.
+                </p>
+
+              </div>
+
+              <span class="admin-management-arrow">
+                →
+              </span>
+
+            </a>
+
+
+          </div>
+
+        </section>
+
+
+      </div>
+
+    </main>
+
+
+  </div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+
+</body>
+</html>

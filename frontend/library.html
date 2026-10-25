@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Library | EmnetMusic</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/library.css" />
+  <link rel="stylesheet" href="css/player.css" />
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <aside class="sidebar">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          E
+        </div>
+
+        <div class="brand-text">
+
+          <span class="brand-title">
+            EmnetMusic
+          </span>
+
+          <span class="brand-slogan">
+            Excitement Starts Here
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+        <a
+          href="home.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </a>
+
+        <a
+          href="search.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">⌕</span>
+          <span>Search</span>
+        </a>
+
+        <a
+          href="videos.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">▶</span>
+          <span>Videos</span>
+        </a>
+
+        <a
+          href="library.html"
+          class="nav-item active"
+        >
+          <span class="nav-icon">▤</span>
+          <span>Library</span>
+        </a>
+
+        <a
+          href="playlists.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">＋</span>
+          <span>Playlists</span>
+        </a>
+
+      </nav>
+
+
+      <div class="sidebar-bottom">
+
+        <a
+          href="profile.html"
+          class="nav-item"
+        >
+          <span class="nav-icon">○</span>
+          <span>Profile</span>
+        </a>
+
+        <button
+          type="button"
+          class="nav-item logout-button"
+          id="logoutButton"
+        >
+          <span class="nav-icon">↗</span>
+          <span>Log out</span>
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <main class="main-content library-page">
+
+      <section class="library-header">
+
+        <p class="library-label">
+          YOUR MUSIC
+        </p>
+
+        <h1>
+          Library
+        </h1>
+
+        <p class="library-description">
+          Your liked songs, followed artists and playlists in one place.
+        </p>
+
+      </section>
+
+
+      <div
+        class="library-message"
+        id="libraryMessage"
+      >
+        Loading your library...
+      </div>
+
+
+      <!-- LIKED SONGS -->
+
+      <section
+        class="library-section"
+        id="likedSongsSection"
+      >
+
+        <div class="library-section-header">
+
+          <div>
+
+            <p class="library-section-label">
+              SAVED MUSIC
+            </p>
+
+            <h2>
+              Liked Songs
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="library-song-list"
+          id="likedSongsList"
+        ></div>
+
+      </section>
+
+
+      <!-- FOLLOWED ARTISTS -->
+
+      <section
+        class="library-section"
+        id="followedArtistsSection"
+      >
+
+        <div class="library-section-header">
+
+          <div>
+
+            <p class="library-section-label">
+              ARTISTS YOU FOLLOW
+            </p>
+
+            <h2>
+              Followed Artists
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="library-artist-grid"
+          id="followedArtistsGrid"
+        ></div>
+
+      </section>
+
+
+      <!-- PLAYLISTS -->
+
+      <section
+        class="library-section"
+        id="playlistsSection"
+      >
+
+        <div class="library-section-header">
+
+          <div>
+
+            <p class="library-section-label">
+              YOUR COLLECTIONS
+            </p>
+
+            <h2>
+              Playlists
+            </h2>
+
+          </div>
+
+
+          <a
+            href="playlists.html"
+            class="library-see-all"
+          >
+            See all
+          </a>
+
+        </div>
+
+
+        <div
+          class="library-playlist-grid"
+          id="playlistsGrid"
+        ></div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <nav class="mobile-nav">
+
+    <a
+      href="home.html"
+      class="mobile-nav-item"
+    >
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+
+    <a
+      href="videos.html"
+      class="mobile-nav-item"
+    >
+      <span>▶</span>
+      <small>Videos</small>
+    </a>
+
+    <a
+      href="search.html"
+      class="mobile-nav-item"
+    >
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+
+    <a
+      href="library.html"
+      class="mobile-nav-item active"
+    >
+      <span>▤</span>
+      <small>Library</small>
+    </a>
+
+    <a
+      href="profile.html"
+      class="mobile-nav-item"
+    >
+      <span>○</span>
+      <small>Profile</small>
+    </a>
+
+  </nav>
+
+
+  <div id="playerContainer"></div>
+
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/library.js"></script>
+
+</body>
+</html>
