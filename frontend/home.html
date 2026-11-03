@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,10 +8,10 @@
   <title>Home | EmnetMusic</title>
 
   <link
-  rel="icon"
-  type="image/png"
-  href="assets/images/emnet-logo.png"
->
+    rel="icon"
+    type="image/png"
+    href="frontend/images/emnet-logo.png"
+  >
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,8 +21,8 @@
     rel="stylesheet"
   >
 
-<link rel="stylesheet" href="css/home.css" />
-<link rel="stylesheet" href="css/player.css" />
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/player.css" />
 </head>
 
 <body>
@@ -31,15 +32,15 @@
     <!-- DESKTOP SIDEBAR -->
     <aside class="sidebar">
 
-      <div class="brand">
-        <div class="brand-mark">E</div>
-
-              <a href="home.html" class="brand" aria-label="EmnetMusic home">
-
+      <a
+        href="home.html"
+        class="brand"
+        aria-label="EmnetMusic home"
+      >
         <div class="brand-mark">
           <img
             src="assets/images/emnet-logo.png"
-            alt=""
+            alt="Emnet Music"
             class="brand-logo"
           >
         </div>
@@ -48,74 +49,77 @@
           <span class="brand-title">EmnetMusic</span>
           <span class="brand-slogan">Excitement Starts Here</span>
         </div>
-
       </a>
 
+      <nav class="sidebar-nav" aria-label="Main navigation">
 
-      <nav class="sidebar-nav">
-
-        <a href="home.html" class="nav-item active" >
+        <a href="home.html" class="nav-item active">
           <span class="nav-icon">⌂</span>
           <span>Home</span>
         </a>
 
-        <a href="search.html" class="nav-item" >
+        <a href="search.html" class="nav-item">
           <span class="nav-icon">⌕</span>
           <span>Search</span>
         </a>
 
-        <a href="videos.html" class="nav-item" >
+        <a href="videos.html" class="nav-item">
           <span class="nav-icon">▶</span>
           <span>Videos</span>
         </a>
 
-        <a href="library.html" class="nav-item" data-auth-only>
+        <a
+          href="library.html"
+          class="nav-item"
+          data-auth-only
+        >
           <span class="nav-icon">▤</span>
           <span>Library</span>
         </a>
 
-        <a href="playlists.html" class="nav-item" data-auth-only>
+        <a
+          href="playlists.html"
+          class="nav-item"
+          data-auth-only
+        >
           <span class="nav-icon">＋</span>
           <span>Playlists</span>
         </a>
 
       </nav>
 
+      <div class="sidebar-bottom">
 
-      
-<div class="sidebar-bottom">
+        <a
+          href="profile.html"
+          class="nav-item"
+          data-auth-only
+        >
+          <span class="nav-icon">○</span>
+          <span>Profile</span>
+        </a>
 
-  <a
-    href="profile.html"
-    class="nav-item"
-    data-auth-only
-  >
-    <span class="nav-icon">○</span>
-    <span>Profile</span>
-  </a>
+        <a
+          href="login.html"
+          class="nav-item"
+          id="guestLoginLink"
+          hidden
+        >
+          <span class="nav-icon">↗</span>
+          <span>Log in</span>
+        </a>
 
-  <a
-    href="login.html"
-    class="nav-item"
-    id="guestLoginLink"
-    hidden
-  >
-    <span class="nav-icon">↗</span>
-    <span>Log in</span>
-  </a>
+        <button
+          type="button"
+          class="nav-item logout-button"
+          id="logoutButton"
+          hidden
+        >
+          <span class="nav-icon">↗</span>
+          <span>Log out</span>
+        </button>
 
-  <button
-    type="button"
-    class="nav-item logout-button"
-    id="logoutButton"
-    hidden
-  >
-    <span class="nav-icon">↗</span>
-    <span>Log out</span>
-  </button>
-
-</div>
-
+      </div>
 
     </aside>
 
@@ -126,7 +130,7 @@
       <!-- TOP HEADER -->
       <header class="topbar">
 
-                <a
+        <a
           href="home.html"
           class="mobile-brand"
           aria-label="EmnetMusic home"
@@ -138,14 +142,13 @@
           >
         </a>
 
-        <div>
+        <div class="welcome-content">
           <p class="welcome-label">WELCOME BACK</p>
 
           <h1 id="welcomeName">
             Welcome to EmnetMusic
           </h1>
         </div>
-
 
         <div class="topbar-actions">
 
@@ -167,6 +170,7 @@
           </a>
 
           <a href="profile.html" class="profile-chip">
+
             <div class="profile-avatar" id="profileInitial">
               E
             </div>
@@ -175,6 +179,7 @@
               <span id="profileName">Account</span>
               <small id="profileRole">listener</small>
             </div>
+
           </a>
 
         </div>
@@ -224,12 +229,12 @@
           <div class="sound-ring ring-three"></div>
 
           <div class="hero-symbol">
-  <img
-    src="assets/images/emnet-logo.png"
-    alt=""
-    class="hero-brand-logo"
-  >
-</div>
+            <img
+              src="assets/images/emnet-logo.png"
+              alt=""
+              class="hero-brand-logo"
+            >
+          </div>
 
         </div>
 
@@ -361,7 +366,6 @@
 
       </section>
 
-
       <div id="homeMessage" class="home-message"></div>
 
     </main>
@@ -370,53 +374,61 @@
 
 
   <!-- MOBILE NAVIGATION -->
-  <nav class="mobile-nav">
+  <nav class="mobile-nav" aria-label="Mobile navigation">
 
-    <a href="home.html" class="mobile-nav-item active" >
+    <a href="home.html" class="mobile-nav-item active">
       <span>⌂</span>
       <small>Home</small>
     </a>
 
-    <a href="videos.html" class="mobile-nav-item" >
+    <a href="videos.html" class="mobile-nav-item">
       <span>▶</span>
       <small>Videos</small>
     </a>
 
-    <a href="search.html" class="mobile-nav-item" >
+    <a href="search.html" class="mobile-nav-item">
       <span>⌕</span>
       <small>Search</small>
     </a>
 
-    <a href="library.html" class="mobile-nav-item" data-auth-only>
+    <a
+      href="library.html"
+      class="mobile-nav-item"
+      data-auth-only
+    >
       <span>▤</span>
       <small>Library</small>
     </a>
 
-    <a href="profile.html" class="mobile-nav-item" data-auth-only>
+    <a
+      href="profile.html"
+      class="mobile-nav-item"
+      data-auth-only
+    >
       <span>○</span>
       <small>Profile</small>
     </a>
 
     <a
-  href="login.html"
-  class="mobile-nav-item"
-  id="mobileGuestLoginLink"
-  hidden
->
-  
-  <small>Log in</small>
-</a>
+      href="login.html"
+      class="mobile-nav-item"
+      id="mobileGuestLoginLink"
+      hidden
+    >
+      <span>↗</span>
+      <small>Log in</small>
+    </a>
+
   </nav>
 
 
-  
-<div id="playerContainer"></div>
+  <div id="playerContainer"></div>
 
-<script src="js/config.js"></script>
-<script src="js/secureMedia.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/player.js"></script>
-<script src="js/home.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/secureMedia.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/home.js"></script>
 
 </body>
 </html>

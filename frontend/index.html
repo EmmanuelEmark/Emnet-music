@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="theme-color" content="#080D0B">
+  <title>Welcome | Emnet Music</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: #080D0B;
+      color: #ffffff;
+      font-family: Arial, Helvetica, sans-serif;
+      overflow: hidden;
+    }
+
+    .splash {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      isolation: isolate;
+      padding: 24px;
+      transition: opacity .5s ease, transform .5s ease;
+    }
+
+    .glow {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: #20C878;
+      opacity: .13;
+      filter: blur(95px);
+      border-radius: 50%;
+      z-index: -1;
+    }
+
+    .logo {
+      width: 105px;
+      height: 105px;
+      object-fit: contain;
+      animation: logoReveal 1s ease both,
+                 float 3s ease-in-out 1s infinite;
+    }
+
+    .brand {
+      margin-top: 24px;
+      font-size: clamp(28px, 6vw, 38px);
+      font-weight: 800;
+      letter-spacing: -.8px;
+      animation: fadeUp .9s .3s both;
+    }
+
+    .brand span {
+      color: #20C878;
+    }
+
+    .tagline {
+      margin-top: 12px;
+      color: #A2B2A8;
+      font-size: 11px;
+      letter-spacing: 2.5px;
+      text-align: center;
+      animation: fadeUp .9s .6s both;
+    }
+
+    .loader {
+      margin-top: 45px;
+      width: 150px;
+      height: 3px;
+      background: #26372E;
+      border-radius: 10px;
+      overflow: hidden;
+      animation: fadeUp .9s .8s both;
+    }
+
+    .loader::after {
+      content: "";
+      display: block;
+      width: 40%;
+      height: 100%;
+      background: #20C878;
+      border-radius: inherit;
+      animation: loading 1.2s ease-in-out infinite;
+    }
+
+    .splash.exit {
+      opacity: 0;
+      transform: scale(1.04);
+    }
+
+    @keyframes logoReveal {
+      from {
+        opacity: 0;
+        transform: scale(.65) rotate(-12deg);
+        filter: blur(8px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) rotate(0);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-7px); }
+    }
+
+    @keyframes loading {
+      from { transform: translateX(-110%); }
+      to { transform: translateX(380%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="splash" id="splash">
+
+    <div class="glow"></div>
+
+    <img
+      src="frontend/images/emnet-logo.png"
+      alt="Emnet Music logo"
+      class="logo"
+    >
+
+    <h1 class="brand">
+      Emnet <span>Music</span>
+    </h1>
+
+    <p class="tagline">
+      EXCITEMENT STARTS HERE
+    </p>
+
+    <div class="loader" aria-label="Loading"></div>
+
+  </main>
+
+  <script>
+    const splash = document.getElementById("splash");
+
+    setTimeout(() => {
+      splash.classList.add("exit");
+
+      setTimeout(() => {
+        window.location.replace("/home.html");
+      }, 500);
+
+    }, 2500);
+  </script>
+
+</body>
+</html>
