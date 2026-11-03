@@ -1,8 +1,8 @@
 const Report = require("../models/Report");
 const Artist = require("../models/Artist");
 const Release = require("../models/Release");
-const Song = require("../models/Song");
-const Video = require("../models/Video");
+const Song = require("../models/song");
+const Video = require("../models/video");
 
 
 const createReport = async (req, res) => {

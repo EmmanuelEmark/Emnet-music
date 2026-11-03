@@ -5,7 +5,7 @@ const Release = require("../models/Release");
 const Artist = require("../models/Artist");
 const Video = require("../models/video");
 
-const Play = require("../models/Play");
+const Play = require("../models/play");
 
 const getHomeFeed = async (req, res) => {
   try {

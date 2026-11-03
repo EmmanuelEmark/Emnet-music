@@ -2,8 +2,8 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
-const Play = require("../models/Play");
-const Song = require("../models/Song");
+const Play = require("../models/play");
+const Song = require("../models/song");
 
 const REPEAT_PLAY_COOLDOWN_MINUTES = 5;
 const MINIMUM_PLAY_SECONDS = 30;

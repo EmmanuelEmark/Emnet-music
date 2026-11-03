@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 const View = require("../models/View");
-const Video = require("../models/Video");
+const Video = require("../models/video");
 
 const REPEAT_VIEW_COOLDOWN_MINUTES = 5;
 const MINIMUM_VIEW_SECONDS = 30;

@@ -1,5 +1,5 @@
 const ListeningHistory = require("../models/ListeningHistory");
-const Song = require("../models/Song");
+const Song = require("../models/song");
 
 
 const recordListeningHistory = async (req, res) => {

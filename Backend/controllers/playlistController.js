@@ -1,4 +1,4 @@
-const Playlist = require("../models/Playlist");
+const Playlist = require("../models/playlist");
 const Song = require("../models/song");
 
 

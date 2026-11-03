@@ -1,6 +1,6 @@
 const Like = require("../models/Like");
-const Follow = require("../models/Follow");
-const Song = require("../models/Song");
+const Follow = require("../models/follow");
+const Song = require("../models/song");
 const Artist = require("../models/Artist");
 const Notification = require("../models/Notification");
 
