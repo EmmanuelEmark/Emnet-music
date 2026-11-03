@@ -2,7 +2,7 @@ const Release = require("../models/Release");
 const Artist = require("../models/Artist");
 const Song = require("../models/song");
 const Notification = require("../models/Notification");
-const Follow = require("../models/Follow");
+const Follow = require("../models/follow");
 
 
 const mongoose = require("mongoose");
