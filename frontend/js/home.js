@@ -182,16 +182,18 @@ async function loadHomeContent() {
   try {
     const token = getToken();
 
-    const response = await fetch(
-      `${API_BASE_URL}/home`,
-      {
-        headers: token
-          ? {
-              Authorization: `Bearer ${token}`
-            }
-          : {}
-      }
-    );
+    
+const response = await fetch(
+  `${API_BASE_URL}/api/home`,
+  {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`
+        }
+      : {}
+  }
+);
+
 
     const data = await response.json();
 
