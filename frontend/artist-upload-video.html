@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0f0d">
+
+  <title>Upload Video | EmnetMusic</title>
+
+  <link rel="stylesheet" href="css/artist-upload-video.css">
+
+  <script src="js/config.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/artist-upload-video.js" defer></script>
+</head>
+
+<body>
+  <header class="site-header">
+    <a class="brand" href="artist-dashboard.html">
+      <span class="brand-mark">E</span>
+      <span>Emnet<span class="brand-accent">Music</span></span>
+    </a>
+
+    <nav aria-label="Artist navigation">
+      <a href="artist-dashboard.html">Dashboard</a>
+      <a href="artist-releases.html">My Releases</a>
+      <a href="artist-videos.html">My Videos</a>
+    </nav>
+  </header>
+
+  <main class="page-container">
+    <div class="page-heading">
+      <a href="artist-dashboard.html" class="back-link">
+        &larr; Back to dashboard
+      </a>
+
+      <p class="eyebrow">ARTIST STUDIO</p>
+      <h1>Upload a video</h1>
+      <p class="intro">
+        Share your visuals with the world. Every video is
+        reviewed before appearing on EmnetMusic.
+      </p>
+    </div>
+
+    <div class="upload-layout">
+      <section class="panel">
+        <form id="videoUploadForm">
+          <h2>Video details</h2>
+          <p class="section-description">
+            Add the information listeners will see.
+          </p>
+
+          <div class="field">
+            <label for="videoTitle">Video title *</label>
+            <input
+              id="videoTitle"
+              type="text"
+              maxlength="150"
+              placeholder="Enter your video title"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="videoType">Video type</label>
+            <select id="videoType">
+              <option value="music_video">Music Video</option>
+            </select>
+            <small>
+              Additional video categories will be enabled
+              when supported by the video model.
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="videoUrl">Video URL *</label>
+            <input
+              id="videoUrl"
+              type="url"
+              placeholder="https://example.com/video.mp4"
+              required
+            >
+            <small>
+              Enter a direct, publicly accessible video URL.
+              YouTube page links are not supported here.
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="thumbnailUrl">Thumbnail URL *</label>
+            <input
+              id="thumbnailUrl"
+              type="url"
+              placeholder="https://example.com/cover.jpg"
+              required
+            >
+            <small>
+              Use a landscape image, preferably 16:9.
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="videoDuration">
+              Video duration (seconds) *
+            </label>
+            <input
+              id="videoDuration"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Automatically detected if available"
+              required
+            >
+            <small id="durationHelp">
+              We'll try to detect the duration automatically.
+              You can also enter it manually.
+            </small>
+          </div>
+
+          <div class="optional-section">
+            <h2>Link existing music</h2>
+            <p class="section-description">
+              Optional. Use the IDs of an existing song or
+              release if you want to connect this video.
+            </p>
+
+            <div class="field">
+              <label for="linkedSong">Song ID (optional)</label>
+              <input
+                id="linkedSong"
+                type="text"
+                placeholder="Existing song ID"
+              >
+            </div>
+
+            <div class="field">
+              <label for="linkedRelease">Release ID (optional)</label>
+              <input
+                id="linkedRelease"
+                type="text"
+                placeholder="Existing release ID"
+              >
+            </div>
+          </div>
+
+          <div class="rights-box">
+            <label class="checkbox-label">
+              <input type="checkbox" id="rightsConfirmed">
+              <span>
+                I confirm that I own this video or have the
+                necessary permission to distribute it on
+                EmnetMusic.
+              </span>
+            </label>
+          </div>
+
+          <div
+            id="uploadMessage"
+            class="form-message"
+            role="status"
+            aria-live="polite"
+          ></div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              id="saveDraftButton"
+            >
+              Save Draft
+            </button>
+
+            <button
+              type="submit"
+              class="primary-button"
+              id="submitVideoButton"
+            >
+              Submit for Review
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="preview-column">
+        <section class="preview-panel">
+          <div class="preview-heading">
+            <h2>Video preview</h2>
+            <span class="draft-badge">Draft</span>
+          </div>
+
+          <div class="thumbnail-preview" id="thumbnailPreview">
+            <img
+              id="previewImage"
+              alt="Video thumbnail preview"
+              hidden
+            >
+
+            <div class="thumbnail-placeholder" id="thumbnailPlaceholder">
+              <span class="play-symbol">▶</span>
+              <p>Your video thumbnail will appear here</p>
+            </div>
+          </div>
+
+          <div class="preview-info">
+            <h3 id="previewTitle">Your video title</h3>
+            <p id="previewDuration">Duration: —</p>
+            <p class="preview-brand">EmnetMusic</p>
+          </div>
+        </section>
+
+        <section class="guidelines-panel">
+          <h3>Before submitting</h3>
+          <ul>
+            <li>Make sure the video URL is accessible.</li>
+            <li>Use a clear, high-quality thumbnail.</li>
+            <li>Only upload content you have rights to distribute.</li>
+            <li>Videos become public after admin approval.</li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

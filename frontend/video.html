@@ -81,23 +81,38 @@
       </nav>
 
 
-      <div class="sidebar-bottom">
+     
+<div class="sidebar-bottom">
 
-        <a href="profile.html" class="nav-item">
-          <span class="nav-icon">○</span>
-          <span>Profile</span>
-        </a>
+  <a href="profile.html" class="nav-item">
+    <span class="nav-icon">○</span>
+    <span>Profile</span>
+  </a>
 
-        <button
-          type="button"
-          class="nav-item logout-button"
-          id="logoutButton"
-        >
-          <span class="nav-icon">↗</span>
-          <span>Log out</span>
-        </button>
+  <!-- GUEST LOGIN -->
+  <a
+    href="login.html"
+    class="nav-item"
+    id="guestLoginLink"
+    hidden
+  >
+    <span class="nav-icon">↗</span>
+    <span>Log in</span>
+  </a>
 
-      </div>
+  <!-- LOGGED-IN USER LOGOUT -->
+  <button
+    type="button"
+    class="nav-item logout-button"
+    id="logoutButton"
+    hidden
+  >
+    <span class="nav-icon">↗</span>
+    <span>Log out</span>
+  </button>
+
+</div>
+
 
     </aside>
 
@@ -120,8 +135,7 @@
 
       <div
         class="video-content"
-        id="videoContent"
-      >
+        id="videoContent">
 
         <section class="video-player-wrapper">
 
@@ -175,6 +189,46 @@
             </div>
 
           </div>
+
+
+          <button
+          type="button"
+          class="video-like-button"
+           id="likeVideoButton"
+           aria-pressed="false">
+  
+           <span id="videoLikeIcon" aria-hidden="true">♡</span>
+            <span id="videoLikeCount">0 likes</span>
+           </button>
+
+
+
+
+          <div class="video-actions">
+          <button
+          type="button"
+          class="video-share-button"
+           id="shareVideoButton" >
+
+         <span aria-hidden="true">↗</span>
+         Share video
+         </button>
+
+         <p
+         class="video-share-message"
+         id="videoShareMessage"
+          role="status"
+         aria-live="polite"
+          ></p>
+  
+          </div>
+
+          <p
+            id="videoLikeMessage"
+            class="video-like-message"
+            role="status"
+            aria-live="polite"
+          ></p>
 
         </section>
 
@@ -246,7 +300,41 @@
           </div>
 
         </section>
+          <!-- RELATED VIDEOS -->
+        <section
+          class="related-videos-section"
+          id="relatedVideosSection"
+          aria-labelledby="relatedVideosHeading"
+        >
+          <div class="related-videos-heading">
+            <div>
+              <p class="video-section-label">
+                KEEP WATCHING
+              </p>
 
+              <h2 id="relatedVideosHeading">
+                Related Videos
+              </h2>
+            </div>
+
+            <a href="videos.html" class="related-view-all">
+              View all videos
+            </a>
+          </div>
+
+          <p
+            class="related-videos-message"
+            id="relatedVideosMessage"
+            role="status"
+          >
+            Loading related videos...
+          </p>
+
+          <div
+            class="related-videos-grid"
+            id="relatedVideosGrid"
+          ></div>
+        </section>
       </div>
 
     </main>
@@ -288,6 +376,7 @@
 
 
   <script src="js/config.js"></script>
+  <script src="js/secureMedia.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/player.js"></script>
   <script src="js/video.js"></script>

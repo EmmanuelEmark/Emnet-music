@@ -1,16 +1,24 @@
+
 <!-- =========================================
-     EMNETMUSIC PLAYER COMPONENT
+     EMNET MUSIC — PLAYER COMPONENT
+
+     Mini Player
+     Expanded Now Playing
+     Playback Queue
+     Song Options
+     Add to Playlist
+     Shared Audio Engine
+
+     Controlled by js/player.js
 ========================================= -->
 
 <div class="player-system" id="playerSystem">
 
-
   <!-- =====================================
-       MINI PLAYER
+       1. MINI PLAYER
   ====================================== -->
 
   <div class="music-player" id="musicPlayer">
-
 
     <!-- SONG INFORMATION -->
 
@@ -22,12 +30,12 @@
     >
 
       <img
-        src=""
+        src="https://placehold.co/600x600/111612/35e67a?text=EmnetMusic"
         alt="Song cover"
         class="player-cover"
         id="playerCover"
+        loading="lazy"
       >
-
 
       <div class="player-song-text">
 
@@ -49,7 +57,6 @@
 
     </button>
 
-
     <!-- MINI PLAYER CONTROLS -->
 
     <div class="player-center">
@@ -57,29 +64,27 @@
       <div class="player-controls">
 
         <button
+          type="button"
           class="player-control"
           id="previousButton"
-          type="button"
           aria-label="Previous song"
         >
           ◀
         </button>
 
-
         <button
+          type="button"
           class="player-control player-main-button"
           id="playPauseButton"
-          type="button"
           aria-label="Play or pause"
         >
           ▶
         </button>
 
-
         <button
+          type="button"
           class="player-control"
           id="nextButton"
-          type="button"
           aria-label="Next song"
         >
           ▶▶
@@ -87,6 +92,7 @@
 
       </div>
 
+      <!-- MINI PLAYER PROGRESS -->
 
       <div class="player-progress-row">
 
@@ -97,17 +103,16 @@
           0:00
         </span>
 
-
         <input
           type="range"
           min="0"
           max="100"
           value="0"
+          step="0.1"
           class="player-progress"
           id="playerProgress"
           aria-label="Song progress"
         >
-
 
         <span
           class="player-time"
@@ -120,24 +125,30 @@
 
     </div>
 
-
-    <!-- RIGHT CONTROLS -->
+    <!-- MINI PLAYER RIGHT CONTROLS -->
 
     <div class="player-right">
+
+      <!-- LIKE SONG -->
 
       <button
         type="button"
         class="mini-action-button"
         id="miniLikeButton"
         aria-label="Like song"
+        aria-pressed="false"
       >
         ♡
       </button>
 
+      <!-- VOLUME -->
 
       <div class="mini-volume">
 
-        <span class="volume-icon">
+        <span
+          class="volume-icon"
+          aria-hidden="true"
+        >
           🔊
         </span>
 
@@ -154,6 +165,7 @@
 
       </div>
 
+      <!-- EXPAND PLAYER -->
 
       <button
         type="button"
@@ -168,20 +180,18 @@
 
   </div>
 
-
-
   <!-- =====================================
-       EXPANDED NOW PLAYING
+       2. EXPANDED NOW PLAYING
   ====================================== -->
 
   <section
     class="now-playing-overlay"
     id="nowPlayingOverlay"
     aria-hidden="true"
+    aria-label="Now Playing"
   >
 
     <div class="now-playing-shell">
-
 
       <!-- HEADER -->
 
@@ -199,7 +209,6 @@
 
         </div>
 
-
         <button
           type="button"
           class="now-playing-close"
@@ -211,12 +220,9 @@
 
       </header>
 
-
-
       <!-- MAIN NOW PLAYING AREA -->
 
       <div class="now-playing-content">
-
 
         <!-- ARTWORK SIDE -->
 
@@ -224,10 +230,13 @@
 
           <div class="now-playing-artwork-wrap">
 
-            <div class="artwork-glow"></div>
+            <div
+              class="artwork-glow"
+              aria-hidden="true"
+            ></div>
 
             <img
-              src=""
+              src="https://placehold.co/600x600/111612/35e67a?text=EmnetMusic"
               alt="Current song artwork"
               class="now-playing-artwork"
               id="expandedPlayerCover"
@@ -237,12 +246,11 @@
 
         </div>
 
-
-
         <!-- SONG DETAILS SIDE -->
 
         <div class="now-playing-details">
 
+          <!-- SONG INFORMATION -->
 
           <div class="now-playing-song-meta">
 
@@ -250,62 +258,68 @@
               Playing from EmnetMusic
             </p>
 
-
             <h1 id="expandedSongTitle">
               Select a song
             </h1>
 
-
-            <button
-              type="button"
+            <span
               class="expanded-artist-name"
               id="expandedArtistName"
             >
               EmnetMusic
-            </button>
+            </span>
 
           </div>
-
-
 
           <!-- ACTION BUTTONS -->
 
           <div class="now-playing-actions">
 
+            <!-- LIKE -->
+
             <button
               type="button"
               class="now-playing-action"
               id="expandedLikeButton"
+              aria-label="Like song"
+              aria-pressed="false"
             >
-              <span>♡</span>
+              <span aria-hidden="true">♡</span>
               <small>Like</small>
             </button>
 
+            <!-- QUEUE -->
 
             <button
               type="button"
               class="now-playing-action"
               id="queueToggleButton"
+              aria-label="Open playback queue"
+              aria-controls="queuePanel"
+              aria-expanded="false"
             >
-              <span>☷</span>
+              <span aria-hidden="true">☷</span>
               <small>Queue</small>
             </button>
 
+            <!-- MORE OPTIONS -->
 
             <button
               type="button"
               class="now-playing-action"
               id="moreSongButton"
+              aria-label="More song options"
+              aria-haspopup="dialog"
             >
-              <span>•••</span>
+              <span aria-hidden="true">•••</span>
               <small>More</small>
             </button>
 
           </div>
 
-
-
-          <!-- EXPANDED PROGRESS -->
+          <!-- =====================================
+               EXPANDED PROGRESS
+          ====================================== -->
 
           <div class="expanded-progress">
 
@@ -314,11 +328,11 @@
               min="0"
               max="100"
               value="0"
+              step="0.1"
               class="expanded-progress-slider"
               id="expandedProgress"
               aria-label="Song progress"
             >
-
 
             <div class="expanded-time-row">
 
@@ -334,21 +348,26 @@
 
           </div>
 
-
-
-          <!-- EXPANDED CONTROLS -->
+          <!-- =====================================
+               EXPANDED PLAYER CONTROLS
+          ====================================== -->
 
           <div class="expanded-controls">
+
+            <!-- SHUFFLE — DEFERRED -->
 
             <button
               type="button"
               class="expanded-secondary-control"
               id="shuffleButton"
-              aria-label="Shuffle"
+              aria-label="Shuffle (coming later)"
+              title="Shuffle — coming later"
+              disabled
             >
               ⤨
             </button>
 
+            <!-- PREVIOUS SONG -->
 
             <button
               type="button"
@@ -359,6 +378,7 @@
               ◀
             </button>
 
+            <!-- PLAY / PAUSE -->
 
             <button
               type="button"
@@ -369,6 +389,7 @@
               ▶
             </button>
 
+            <!-- NEXT SONG -->
 
             <button
               type="button"
@@ -379,25 +400,30 @@
               ▶
             </button>
 
+            <!-- REPEAT — DEFERRED -->
 
             <button
               type="button"
               class="expanded-secondary-control"
               id="repeatButton"
-              aria-label="Repeat"
+              aria-label="Repeat (coming later)"
+              title="Repeat — coming later"
+              disabled
             >
               ↻
             </button>
 
           </div>
 
-
-
-          <!-- EXPANDED VOLUME -->
+          <!-- =====================================
+               EXPANDED VOLUME
+          ====================================== -->
 
           <div class="expanded-volume">
 
-            <span>🔊</span>
+            <span aria-hidden="true">
+              🔊
+            </span>
 
             <input
               type="range"
@@ -415,13 +441,14 @@
 
       </div>
 
-
-
-      <!-- QUEUE PANEL -->
+      <!-- =====================================
+           3. PLAYBACK QUEUE
+      ====================================== -->
 
       <aside
         class="queue-panel"
         id="queuePanel"
+        aria-label="Playback queue"
       >
 
         <div class="queue-header">
@@ -436,17 +463,16 @@
 
           </div>
 
-
           <button
             type="button"
             id="closeQueueButton"
             class="queue-close-button"
+            aria-label="Close playback queue"
           >
             ×
           </button>
 
         </div>
-
 
         <div
           class="queue-list"
@@ -461,229 +487,277 @@
 
       </aside>
 
-
     </div>
 
   </section>
 
   <!-- =====================================
-     MORE SONG OPTIONS
-====================================== -->
-
-<div
-  class="song-more-modal"
-  id="songMoreModal"
-  aria-hidden="true"
->
-
-  <div class="song-more-card">
-
-    <div class="song-more-header">
-
-      <div>
-        <p class="song-more-label">
-          SONG OPTIONS
-        </p>
-
-        <h2 id="songMoreTitle">
-          Song
-        </h2>
-      </div>
-
-
-      <button
-        type="button"
-        class="song-more-close"
-        id="closeSongMoreModal"
-        aria-label="Close"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="song-more-options">
-
-
-      <button
-        type="button"
-        class="song-more-option"
-        id="moreAddToPlaylist"
-      >
-
-        <span class="song-more-icon">
-          ＋
-        </span>
-
-        <div>
-          <strong>
-            Add to playlist
-          </strong>
-
-          <small>
-            Save this song to one of your playlists
-          </small>
-        </div>
-
-      </button>
-
-
-      <button
-        type="button"
-        class="song-more-option"
-        id="moreGoToArtist"
-      >
-
-        <span class="song-more-icon">
-          ♫
-        </span>
-
-        <div>
-          <strong>
-            Go to artist
-          </strong>
-
-          <small>
-            View the artist profile
-          </small>
-        </div>
-
-      </button>
-
-
-      <button
-        type="button"
-        class="song-more-option"
-        id="moreGoToRelease"
-      >
-
-        <span class="song-more-icon">
-          ▣
-        </span>
-
-        <div>
-          <strong>
-            Go to release
-          </strong>
-
-          <small>
-            View the album, EP or single
-          </small>
-        </div>
-
-      </button>
-
-
-      <button
-        type="button"
-        class="song-more-option"
-        id="moreShareSong"
-      >
-
-        <span class="song-more-icon">
-          ↗
-        </span>
-
-        <div>
-          <strong>
-            Share
-          </strong>
-
-          <small>
-            Share this song
-          </small>
-        </div>
-
-      </button>
-
-
-    </div>
-
-
-    <div
-      class="song-more-message"
-      id="songMoreMessage"
-    ></div>
-
-  </div>
-
-</div>
-
-
-<!-- =====================================
-     ADD TO PLAYLIST MODAL
-====================================== -->
-
-<div
-  class="player-playlist-modal"
-  id="playerPlaylistModal"
-  aria-hidden="true"
->
-
-  <div class="player-playlist-card">
-
-    <div class="player-playlist-header">
-
-      <div>
-
-        <p class="player-playlist-label">
-          SAVE SONG
-        </p>
-
-        <h2>
-          Add to playlist
-        </h2>
-
-      </div>
-
-
-      <button
-        type="button"
-        class="player-playlist-close"
-        id="closePlayerPlaylistModal"
-        aria-label="Close"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-    <p
-      class="player-playlist-song"
-      id="playerPlaylistSongName"
-    >
-      Select a song
-    </p>
-
-
-    <div
-      class="player-playlist-message"
-      id="playerPlaylistMessage"
-    ></div>
-
-
-    <div
-      class="player-playlist-list"
-      id="playerPlaylistList"
-    >
-
-      <div class="player-playlist-loading">
-        Loading playlists...
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-  <!-- =====================================
-       ONE AUDIO ENGINE FOR BOTH VIEWS
+       4. MORE SONG OPTIONS MODAL
   ====================================== -->
 
-  <audio id="audioPlayer"></audio>
+  <div
+    class="song-more-modal"
+    id="songMoreModal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Song options"
+    aria-hidden="true"
+  >
 
+    <div class="song-more-card">
+
+      <!-- HEADER -->
+
+      <div class="song-more-header">
+
+        <div>
+
+          <p class="song-more-label">
+            SONG OPTIONS
+          </p>
+
+          <h2 id="songMoreTitle">
+            Song
+          </h2>
+
+        </div>
+
+        <button
+          type="button"
+          class="song-more-close"
+          id="closeSongMoreModal"
+          aria-label="Close song options"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <!-- SONG OPTIONS -->
+
+      <div class="song-more-options">
+
+        <!-- ADD TO PLAYLIST -->
+
+        <button
+          type="button"
+          class="song-more-option"
+          id="moreAddToPlaylist"
+        >
+
+          <span
+            class="song-more-icon"
+            aria-hidden="true"
+          >
+            ＋
+          </span>
+
+          <div>
+
+            <strong>
+              Add to playlist
+            </strong>
+
+            <small>
+              Save this song to one of your playlists
+            </small>
+
+          </div>
+
+        </button>
+
+        <!-- GO TO ARTIST -->
+
+        <button
+          type="button"
+          class="song-more-option"
+          id="moreGoToArtist"
+        >
+
+          <span
+            class="song-more-icon"
+            aria-hidden="true"
+          >
+            ♫
+          </span>
+
+          <div>
+
+            <strong>
+              Go to artist
+            </strong>
+
+            <small>
+              View the artist profile
+            </small>
+
+          </div>
+
+        </button>
+
+        <!-- GO TO RELEASE -->
+
+        <button
+          type="button"
+          class="song-more-option"
+          id="moreGoToRelease"
+        >
+
+          <span
+            class="song-more-icon"
+            aria-hidden="true"
+          >
+            ▣
+          </span>
+
+          <div>
+
+            <strong>
+              Go to release
+            </strong>
+
+            <small>
+              View the album, EP or single
+            </small>
+
+          </div>
+
+        </button>
+
+        <!-- SHARE SONG -->
+
+        <button
+          type="button"
+          class="song-more-option"
+          id="moreShareSong"
+        >
+
+          <span
+            class="song-more-icon"
+            aria-hidden="true"
+          >
+            ↗
+          </span>
+
+          <div>
+
+            <strong>
+              Share
+            </strong>
+
+            <small>
+              Share this song
+            </small>
+
+          </div>
+
+        </button>
+
+      </div>
+
+      <!-- MESSAGE -->
+
+      <div
+        class="song-more-message"
+        id="songMoreMessage"
+        role="status"
+        aria-live="polite"
+      ></div>
+
+    </div>
+
+  </div>
+
+  <!-- =====================================
+       5. ADD TO PLAYLIST MODAL
+  ====================================== -->
+
+  <div
+    class="player-playlist-modal"
+    id="playerPlaylistModal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Add song to playlist"
+    aria-hidden="true"
+  >
+
+    <div class="player-playlist-card">
+
+      <!-- HEADER -->
+
+      <div class="player-playlist-header">
+
+        <div>
+
+          <p class="player-playlist-label">
+            SAVE SONG
+          </p>
+
+          <h2>
+            Add to playlist
+          </h2>
+
+        </div>
+
+        <button
+          type="button"
+          class="player-playlist-close"
+          id="closePlayerPlaylistModal"
+          aria-label="Close add to playlist"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <!-- SELECTED SONG -->
+
+      <p
+        class="player-playlist-song"
+        id="playerPlaylistSongName"
+      >
+        Select a song
+      </p>
+
+      <!-- PLAYLIST MESSAGE -->
+
+      <div
+        class="player-playlist-message"
+        id="playerPlaylistMessage"
+        role="status"
+        aria-live="polite"
+      ></div>
+
+      <!-- PLAYLIST LIST -->
+
+      <div
+        class="player-playlist-list"
+        id="playerPlaylistList"
+      >
+
+        <div class="player-playlist-loading">
+          Loading playlists...
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =====================================
+       6. SHARED AUDIO ENGINE
+
+       One audio element controls both
+       mini and expanded player views.
+
+       Audio source is assigned dynamically
+       by player.js using secure R2 URLs.
+  ====================================== -->
+
+  <audio
+    id="audioPlayer"
+    preload="metadata"
+  ></audio>
 
 </div>

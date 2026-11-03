@@ -1,1066 +1,1056 @@
-if (!protectPage()) {
 
-  throw new Error(
-    "Authentication required."
-  );
+/* =====================================================
+   EMNET MUSIC — PLAYLIST DETAILS
+   Authenticated management + secure R2 artwork
+===================================================== */
 
-}
+// Keep playlist management restricted to logged-in users.
+const playlistAuthorized =
+  typeof protectPage === "function"
+    ? protectPage()
+    : Boolean(
+        typeof getToken === "function" &&
+        getToken()
+      );
 
-
-/* ========================================
-   PLAYLIST ID
-======================================== */
-
-const params =
-  new URLSearchParams(
-    window.location.search
-  );
-
+/* =====================================================
+   1. PLAYLIST ID
+===================================================== */
 
 const playlistId =
-  params.get("id");
+  new URLSearchParams(
+    window.location.search
+  ).get("id");
 
-
-/* ========================================
-   ELEMENTS
-======================================== */
+/* =====================================================
+   2. ELEMENTS
+===================================================== */
 
 const playlistLoading =
-  document.getElementById(
-    "playlistLoading"
-  );
-
+  document.getElementById("playlistLoading");
 
 const playlistError =
-  document.getElementById(
-    "playlistError"
-  );
-
+  document.getElementById("playlistError");
 
 const playlistContent =
-  document.getElementById(
-    "playlistContent"
-  );
-
+  document.getElementById("playlistContent");
 
 const playlistTitle =
-  document.getElementById(
-    "playlistTitle"
-  );
-
+  document.getElementById("playlistTitle");
 
 const playlistDescription =
-  document.getElementById(
-    "playlistDescription"
-  );
-
+  document.getElementById("playlistDescription");
 
 const playlistVisibility =
-  document.getElementById(
-    "playlistVisibility"
-  );
-
+  document.getElementById("playlistVisibility");
 
 const playlistSongCount =
-  document.getElementById(
-    "playlistSongCount"
-  );
-
+  document.getElementById("playlistSongCount");
 
 const playPlaylistButton =
-  document.getElementById(
-    "playPlaylistButton"
-  );
-
+  document.getElementById("playPlaylistButton");
 
 const editPlaylistButton =
-  document.getElementById(
-    "editPlaylistButton"
-  );
-
+  document.getElementById("editPlaylistButton");
 
 const deletePlaylistButton =
-  document.getElementById(
-    "deletePlaylistButton"
-  );
-
+  document.getElementById("deletePlaylistButton");
 
 const playlistTrackList =
-  document.getElementById(
-    "playlistTrackList"
-  );
-
+  document.getElementById("playlistTrackList");
 
 const editPlaylistModal =
-  document.getElementById(
-    "editPlaylistModal"
-  );
-
+  document.getElementById("editPlaylistModal");
 
 const closeEditPlaylistModal =
-  document.getElementById(
-    "closeEditPlaylistModal"
-  );
-
+  document.getElementById("closeEditPlaylistModal");
 
 const editPlaylistForm =
-  document.getElementById(
-    "editPlaylistForm"
-  );
-
+  document.getElementById("editPlaylistForm");
 
 const editPlaylistName =
-  document.getElementById(
-    "editPlaylistName"
-  );
-
+  document.getElementById("editPlaylistName");
 
 const editPlaylistDescription =
-  document.getElementById(
-    "editPlaylistDescription"
-  );
-
+  document.getElementById("editPlaylistDescription");
 
 const editPlaylistPublic =
-  document.getElementById(
-    "editPlaylistPublic"
-  );
-
+  document.getElementById("editPlaylistPublic");
 
 const editPlaylistMessage =
-  document.getElementById(
-    "editPlaylistMessage"
-  );
-
+  document.getElementById("editPlaylistMessage");
 
 const savePlaylistButton =
-  document.getElementById(
-    "savePlaylistButton"
-  );
-
+  document.getElementById("savePlaylistButton");
 
 const logoutButton =
-  document.getElementById(
-    "logoutButton"
-  );
+  document.getElementById("logoutButton");
 
-
-/* ========================================
-   STATE
-======================================== */
+/* =====================================================
+   3. STATE
+===================================================== */
 
 let currentPlaylist = null;
-
 let playlistSongs = [];
+let playlistBusy = false;
 
+const PLAYLIST_PLACEHOLDER =
+  "https://placehold.co/600x600/111612/35e67a?text=EmnetMusic";
 
-/* ========================================
-   START
-======================================== */
+const playlistArtworkCache = new Map();
 
-startPlaylistPage();
+/* =====================================================
+   4. START PAGE
+===================================================== */
 
+if (playlistAuthorized) {
+  startPlaylistPage();
+}
 
 async function startPlaylistPage() {
-
-  await loadPlayerComponent();
-
-
   if (!playlistId) {
-
-    showPlaylistError(
-      "Playlist ID is missing."
-    );
-
+    showPlaylistError("Playlist ID is missing.");
     return;
-
   }
 
+  if (typeof loadPlayerComponent === "function") {
+    try {
+      await loadPlayerComponent();
+    } catch (error) {
+      console.warn(
+        "Player component unavailable:",
+        error
+      );
+    }
+  }
 
   await loadPlaylist();
-
 }
 
+/* =====================================================
+   5. AUTHENTICATION
+===================================================== */
 
-/* ========================================
-   LOGOUT
-======================================== */
-
-if (logoutButton) {
-
-  logoutButton.addEventListener(
-    "click",
-    logout
-  );
-
+function getPlaylistToken() {
+  return typeof getToken === "function"
+    ? getToken()
+    : null;
 }
 
+function redirectPlaylistLogin() {
+  window.location.href =
+    `login.html?redirect=${encodeURIComponent(
+      window.location.pathname +
+      window.location.search
+    )}`;
+}
 
-/* ========================================
-   LOAD PLAYLIST
-======================================== */
-
-async function loadPlaylist() {
-
-  const token =
-    getToken();
-
-
-  if (!token) {
-
-    window.location.href =
-      "login.html";
-
-    return;
-
+function handlePlaylistAuthentication(response) {
+  if (response.status === 401) {
+    redirectPlaylistLogin();
+    return false;
   }
 
+  return true;
+}
 
+/* =====================================================
+   6. AUTHENTICATED API REQUESTS
+===================================================== */
+
+async function playlistRequest(
+  endpoint,
+  options = {}
+) {
+  const token = getPlaylistToken();
+
+  if (!token) {
+    redirectPlaylistLogin();
+
+    throw new Error(
+      "Authentication required."
+    );
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}${endpoint}`,
+    {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  if (!handlePlaylistAuthentication(response)) {
+    throw new Error(
+      "Your session has expired."
+    );
+  }
+
+  // DELETE requests may return 204 No Content.
+  const responseText = await response.text();
+
+  let data = {};
+
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      if (!response.ok) {
+        throw new Error(
+          "Unexpected server response."
+        );
+      }
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      `Request failed (${response.status}).`
+    );
+  }
+
+  return data;
+}
+
+/* =====================================================
+   7. LOAD PLAYLIST
+===================================================== */
+
+async function loadPlaylist() {
   try {
-
-    const response =
-      await fetch(
-        `${API_BASE_URL}/playlists/${playlistId}`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    console.log(
-      "Playlist response:",
-      data
+    const data = await playlistRequest(
+      `/playlists/${encodeURIComponent(
+        playlistId
+      )}`
     );
 
-
-    if (!response.ok) {
-
+    if (
+      !data.playlist ||
+      typeof data.playlist !== "object"
+    ) {
       throw new Error(
-        data.message ||
-        "Unable to load playlist."
+        "Playlist information was not returned."
       );
-
     }
 
-
-    currentPlaylist =
-      data.playlist;
-
+    currentPlaylist = data.playlist;
 
     playlistSongs =
-      Array.isArray(
-        currentPlaylist.songs
-      )
-        ? currentPlaylist.songs
+      Array.isArray(currentPlaylist.songs)
+        ? currentPlaylist.songs.filter(
+            (song) =>
+              song &&
+              typeof song === "object" &&
+              song._id
+          )
         : [];
-
 
     renderPlaylist();
 
+    if (playlistLoading) {
+      playlistLoading.style.display = "none";
+    }
 
-    playlistLoading.style.display =
-      "none";
+    if (playlistError) {
+      playlistError.style.display = "none";
+    }
 
-
-    playlistError.style.display =
-      "none";
-
-
-    playlistContent.classList.add(
-      "active"
-    );
-
+    if (playlistContent) {
+      playlistContent.classList.add("active");
+    }
 
   } catch (error) {
-
     console.error(
-      "Playlist page error:",
+      "Playlist load error:",
       error
     );
 
-
-    showPlaylistError(
-      error.message
-    );
-
+    showPlaylistError(error.message);
   }
-
 }
 
-
-/* ========================================
-   RENDER PLAYLIST
-======================================== */
+/* =====================================================
+   8. RENDER PLAYLIST INFORMATION
+===================================================== */
 
 function renderPlaylist() {
-
   if (!currentPlaylist) {
     return;
   }
 
-
   document.title =
     `${currentPlaylist.name || "Playlist"} | EmnetMusic`;
 
-
-  playlistTitle.textContent =
-    currentPlaylist.name ||
-    "Playlist";
-
-
-  playlistDescription.textContent =
-    currentPlaylist.description ||
-    "No description";
-
-
-  playlistVisibility.textContent =
-    currentPlaylist.isPublic
-      ? "Public"
-      : "Private";
-
-
-  playlistSongCount.textContent =
-    `${playlistSongs.length} ${
-      playlistSongs.length === 1
-        ? "song"
-        : "songs"
-    }`;
-
-
-  renderPlaylistSongs();
-
-}
-
-
-/* ========================================
-   SONGS
-======================================== */
-
-function renderPlaylistSongs() {
-
-  playlistTrackList.innerHTML =
-    "";
-
-
-  if (!playlistSongs.length) {
-
-    playlistTrackList.innerHTML = `
-      <div class="playlist-empty">
-        This playlist has no songs yet.
-      </div>
-    `;
-
-    return;
-
+  if (playlistTitle) {
+    playlistTitle.textContent =
+      currentPlaylist.name || "Playlist";
   }
 
+  if (playlistDescription) {
+    playlistDescription.textContent =
+      currentPlaylist.description ||
+      "No description";
+  }
 
-  playlistSongs.forEach(
-    (song, index) => {
+  if (playlistVisibility) {
+    playlistVisibility.textContent =
+      currentPlaylist.isPublic
+        ? "Public"
+        : "Private";
+  }
 
-      const release =
-        song.releaseId || {};
+  if (playlistSongCount) {
+    playlistSongCount.textContent =
+      `${playlistSongs.length} ${
+        playlistSongs.length === 1
+          ? "song"
+          : "songs"
+      }`;
+  }
 
+  if (playPlaylistButton) {
+    playPlaylistButton.disabled =
+      !playlistSongs.length;
+  }
 
-      const artistName =
-        getPlaylistArtistNames(
-          song.primaryArtists
-        );
+  renderPlaylistSongs();
+}
 
+/* =====================================================
+   9. IMAGE HELPERS
+===================================================== */
 
-      const row =
-        document.createElement(
-          "div"
-        );
+function safePlaylistImage(url) {
+  if (
+    typeof url !== "string" ||
+    !url.trim()
+  ) {
+    return PLAYLIST_PLACEHOLDER;
+  }
 
+  try {
+    const parsed = new URL(
+      url,
+      window.location.href
+    );
 
-      row.className =
-        "playlist-track-row";
+    return (
+      parsed.protocol === "https:" ||
+      parsed.protocol === "http:"
+    )
+      ? parsed.href
+      : PLAYLIST_PLACEHOLDER;
 
+  } catch {
+    return PLAYLIST_PLACEHOLDER;
+  }
+}
 
-      row.innerHTML = `
-        <div class="playlist-track-number">
-          ${index + 1}
-        </div>
+function attachPlaylistImageFallback(image) {
+  image.addEventListener("error", () => {
+    if (image.src !== PLAYLIST_PLACEHOLDER) {
+      image.src = PLAYLIST_PLACEHOLDER;
+    }
+  });
+}
 
-        <img
-          class="playlist-track-cover"
-          src="${safePlaylistImage(
-            release.coverImage
-          )}"
-          alt="${escapePlaylistHTML(
-            song.title ||
-            "Song"
-          )}"
-        >
+function playlistReleaseId(song) {
+  const release = song.releaseId;
 
-        <div class="playlist-track-main">
+  if (typeof release === "string") {
+    return release;
+  }
 
-          <h3>
-            ${escapePlaylistHTML(
-              song.title ||
-              "Untitled"
-            )}
-          </h3>
+  return release &&
+    typeof release === "object"
+      ? release._id
+      : null;
+}
 
-          <p>
-            ${escapePlaylistHTML(
-              artistName ||
-              "Artist"
-            )}
-          </p>
+function playlistReleaseObject(song) {
+  return song.releaseId &&
+    typeof song.releaseId === "object"
+      ? song.releaseId
+      : {};
+}
 
-        </div>
+/* =====================================================
+   10. SECURE CLOUDFLARE R2 ARTWORK
+===================================================== */
 
-        <div class="playlist-track-release">
-          ${escapePlaylistHTML(
-            release.title ||
-            ""
-          )}
-        </div>
+async function getSecurePlaylistArtwork(releaseId) {
+  const cached =
+    playlistArtworkCache.get(releaseId);
 
-        <button
-          type="button"
-          class="playlist-track-play"
-          data-song-id="${song._id}"
-        >
-          ▶
-        </button>
+  if (
+    cached &&
+    Date.now() < cached.expiresAt
+  ) {
+    return cached.url;
+  }
 
-        <button
-          type="button"
-          class="playlist-track-remove"
-          data-song-id="${song._id}"
-        >
-          ×
-        </button>
-      `;
-
-
-      playlistTrackList.appendChild(
-        row
-      );
-
+  const response = await fetch(
+    `${API_BASE_URL}/media/releases/${encodeURIComponent(
+      releaseId
+    )}/artwork`,
+    {
+      method: "GET",
+      cache: "no-store"
     }
   );
 
-
-  /* PLAY BUTTONS */
-
-  playlistTrackList
-    .querySelectorAll(
-      ".playlist-track-play"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const song =
-              playlistSongs.find(
-                (item) =>
-                  item._id ===
-                  button.dataset.songId
-              );
-
-
-            if (!song) {
-              return;
-            }
-
-
-            playSong(
-              song,
-              playlistSongs
-            );
-
-          }
-        );
-
-      }
+  if (!response.ok) {
+    throw new Error(
+      `Artwork unavailable (${response.status})`
     );
+  }
 
+  const data = await response.json();
 
-  /* REMOVE BUTTONS */
+  const url =
+    data.mediaUrl ||
+    data.playbackUrl;
 
-  playlistTrackList
-    .querySelectorAll(
-      ".playlist-track-remove"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            removeSongFromPlaylist(
-              button.dataset.songId
-            );
-
-          }
-        );
-
-      }
+  if (!url) {
+    throw new Error(
+      "Artwork URL missing."
     );
+  }
 
+  const seconds = Number(data.expiresIn);
+
+  if (
+    Number.isFinite(seconds) &&
+    seconds > 30
+  ) {
+    playlistArtworkCache.set(releaseId, {
+      url,
+      expiresAt:
+        Date.now() +
+        (seconds - 30) * 1000
+    });
+  }
+
+  return url;
 }
 
-
-/* ========================================
-   PLAY WHOLE PLAYLIST
-======================================== */
-
-playPlaylistButton.addEventListener(
-  "click",
-  () => {
-
-    if (!playlistSongs.length) {
-      return;
-    }
-
-
-    playSong(
-      playlistSongs[0],
-      playlistSongs
-    );
-
-  }
-);
-
-
-/* ========================================
-   REMOVE SONG
-======================================== */
-
-async function removeSongFromPlaylist(
-  songId
+async function applySecurePlaylistArtwork(
+  image,
+  song
 ) {
+  const releaseId =
+    playlistReleaseId(song);
 
-  const token =
-    getToken();
-
-
-  if (!token) {
+  if (!releaseId || !image) {
     return;
   }
 
+  try {
+    const url =
+      await getSecurePlaylistArtwork(
+        releaseId
+      );
 
-  const confirmed =
-    window.confirm(
-      "Remove this song from the playlist?"
+    if (image.isConnected) {
+      image.src =
+        safePlaylistImage(url);
+    }
+
+  } catch (error) {
+    console.warn(
+      "Playlist artwork fallback:",
+      releaseId,
+      error.message
+    );
+  }
+}
+
+/* =====================================================
+   11. ARTIST NAMES
+===================================================== */
+
+function getPlaylistArtistNames(artists) {
+  if (!Array.isArray(artists)) {
+    return "";
+  }
+
+  return artists
+    .filter(
+      (artist) =>
+        artist &&
+        typeof artist === "object"
+    )
+    .map(
+      (artist) =>
+        artist.stageName ||
+        artist.fullName ||
+        ""
+    )
+    .filter(Boolean)
+    .join(", ");
+}
+
+/* =====================================================
+   12. RENDER PLAYLIST SONGS
+===================================================== */
+
+function renderPlaylistSongs() {
+  if (!playlistTrackList) {
+    return;
+  }
+
+  playlistTrackList.replaceChildren();
+
+  if (!playlistSongs.length) {
+    const empty =
+      document.createElement("div");
+
+    empty.className = "playlist-empty";
+
+    empty.textContent =
+      "This playlist has no songs yet.";
+
+    playlistTrackList.appendChild(empty);
+
+    return;
+  }
+
+  const fragment =
+    document.createDocumentFragment();
+
+  playlistSongs.forEach((song, index) => {
+    const release =
+      playlistReleaseObject(song);
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "playlist-track-row";
+
+    /* TRACK NUMBER */
+
+    const number =
+      document.createElement("div");
+
+    number.className =
+      "playlist-track-number";
+
+    number.textContent = index + 1;
+
+    /* COVER ARTWORK */
+
+    const image =
+      document.createElement("img");
+
+    image.className =
+      "playlist-track-cover";
+
+    image.alt =
+      song.title || "Song";
+
+    image.loading = "lazy";
+
+    image.src =
+      safePlaylistImage(
+        release.coverImage
+      );
+
+    attachPlaylistImageFallback(image);
+
+    /* SONG INFORMATION */
+
+    const main =
+      document.createElement("div");
+
+    main.className =
+      "playlist-track-main";
+
+    const title =
+      document.createElement("h3");
+
+    title.textContent =
+      song.title || "Untitled";
+
+    const artist =
+      document.createElement("p");
+
+    artist.textContent =
+      getPlaylistArtistNames(
+        song.primaryArtists
+      ) || "Artist";
+
+    main.append(title, artist);
+
+    /* RELEASE NAME */
+
+    const releaseName =
+      document.createElement("div");
+
+    releaseName.className =
+      "playlist-track-release";
+
+    releaseName.textContent =
+      release.title || "";
+
+    /* PLAY BUTTON */
+
+    const playButton =
+      document.createElement("button");
+
+    playButton.type = "button";
+
+    playButton.className =
+      "playlist-track-play";
+
+    playButton.dataset.songId =
+      song._id;
+
+    playButton.setAttribute(
+      "aria-label",
+      `Play ${song.title || "song"}`
     );
 
+    playButton.textContent = "▶";
+
+    playButton.addEventListener(
+      "click",
+      () => playPlaylistSong(song._id)
+    );
+
+    /* REMOVE BUTTON */
+
+    const removeButton =
+      document.createElement("button");
+
+    removeButton.type = "button";
+
+    removeButton.className =
+      "playlist-track-remove";
+
+    removeButton.dataset.songId =
+      song._id;
+
+    removeButton.setAttribute(
+      "aria-label",
+      `Remove ${song.title || "song"}`
+    );
+
+    removeButton.textContent = "×";
+
+    removeButton.addEventListener(
+      "click",
+      () => removeSongFromPlaylist(
+        song._id
+      )
+    );
+
+    row.append(
+      number,
+      image,
+      main,
+      releaseName,
+      playButton,
+      removeButton
+    );
+
+    fragment.appendChild(row);
+
+    applySecurePlaylistArtwork(
+      image,
+      song
+    );
+  });
+
+  playlistTrackList.appendChild(fragment);
+}
+
+/* =====================================================
+   13. PLAY SONG / PLAY WHOLE PLAYLIST
+===================================================== */
+
+function playPlaylistSong(songId) {
+  if (typeof playSong !== "function") {
+    alert(
+      "Music player is unavailable."
+    );
+
+    return;
+  }
+
+  const song =
+    playlistSongs.find(
+      (item) =>
+        String(item._id) ===
+        String(songId)
+    );
+
+  if (song) {
+    // player.js handles signed R2 audio URLs.
+    playSong(song, playlistSongs);
+  }
+}
+
+if (playPlaylistButton) {
+  playPlaylistButton.addEventListener(
+    "click",
+    () => {
+      if (playlistSongs.length) {
+        playPlaylistSong(
+          playlistSongs[0]._id
+        );
+      }
+    }
+  );
+}
+
+/* =====================================================
+   14. REMOVE SONG FROM PLAYLIST
+===================================================== */
+
+async function removeSongFromPlaylist(songId) {
+  if (
+    playlistBusy ||
+    !currentPlaylist
+  ) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Remove this song from the playlist?"
+  );
 
   if (!confirmed) {
     return;
   }
 
+  playlistBusy = true;
 
   try {
-
-    const response =
-      await fetch(
-        `${API_BASE_URL}/playlists/${playlistId}/songs/${songId}`,
-        {
-          method:
-            "DELETE",
-
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.message ||
-        "Unable to remove song."
-      );
-
-    }
-
+    await playlistRequest(
+      `/playlists/${encodeURIComponent(
+        playlistId
+      )}/songs/${encodeURIComponent(
+        songId
+      )}`,
+      {
+        method: "DELETE"
+      }
+    );
 
     playlistSongs =
       playlistSongs.filter(
         (song) =>
-          song._id !== songId
+          String(song._id) !==
+          String(songId)
       );
-
 
     currentPlaylist.songs =
       playlistSongs;
 
-
     renderPlaylist();
 
-
   } catch (error) {
-
     console.error(
-      "Remove playlist song error:",
+      "Remove song error:",
       error
     );
-
 
     alert(
       error.message ||
       "Unable to remove song."
     );
 
+  } finally {
+    playlistBusy = false;
   }
-
 }
 
-
-/* ========================================
-   EDIT MODAL
-======================================== */
-
-editPlaylistButton.addEventListener(
-  "click",
-  () => {
-
-    editPlaylistName.value =
-      currentPlaylist.name || "";
-
-
-    editPlaylistDescription.value =
-      currentPlaylist.description || "";
-
-
-    editPlaylistPublic.checked =
-      Boolean(
-        currentPlaylist.isPublic
-      );
-
-
-    editPlaylistMessage.textContent =
-      "";
-
-
-    editPlaylistModal.classList.add(
-      "active"
-    );
-
-  }
-);
-
-
-closeEditPlaylistModal.addEventListener(
-  "click",
-  closeEditModal
-);
-
-
-editPlaylistModal.addEventListener(
-  "click",
-  (event) => {
-
-    if (
-      event.target ===
-      editPlaylistModal
-    ) {
-
-      closeEditModal();
-
-    }
-
-  }
-);
-
+/* =====================================================
+   15. EDIT PLAYLIST MODAL
+===================================================== */
 
 function closeEditModal() {
+  if (editPlaylistModal) {
+    editPlaylistModal.classList.remove(
+      "active"
+    );
+  }
 
-  editPlaylistModal.classList.remove(
-    "active"
-  );
-
-
-  editPlaylistMessage.textContent =
-    "";
-
+  if (editPlaylistMessage) {
+    editPlaylistMessage.textContent = "";
+  }
 }
 
+if (editPlaylistButton) {
+  editPlaylistButton.addEventListener(
+    "click",
+    () => {
+      if (
+        !currentPlaylist ||
+        !editPlaylistModal
+      ) {
+        return;
+      }
 
-/* ========================================
-   UPDATE PLAYLIST
-======================================== */
+      if (editPlaylistName) {
+        editPlaylistName.value =
+          currentPlaylist.name || "";
+      }
 
-editPlaylistForm.addEventListener(
-  "submit",
-  updatePlaylist
-);
+      if (editPlaylistDescription) {
+        editPlaylistDescription.value =
+          currentPlaylist.description || "";
+      }
 
+      if (editPlaylistPublic) {
+        editPlaylistPublic.checked =
+          Boolean(
+            currentPlaylist.isPublic
+          );
+      }
 
-async function updatePlaylist(
-  event
-) {
+      if (editPlaylistMessage) {
+        editPlaylistMessage.textContent = "";
+      }
 
+      editPlaylistModal.classList.add(
+        "active"
+      );
+    }
+  );
+}
+
+if (closeEditPlaylistModal) {
+  closeEditPlaylistModal.addEventListener(
+    "click",
+    closeEditModal
+  );
+}
+
+if (editPlaylistModal) {
+  editPlaylistModal.addEventListener(
+    "click",
+    (event) => {
+      if (
+        event.target === editPlaylistModal
+      ) {
+        closeEditModal();
+      }
+    }
+  );
+}
+
+/* =====================================================
+   16. UPDATE PLAYLIST
+===================================================== */
+
+if (editPlaylistForm) {
+  editPlaylistForm.addEventListener(
+    "submit",
+    updatePlaylist
+  );
+}
+
+async function updatePlaylist(event) {
   event.preventDefault();
 
-
-  const token =
-    getToken();
-
-
-  if (!token) {
+  if (
+    playlistBusy ||
+    !currentPlaylist
+  ) {
     return;
   }
-
 
   const name =
-    editPlaylistName.value.trim();
-
+    editPlaylistName?.value.trim() ||
+    "";
 
   if (!name) {
-
-    editPlaylistMessage.textContent =
-      "Playlist name is required.";
+    if (editPlaylistMessage) {
+      editPlaylistMessage.textContent =
+        "Playlist name is required.";
+    }
 
     return;
-
   }
 
+  playlistBusy = true;
 
-  try {
-
-    savePlaylistButton.disabled =
-      true;
-
+  if (savePlaylistButton) {
+    savePlaylistButton.disabled = true;
 
     savePlaylistButton.textContent =
       "Saving...";
+  }
 
+  try {
+    const changes = {
+      name,
 
-    const response =
-      await fetch(
-        `${API_BASE_URL}/playlists/${playlistId}`,
-        {
-          method:
-            "PATCH",
+      description:
+        editPlaylistDescription?.value.trim() ||
+        "",
 
-          headers: {
-            "Content-Type":
-              "application/json",
+      isPublic:
+        Boolean(
+          editPlaylistPublic?.checked
+        )
+    };
 
-            Authorization:
-              `Bearer ${token}`,
-          },
+    const data = await playlistRequest(
+      `/playlists/${encodeURIComponent(
+        playlistId
+      )}`,
+      {
+        method: "PATCH",
 
-          body:
-            JSON.stringify({
-              name,
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
 
-              description:
-                editPlaylistDescription
-                  .value
-                  .trim(),
+        body: JSON.stringify(changes)
+      }
+    );
 
-              isPublic:
-                editPlaylistPublic
-                  .checked,
-            }),
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.message ||
-        "Unable to update playlist."
-      );
-
-    }
-
-
-    currentPlaylist.name =
-      data.playlist.name;
-
-
-    currentPlaylist.description =
-      data.playlist.description;
-
-
-    currentPlaylist.isPublic =
-      data.playlist.isPublic;
-
+    currentPlaylist = {
+      ...currentPlaylist,
+      ...changes,
+      ...(data.playlist || {})
+    };
 
     closeEditModal();
-
-
     renderPlaylist();
 
-
   } catch (error) {
-
     console.error(
       "Update playlist error:",
       error
     );
 
-
-    editPlaylistMessage.textContent =
-      error.message ||
-      "Unable to update playlist.";
+    if (editPlaylistMessage) {
+      editPlaylistMessage.textContent =
+        error.message ||
+        "Unable to update playlist.";
+    }
 
   } finally {
+    playlistBusy = false;
 
-    savePlaylistButton.disabled =
-      false;
+    if (savePlaylistButton) {
+      savePlaylistButton.disabled = false;
 
-
-    savePlaylistButton.textContent =
-      "Save changes";
-
+      savePlaylistButton.textContent =
+        "Save changes";
+    }
   }
-
 }
 
+/* =====================================================
+   17. DELETE PLAYLIST
+===================================================== */
 
-/* ========================================
-   DELETE PLAYLIST
-======================================== */
-
-deletePlaylistButton.addEventListener(
-  "click",
-  deletePlaylist
-);
-
+if (deletePlaylistButton) {
+  deletePlaylistButton.addEventListener(
+    "click",
+    deletePlaylist
+  );
+}
 
 async function deletePlaylist() {
-
-  const token =
-    getToken();
-
-
-  if (!token) {
+  if (
+    playlistBusy ||
+    !currentPlaylist
+  ) {
     return;
   }
 
-
-  const confirmed =
-    window.confirm(
-      `Delete "${currentPlaylist.name}"?`
-    );
-
+  const confirmed = window.confirm(
+    `Delete "${currentPlaylist.name}"?`
+  );
 
   if (!confirmed) {
     return;
   }
 
+  playlistBusy = true;
+
+  if (deletePlaylistButton) {
+    deletePlaylistButton.disabled = true;
+  }
 
   try {
-
-    const response =
-      await fetch(
-        `${API_BASE_URL}/playlists/${playlistId}`,
-        {
-          method:
-            "DELETE",
-
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.message ||
-        "Unable to delete playlist."
-      );
-
-    }
-
+    await playlistRequest(
+      `/playlists/${encodeURIComponent(
+        playlistId
+      )}`,
+      {
+        method: "DELETE"
+      }
+    );
 
     window.location.href =
       "playlists.html";
 
-
   } catch (error) {
-
     console.error(
       "Delete playlist error:",
       error
     );
-
 
     alert(
       error.message ||
       "Unable to delete playlist."
     );
 
-  }
+  } finally {
+    playlistBusy = false;
 
+    if (deletePlaylistButton) {
+      deletePlaylistButton.disabled = false;
+    }
+  }
 }
 
+/* =====================================================
+   18. LOGOUT
+===================================================== */
 
-/* ========================================
-   ARTIST NAMES
-======================================== */
-
-function getPlaylistArtistNames(
-  artists
+if (
+  logoutButton &&
+  typeof logout === "function"
 ) {
-
-  if (!Array.isArray(artists)) {
-
-    return "";
-
-  }
-
-
-  return artists
-    .map(
-      (artist) => {
-
-        if (
-          typeof artist ===
-          "string"
-        ) {
-
-          return "";
-
-        }
-
-
-        return (
-          artist.stageName ||
-          artist.fullName ||
-          ""
-        );
-
-      }
-    )
-    .filter(Boolean)
-    .join(", ");
-
-}
-
-
-/* ========================================
-   IMAGE
-======================================== */
-
-function safePlaylistImage(
-  imageUrl
-) {
-
-  if (
-    imageUrl &&
-    typeof imageUrl ===
-      "string"
-  ) {
-
-    return imageUrl;
-
-  }
-
-
-  return (
-    "https://placehold.co/" +
-    "600x600/111612/" +
-    "35e67a?text=EmnetMusic"
+  logoutButton.addEventListener(
+    "click",
+    logout
   );
-
 }
 
+/* =====================================================
+   19. ERROR HANDLING
+===================================================== */
 
-/* ========================================
-   ERROR
-======================================== */
-
-function showPlaylistError(
-  message
-) {
-
-  playlistLoading.style.display =
-    "none";
-
-
-  playlistContent.classList.remove(
-    "active"
-  );
-
-
-  playlistError.style.display =
-    "block";
-
-
-  playlistError.textContent =
-    message ||
-    "Unable to load playlist.";
-
-}
-
-
-/* ========================================
-   ESCAPE HTML
-======================================== */
-
-function escapePlaylistHTML(
-  value
-) {
-
-  if (
-    value === null ||
-    value === undefined
-  ) {
-
-    return "";
-
+function showPlaylistError(message) {
+  if (playlistLoading) {
+    playlistLoading.style.display = "none";
   }
 
-
-  return String(value)
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
+  if (playlistContent) {
+    playlistContent.classList.remove(
+      "active"
     );
+  }
 
+  if (playlistError) {
+    playlistError.style.display = "block";
+
+    playlistError.textContent =
+      message ||
+      "Unable to load playlist.";
+  }
 }

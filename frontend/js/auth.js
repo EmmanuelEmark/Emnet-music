@@ -27,7 +27,7 @@ function logout() {
   window.location.href = "login.html";
 }
 
-async function getCurrentUser() {
+async function getCurrentUser({ redirectOnFailure = true } = {}) {
   const token = getToken();
 
   if (!token) {
@@ -44,10 +44,23 @@ async function getCurrentUser() {
       }
     );
 
-    if (!response.ok) {
-      logout();
-      return null;
+    
+if (!response.ok) {
+
+  // Clear invalid or expired authentication.
+  if (response.status === 401 || response.status === 403) {
+    localStorage.removeItem("emnetToken");
+    localStorage.removeItem("emnetUser");
+
+    // Protected pages still redirect to login.
+    if (redirectOnFailure) {
+      window.location.href = "login.html";
     }
+  }
+
+  return null;
+}
+
 
     const data = await response.json();
 

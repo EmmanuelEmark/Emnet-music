@@ -1,3 +1,29 @@
+
+/* =========================================================
+   EMNET MUSIC — MUSIC PLAYER
+
+   Supports:
+   - Public and registered-user playback
+   - Private Cloudflare R2 audio
+   - Secure artwork
+   - Mini and expanded players
+   - Queue and track navigation
+   - Likes and playlists
+   - Artist and release navigation
+   - Song sharing
+   - Qualified play counting
+   - Signed URL recovery
+
+   Requires:
+   config.js
+   secureMedia.js
+   auth.js
+========================================================= */
+
+/* =========================================================
+   1. PLAYER ELEMENTS
+========================================================= */
+
 let musicPlayer;
 let audioPlayer;
 let playerCover;
@@ -27,7 +53,6 @@ let expandedNextButton;
 let expandedProgress;
 let expandedCurrentTime;
 let expandedDurationTime;
-
 let expandedVolumeSlider;
 
 let queueToggleButton;
@@ -41,1257 +66,951 @@ let shuffleButton;
 let repeatButton;
 let moreSongButton;
 
-
-
 let songMoreModal;
-
 let closeSongMoreModal;
-
 let songMoreTitle;
-
 let songMoreMessage;
-
 let moreAddToPlaylist;
-
 let moreGoToArtist;
-
 let moreGoToRelease;
-
 let moreShareSong;
 
 let playerPlaylistModal;
-
 let closePlayerPlaylistModal;
-
 let playerPlaylistList;
-
 let playerPlaylistMessage;
-
 let playerPlaylistSongName;
+
+/* =========================================================
+   2. STATE
+========================================================= */
 
 let currentSong = null;
 let currentQueue = [];
 let currentSongIndex = -1;
 
 let playerLoaded = false;
+let playerLoadingPromise = null;
+
 let likedSongIds = new Set();
+let likeRequestPending = false;
 
+let activeSongPlaySession = null;
 
-/* ========================================
-   LOAD PLAYER COMPONENT
-======================================== */
+let emnetSongSelectionId = 0;
+let playerPlaylistRequestId = 0;
+let playerPlaylistSongId = null;
+let playerPlaylistBusy = false;
+
+const PLAYER_FALLBACK_COVER =
+  "https://placehold.co/600x600/111612/35e67a?text=EmnetMusic";
+
+/* =========================================================
+   3. COMMON HELPERS
+========================================================= */
+
+function playerElement(id) {
+  return document.getElementById(id);
+}
+
+function playerOn(element, eventName, callback) {
+  if (element) {
+    element.addEventListener(eventName, callback);
+  }
+}
+
+function playerSetText(element, value) {
+  if (element) {
+    element.textContent = value;
+  }
+}
+
+function playerSetValue(element, value) {
+  if (element) {
+    element.value = value;
+  }
+}
+
+function playerToken() {
+  return typeof getToken === "function"
+    ? getToken()
+    : null;
+}
+
+function playerLoggedIn() {
+  return Boolean(playerToken());
+}
+
+function playerLoginRedirect() {
+  if (typeof redirectToLogin === "function") {
+    redirectToLogin();
+  } else {
+    window.location.href = "login.html";
+  }
+}
+
+function playerHandleUnauthorized(response) {
+  if (response.status !== 401) {
+    return false;
+  }
+
+  if (typeof clearAuthentication === "function") {
+    clearAuthentication();
+  }
+
+  playerLoginRedirect();
+  return true;
+}
+
+async function playerReadResponse(response) {
+  const text = await response.text();
+
+  if (!text) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    if (!response.ok) {
+      throw new Error(
+        `Request failed (${response.status}).`
+      );
+    }
+
+    return {};
+  }
+}
+
+function playerSafeImage(url) {
+  if (typeof url !== "string" || !url.trim()) {
+    return PLAYER_FALLBACK_COVER;
+  }
+
+  try {
+    const parsed = new URL(url, window.location.href);
+
+    if (
+      parsed.protocol === "http:" ||
+      parsed.protocol === "https:"
+    ) {
+      return parsed.href;
+    }
+  } catch {
+    // Invalid image URL.
+  }
+
+  return PLAYER_FALLBACK_COVER;
+}
+
+function playerRelease(song) {
+  return song?.releaseId &&
+    typeof song.releaseId === "object"
+    ? song.releaseId
+    : {};
+}
+
+function playerReleaseId(song) {
+  const release = song?.releaseId;
+
+  return typeof release === "string"
+    ? release
+    : release?._id || null;
+}
+
+function playerSetImage(image, url) {
+  if (!image) return;
+
+  image.onerror = () => {
+    image.onerror = null;
+    image.src = PLAYER_FALLBACK_COVER;
+  };
+
+  image.src = playerSafeImage(url);
+}
+
+/* =========================================================
+   4. LOAD PLAYER COMPONENT
+========================================================= */
 
 async function loadPlayerComponent() {
-
   if (playerLoaded) {
     return;
   }
 
-  const container =
-    document.getElementById(
-      "playerContainer"
-    );
-
-  if (!container) {
-
-    console.error(
-      "playerContainer was not found on this page."
-    );
-
-    return;
+  if (playerLoadingPromise) {
+    return playerLoadingPromise;
   }
 
+  playerLoadingPromise = (async () => {
+    const container = playerElement("playerContainer");
 
-  try {
+    if (!container) {
+      console.warn(
+        "playerContainer was not found on this page."
+      );
+      return;
+    }
 
     const response = await fetch(
       "components/player.html"
     );
 
-
     if (!response.ok) {
-
       throw new Error(
         "Unable to load player component."
       );
-
     }
 
+    const html = await response.text();
 
-    const html =
-      await response.text();
+    container.innerHTML = html;
 
+    if (!initializePlayer()) {
+      throw new Error(
+        "Player component is incomplete."
+      );
+    }
 
-    container.innerHTML =
-      html;
+    playerLoaded = true;
 
+    // Likes are optional for public listening.
+    loadLikedSongs().catch(console.error);
+  })();
 
-    initializePlayer();
-
-
-    playerLoaded =
-      true;
-
-    await loadLikedSongs();
-
-
+  try {
+    await playerLoadingPromise;
   } catch (error) {
-
     console.error(
       "Player component error:",
       error
     );
-
+  } finally {
+    playerLoadingPromise = null;
   }
-
 }
 
-
-/* ========================================
-   INITIALIZE PLAYER
-======================================== */
+/* =========================================================
+   5. INITIALIZE PLAYER
+========================================================= */
 
 function initializePlayer() {
+  musicPlayer = playerElement("musicPlayer");
+  audioPlayer = playerElement("audioPlayer");
 
-  musicPlayer =
-    document.getElementById(
-      "musicPlayer"
-    );
+  playerCover = playerElement("playerCover");
+  playerSongTitle = playerElement("playerSongTitle");
+  playerArtist = playerElement("playerArtist");
 
+  playPauseButton = playerElement("playPauseButton");
+  previousButton = playerElement("previousButton");
+  nextButton = playerElement("nextButton");
 
-    playerPlaylistModal =
-  document.getElementById(
-    "playerPlaylistModal"
+  playerProgress = playerElement("playerProgress");
+  currentTime = playerElement("currentTime");
+  durationTime = playerElement("durationTime");
+  volumeSlider = playerElement("volumeSlider");
+
+  playerExpandButton = playerElement("playerExpandButton");
+  playerExpandIconButton = playerElement(
+    "playerExpandIconButton"
   );
 
-
-closePlayerPlaylistModal =
-  document.getElementById(
-    "closePlayerPlaylistModal"
+  nowPlayingOverlay = playerElement("nowPlayingOverlay");
+  closeNowPlayingButton = playerElement(
+    "closeNowPlayingButton"
   );
 
-
-playerPlaylistList =
-  document.getElementById(
-    "playerPlaylistList"
+  expandedPlayerCover = playerElement(
+    "expandedPlayerCover"
   );
 
-
-playerPlaylistMessage =
-  document.getElementById(
-    "playerPlaylistMessage"
+  expandedSongTitle = playerElement(
+    "expandedSongTitle"
   );
 
-
-playerPlaylistSongName =
-  document.getElementById(
-    "playerPlaylistSongName"
+  expandedArtistName = playerElement(
+    "expandedArtistName"
   );
 
-
-
-
-  audioPlayer =
-    document.getElementById(
-      "audioPlayer"
-    );
-
-
-  playerCover =
-    document.getElementById(
-      "playerCover"
-    );
-
-
-  playerSongTitle =
-    document.getElementById(
-      "playerSongTitle"
-    );
-
-
-  playerArtist =
-    document.getElementById(
-      "playerArtist"
-    );
-
-
-  playPauseButton =
-    document.getElementById(
-      "playPauseButton"
-    );
-
-
-  previousButton =
-    document.getElementById(
-      "previousButton"
-    );
-
-
-  nextButton =
-    document.getElementById(
-      "nextButton"
-    );
-
-
-  playerProgress =
-    document.getElementById(
-      "playerProgress"
-    );
-
-
-  currentTime =
-    document.getElementById(
-      "currentTime"
-    );
-
-
-  durationTime =
-    document.getElementById(
-      "durationTime"
-    );
-
-
-  volumeSlider =
-    document.getElementById(
-      "volumeSlider"
-    );
-
-
-  playerExpandButton =
-    document.getElementById(
-      "playerExpandButton"
-    );
-
-
-  playerExpandIconButton =
-    document.getElementById(
-      "playerExpandIconButton"
-    );
-
-
-  nowPlayingOverlay =
-    document.getElementById(
-      "nowPlayingOverlay"
-    );
-
-
-  closeNowPlayingButton =
-    document.getElementById(
-      "closeNowPlayingButton"
-    );
-
-
-  expandedPlayerCover =
-    document.getElementById(
-      "expandedPlayerCover"
-    );
-
-
-  expandedSongTitle =
-    document.getElementById(
-      "expandedSongTitle"
-    );
-
-
-  expandedArtistName =
-    document.getElementById(
-      "expandedArtistName"
-    );
-
-
-  expandedPreviousButton =
-    document.getElementById(
-      "expandedPreviousButton"
-    );
-
-
-  expandedPlayPauseButton =
-    document.getElementById(
-      "expandedPlayPauseButton"
-    );
-
-
-  expandedNextButton =
-    document.getElementById(
-      "expandedNextButton"
-    );
-
-
-  expandedProgress =
-    document.getElementById(
-      "expandedProgress"
-    );
-
-
-  expandedCurrentTime =
-    document.getElementById(
-      "expandedCurrentTime"
-    );
-
-
-  expandedDurationTime =
-    document.getElementById(
-      "expandedDurationTime"
-    );
-
-
-  expandedVolumeSlider =
-    document.getElementById(
-      "expandedVolumeSlider"
-    );
-
-
-  queueToggleButton =
-    document.getElementById(
-      "queueToggleButton"
-    );
-
-
-  queuePanel =
-    document.getElementById(
-      "queuePanel"
-    );
-
-
-  queueList =
-    document.getElementById(
-      "queueList"
-    );
-
-
-  closeQueueButton =
-    document.getElementById(
-      "closeQueueButton"
-    );
-
-
-  miniLikeButton =
-    document.getElementById(
-      "miniLikeButton"
-    );
-
-
-  expandedLikeButton =
-    document.getElementById(
-      "expandedLikeButton"
-    );
-
-
-  shuffleButton =
-    document.getElementById(
-      "shuffleButton"
-    );
-
-
-  repeatButton =
-    document.getElementById(
-      "repeatButton"
-    );
-
-
-  moreSongButton =
-    document.getElementById(
-      "moreSongButton"
-    );
-
-  songMoreModal =
-  document.getElementById(
-    "songMoreModal"
+  expandedPreviousButton = playerElement(
+    "expandedPreviousButton"
   );
 
+  expandedPlayPauseButton = playerElement(
+    "expandedPlayPauseButton"
+  );
 
-closeSongMoreModal =
-  document.getElementById(
+  expandedNextButton = playerElement(
+    "expandedNextButton"
+  );
+
+  expandedProgress = playerElement("expandedProgress");
+
+  expandedCurrentTime = playerElement(
+    "expandedCurrentTime"
+  );
+
+  expandedDurationTime = playerElement(
+    "expandedDurationTime"
+  );
+
+  expandedVolumeSlider = playerElement(
+    "expandedVolumeSlider"
+  );
+
+  queueToggleButton = playerElement("queueToggleButton");
+  queuePanel = playerElement("queuePanel");
+  queueList = playerElement("queueList");
+  closeQueueButton = playerElement("closeQueueButton");
+
+  miniLikeButton = playerElement("miniLikeButton");
+  expandedLikeButton = playerElement(
+    "expandedLikeButton"
+  );
+
+  shuffleButton = playerElement("shuffleButton");
+  repeatButton = playerElement("repeatButton");
+  moreSongButton = playerElement("moreSongButton");
+
+  songMoreModal = playerElement("songMoreModal");
+  closeSongMoreModal = playerElement(
     "closeSongMoreModal"
   );
 
+  songMoreTitle = playerElement("songMoreTitle");
+  songMoreMessage = playerElement("songMoreMessage");
 
-songMoreTitle =
-  document.getElementById(
-    "songMoreTitle"
-  );
-
-
-songMoreMessage =
-  document.getElementById(
-    "songMoreMessage"
-  );
-
-
-moreAddToPlaylist =
-  document.getElementById(
+  moreAddToPlaylist = playerElement(
     "moreAddToPlaylist"
   );
 
+  moreGoToArtist = playerElement("moreGoToArtist");
+  moreGoToRelease = playerElement("moreGoToRelease");
+  moreShareSong = playerElement("moreShareSong");
 
-moreGoToArtist =
-  document.getElementById(
-    "moreGoToArtist"
+  playerPlaylistModal = playerElement(
+    "playerPlaylistModal"
   );
 
-
-moreGoToRelease =
-  document.getElementById(
-    "moreGoToRelease"
+  closePlayerPlaylistModal = playerElement(
+    "closePlayerPlaylistModal"
   );
 
+  playerPlaylistList = playerElement(
+    "playerPlaylistList"
+  );
 
-moreShareSong =
-  document.getElementById(
-    "moreShareSong"
-  );  
+  playerPlaylistMessage = playerElement(
+    "playerPlaylistMessage"
+  );
 
-
+  playerPlaylistSongName = playerElement(
+    "playerPlaylistSongName"
+  );
 
   if (
     !musicPlayer ||
     !audioPlayer ||
     !playPauseButton
   ) {
-
-    console.error(
-      "Player component is incomplete."
-    );
-
-    return;
-
+    return false;
   }
 
+  audioPlayer.volume = 0.8;
 
-  audioPlayer.volume =
-    0.8;
-
-
-  if (volumeSlider) {
-
-    volumeSlider.value =
-      0.8;
-
-  }
-
-
-  if (expandedVolumeSlider) {
-
-    expandedVolumeSlider.value =
-      0.8;
-
-  }
-
+  playerSetValue(volumeSlider, 0.8);
+  playerSetValue(expandedVolumeSlider, 0.8);
 
   setupPlayerEvents();
 
+  return true;
 }
 
-
-/* ========================================
-   PLAYER EVENTS
-======================================== */
+/* =========================================================
+   6. PLAYER EVENTS
+========================================================= */
 
 function setupPlayerEvents() {
-
-  playPauseButton.addEventListener(
+  playerOn(
+    playPauseButton,
     "click",
     togglePlayPause
   );
 
-
-  expandedPlayPauseButton.addEventListener(
+  playerOn(
+    expandedPlayPauseButton,
     "click",
     togglePlayPause
   );
 
+  playerOn(nextButton, "click", playNextSong);
+  playerOn(expandedNextButton, "click", playNextSong);
 
-  nextButton.addEventListener(
-    "click",
-    playNextSong
-  );
-
-
-  expandedNextButton.addEventListener(
-    "click",
-    playNextSong
-  );
-
-
-  previousButton.addEventListener(
+  playerOn(previousButton, "click", playPreviousSong);
+  playerOn(
+    expandedPreviousButton,
     "click",
     playPreviousSong
   );
 
-
-  expandedPreviousButton.addEventListener(
-    "click",
-    playPreviousSong
-  );
-
-
-  playerExpandButton.addEventListener(
+  playerOn(
+    playerExpandButton,
     "click",
     openNowPlaying
   );
 
-
-  playerExpandIconButton.addEventListener(
+  playerOn(
+    playerExpandIconButton,
     "click",
     openNowPlaying
   );
 
-
-  closeNowPlayingButton.addEventListener(
+  playerOn(
+    closeNowPlayingButton,
     "click",
     closeNowPlaying
   );
 
+  playerOn(queueToggleButton, "click", openQueue);
+  playerOn(closeQueueButton, "click", closeQueue);
 
-  queueToggleButton.addEventListener(
+  playerOn(playerProgress, "input", () => {
+    seekAudio(playerProgress.value);
+  });
+
+  playerOn(expandedProgress, "input", () => {
+    seekAudio(expandedProgress.value);
+  });
+
+  playerOn(volumeSlider, "input", () => {
+    setVolume(volumeSlider.value);
+  });
+
+  playerOn(expandedVolumeSlider, "input", () => {
+    setVolume(expandedVolumeSlider.value);
+  });
+
+  playerOn(audioPlayer, "play", () => {
+    EmnetSecureMedia.setPlayingState(true);
+    resetListeningPosition();
+    updatePlayButtons();
+  });
+
+  playerOn(audioPlayer, "pause", () => {
+    EmnetSecureMedia.setPlayingState(false);
+    resetListeningPosition();
+    updatePlayButtons();
+  });
+
+  playerOn(audioPlayer, "timeupdate", () => {
+    updateProgress();
+    trackSongListeningTime();
+  });
+
+  playerOn(audioPlayer, "loadedmetadata", updateProgress);
+
+  playerOn(audioPlayer, "ended", () => {
+    finishSongListeningSession();
+    playNextSong();
+  });
+
+  playerOn(audioPlayer, "error", async () => {
+    if (!currentSong) return;
+
+    console.warn(
+      "Audio error detected. Attempting recovery."
+    );
+
+    const recovered =
+      await EmnetSecureMedia.recoverPlayback(
+        audioPlayer
+      );
+
+    if (!recovered) {
+      console.warn(
+        "Audio recovery was unsuccessful."
+      );
+    }
+  });
+
+  playerOn(
+    audioPlayer,
+    "seeking",
+    resetListeningPosition
+  );
+
+  playerOn(
+    audioPlayer,
+    "seeked",
+    resetListeningPosition
+  );
+
+  playerOn(
+    miniLikeButton,
     "click",
-    openQueue
+    toggleCurrentSongLike
   );
 
-
-  closeQueueButton.addEventListener(
+  playerOn(
+    expandedLikeButton,
     "click",
-    closeQueue
+    toggleCurrentSongLike
   );
 
+  // Deferred features from the original player.
+  playerOn(shuffleButton, "click", () => {
+    console.log(
+      "Shuffle functionality will be added later."
+    );
+  });
 
-  playerProgress.addEventListener(
-    "input",
-    () => {
+  playerOn(repeatButton, "click", () => {
+    console.log(
+      "Repeat functionality will be added later."
+    );
+  });
 
-      seekAudio(
-        playerProgress.value
-      );
-
-    }
-  );
-
-
-  expandedProgress.addEventListener(
-    "input",
-    () => {
-
-      seekAudio(
-        expandedProgress.value
-      );
-
-    }
-  );
-
-
-  volumeSlider.addEventListener(
-    "input",
-    () => {
-
-      setVolume(
-        volumeSlider.value
-      );
-
-    }
-  );
-
-
-  expandedVolumeSlider.addEventListener(
-    "input",
-    () => {
-
-      setVolume(
-        expandedVolumeSlider.value
-      );
-
-    }
-  );
-
-
-  audioPlayer.addEventListener(
-    "play",
-    updatePlayButtons
-  );
-
-
-  audioPlayer.addEventListener(
-    "pause",
-    updatePlayButtons
-  );
-
-
-  audioPlayer.addEventListener(
-    "timeupdate",
-    updateProgress
-  );
-
-
-  audioPlayer.addEventListener(
-    "loadedmetadata",
-    updateProgress
-  );
-
-
-  audioPlayer.addEventListener(
-    "ended",
-    playNextSong
-  );
-
-
-  miniLikeButton.addEventListener(
-  "click",
-  toggleCurrentSongLike
-);
-
-
-expandedLikeButton.addEventListener(
-  "click",
-  toggleCurrentSongLike
-);
-
-  shuffleButton.addEventListener(
+  playerOn(
+    moreSongButton,
     "click",
-    () => {
-
-      console.log(
-        "Shuffle functionality will be added later."
-      );
-
-    }
+    openSongMoreMenu
   );
 
-
-  repeatButton.addEventListener(
-    "click",
-    () => {
-
-      console.log(
-        "Repeat functionality will be added later."
-      );
-
-    }
-  );
-
-
-moreSongButton.addEventListener(
-  "click",
-  openSongMoreMenu
-);
-
-if (closeSongMoreModal) {
-
-  closeSongMoreModal.addEventListener(
+  playerOn(
+    closeSongMoreModal,
     "click",
     closeSongMoreMenu
   );
 
-}
-
-
-if (songMoreModal) {
-
-  songMoreModal.addEventListener(
-    "click",
-    (event) => {
-
-      if (
-        event.target ===
-        songMoreModal
-      ) {
-
-        closeSongMoreMenu();
-
-      }
-
-    }
-  );
-
-}
-
-
-if (moreAddToPlaylist) {
-
-  moreAddToPlaylist.addEventListener(
-    "click",
-    () => {
-
+  playerOn(songMoreModal, "click", (event) => {
+    if (event.target === songMoreModal) {
       closeSongMoreMenu();
-
-      openAddToPlaylistModal();
-
     }
-  );
+  });
 
-}
+  playerOn(moreAddToPlaylist, "click", () => {
+    closeSongMoreMenu();
+    openAddToPlaylistModal();
+  });
 
-
-if (moreGoToArtist) {
-
-  moreGoToArtist.addEventListener(
+  playerOn(
+    moreGoToArtist,
     "click",
     goToCurrentSongArtist
   );
 
-}
-
-
-if (moreGoToRelease) {
-
-  moreGoToRelease.addEventListener(
+  playerOn(
+    moreGoToRelease,
     "click",
     goToCurrentSongRelease
   );
 
-}
-
-
-if (moreShareSong) {
-
-  moreShareSong.addEventListener(
+  playerOn(
+    moreShareSong,
     "click",
     shareCurrentSong
   );
 
-}
-
-if (closePlayerPlaylistModal) {
-
-  closePlayerPlaylistModal.addEventListener(
+  playerOn(
+    closePlayerPlaylistModal,
     "click",
     closeAddToPlaylistModal
   );
 
-}
-
-
-if (playerPlaylistModal) {
-
-  playerPlaylistModal.addEventListener(
+  playerOn(
+    playerPlaylistModal,
     "click",
     (event) => {
-
-      if (
-        event.target ===
-        playerPlaylistModal
-      ) {
-
+      if (event.target === playerPlaylistModal) {
         closeAddToPlaylistModal();
-
       }
-
     }
   );
-
 }
 
-}
+/* =========================================================
+   7. PLAY SONG — SECURE R2
+========================================================= */
 
+async function playSong(song, queue = []) {
+  if (!song?._id) {
+    console.error("Invalid song information.");
+    return;
+  }
 
-/* ========================================
-   PLAY SONG
-======================================== */
-
-async function playSong(
-  song,
-  queue = []
-) {
+  // Increment before awaiting component loading.
+  const selectionId = ++emnetSongSelectionId;
 
   if (!playerLoaded) {
-
     await loadPlayerComponent();
-
   }
 
-
-  if (
-    !musicPlayer ||
-    !audioPlayer
-  ) {
-
-    console.error(
-      "Music player is not ready."
-    );
-
+  if (selectionId !== emnetSongSelectionId) {
     return;
-
   }
 
-
-  if (!song) {
-
-    console.error(
-      "No song was provided."
-    );
-
+  if (!musicPlayer || !audioPlayer) {
+    console.error("Music player is not ready.");
     return;
-
   }
 
+  // Preserve the previous song's listening session.
+  finishSongListeningSession();
 
-  if (!song.audioUrl) {
+  // Cancel previous R2 requests and renewal timers.
+  EmnetSecureMedia.cancelPendingPlayback();
 
-    console.error(
-      "This song does not have an audio URL."
+  audioPlayer.pause();
+  audioPlayer.removeAttribute("src");
+  audioPlayer.load();
+
+  currentSong = song;
+
+  if (Array.isArray(queue) && queue.length) {
+    currentQueue = queue.filter(
+      (item) => item && item._id
     );
-
-    return;
-
+  } else {
+    currentQueue = [song];
   }
 
-
-  currentSong =
-    song;
-
-
-  if (Array.isArray(queue)) {
-
-    currentQueue =
-      queue;
-
-
-    currentSongIndex =
-      queue.findIndex(
-        (item) =>
-          item._id === song._id
-      );
-
-  }
-
+  currentSongIndex = currentQueue.findIndex(
+    (item) =>
+      String(item._id) === String(song._id)
+  );
 
   if (currentSongIndex < 0) {
-
-    currentSongIndex =
-      0;
-
+    currentQueue = [song, ...currentQueue];
+    currentSongIndex = 0;
   }
 
+  activeSongPlaySession = null;
 
-  updateSongInformation(
-    song
-  );
-
-
+  updateSongInformation(song);
   renderQueue();
-
-
-  musicPlayer.classList.add(
-    "active"
-  );
-
-
   resetProgress();
 
-
-  audioPlayer.src =
-    song.audioUrl;
-
+  musicPlayer.classList.add("active");
 
   try {
+    const playback =
+      await EmnetSecureMedia.prepareSong(
+        song,
+        audioPlayer
+      );
+
+    if (
+      !playback ||
+      selectionId !== emnetSongSelectionId
+    ) {
+      return;
+    }
+
+    audioPlayer.src = playback.url;
+
+    const session = createSongPlaySession(song);
+    activeSongPlaySession = session;
+
+    // Start backend session without blocking playback.
+    beginSongPlaySession(session);
 
     await audioPlayer.play();
 
-
-    await recordSongPlay(
-      song._id
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Unable to play song:",
-      error
-    );
-
-  }
-
-}
-
-
-/* ========================================
-   UPDATE SONG INFORMATION
-======================================== */
-
-function updateSongInformation(song) {
-
-  const release =
-    song.releaseId || {};
-
-
-  const artistName =
-    getPlayerArtistNames(
-      song.primaryArtists
-    ) || "Artist";
-
-
-  const coverImage =
-    release.coverImage ||
-    "https://placehold.co/600x600/111612/35e67a?text=EmnetMusic";
-
-
-  playerSongTitle.textContent =
-    song.title ||
-    "Untitled";
-
-
-  playerArtist.textContent =
-    artistName;
-
-
-  playerCover.src =
-    coverImage;
-
-
-  expandedSongTitle.textContent =
-    song.title ||
-    "Untitled";
-
-
-  expandedArtistName.textContent =
-    artistName;
-
-
-  expandedPlayerCover.src =
-    coverImage;
-
-}
-
-
-/* ========================================
-   PLAY / PAUSE
-======================================== */
-
-async function togglePlayPause() {
-
-  if (
-    !currentSong ||
-    !audioPlayer
-  ) {
-    return;
-  }
-
-
-  try {
-
-    if (audioPlayer.paused) {
-
-      await audioPlayer.play();
-
-    } else {
-
-      audioPlayer.pause();
-
+    if (
+      selectionId === emnetSongSelectionId &&
+      activeSongPlaySession === session
+    ) {
+      EmnetSecureMedia.setPlayingState(true);
+      resetListeningPosition();
     }
 
   } catch (error) {
+    if (selectionId !== emnetSongSelectionId) {
+      return;
+    }
 
+    if (error.name !== "AbortError") {
+      console.error(
+        "Unable to play song:",
+        error.message
+      );
+    }
+
+    if (!audioPlayer.src) {
+      activeSongPlaySession = null;
+    }
+  }
+}
+
+/* =========================================================
+   8. UPDATE SONG INFORMATION
+========================================================= */
+
+function updateSongInformation(song) {
+  const release = playerRelease(song);
+  const releaseId = playerReleaseId(song);
+
+  const artistName =
+    getPlayerArtistNames(song.primaryArtists) ||
+    "Artist";
+
+  const fallbackCover = playerSafeImage(
+    release.coverImage ||
+    song.coverImage ||
+    PLAYER_FALLBACK_COVER
+  );
+
+  playerSetText(
+    playerSongTitle,
+    song.title || "Untitled"
+  );
+
+  playerSetText(playerArtist, artistName);
+
+  playerSetText(
+    expandedSongTitle,
+    song.title || "Untitled"
+  );
+
+  playerSetText(
+    expandedArtistName,
+    artistName
+  );
+
+  const images = [
+    playerCover,
+    expandedPlayerCover
+  ].filter(Boolean);
+
+  images.forEach((image) => {
+    image.dataset.emnetReleaseId =
+      String(releaseId || "");
+
+    playerSetImage(image, fallbackCover);
+  });
+
+  if (releaseId) {
+    EmnetSecureMedia.setArtwork(
+      releaseId,
+      images,
+      fallbackCover
+    );
+  }
+
+  updateLikeButtons();
+}
+
+/* =========================================================
+   9. PLAY / PAUSE
+========================================================= */
+
+async function togglePlayPause() {
+  if (!currentSong || !audioPlayer) {
+    return;
+  }
+
+  try {
+    if (audioPlayer.paused) {
+      await audioPlayer.play();
+    } else {
+      audioPlayer.pause();
+    }
+  } catch (error) {
     console.error(
       "Playback error:",
       error
     );
-
   }
-
 }
 
-
-/* ========================================
-   UPDATE PLAY BUTTONS
-======================================== */
-
 function updatePlayButtons() {
+  if (!audioPlayer) return;
 
-  if (!audioPlayer) {
-    return;
-  }
+  const icon = audioPlayer.paused
+    ? "▶"
+    : "❚❚";
 
+  playerSetText(playPauseButton, icon);
+  playerSetText(expandedPlayPauseButton, icon);
 
-  const icon =
-    audioPlayer.paused
-      ? "▶"
-      : "❚❚";
-
-
-  playPauseButton.textContent =
-    icon;
-
-
-  expandedPlayPauseButton.textContent =
-    icon;
   updateLikeButtons();
 }
 
-
-/* ========================================
-   PROGRESS
-======================================== */
+/* =========================================================
+   10. PROGRESS AND SEEKING
+========================================================= */
 
 function updateProgress() {
+  if (!audioPlayer) return;
 
-  if (!audioPlayer) {
-    return;
-  }
-
-
-  const duration =
-    audioPlayer.duration;
-
-
-  const position =
-    audioPlayer.currentTime;
-
+  const duration = audioPlayer.duration;
+  const position = audioPlayer.currentTime;
 
   if (
     !Number.isFinite(duration) ||
     duration <= 0
   ) {
-
     return;
-
   }
 
+  const progress = Math.min(
+    100,
+    Math.max(0, (position / duration) * 100)
+  );
 
-  const progress =
-    (
-      position /
-      duration
-    ) * 100;
+  playerSetValue(playerProgress, progress);
+  playerSetValue(expandedProgress, progress);
 
+  playerSetText(
+    currentTime,
+    formatTime(position)
+  );
 
-  playerProgress.value =
-    progress;
+  playerSetText(
+    expandedCurrentTime,
+    formatTime(position)
+  );
 
+  playerSetText(
+    durationTime,
+    formatTime(duration)
+  );
 
-  expandedProgress.value =
-    progress;
-
-
-  currentTime.textContent =
-    formatTime(
-      position
-    );
-
-
-  expandedCurrentTime.textContent =
-    formatTime(
-      position
-    );
-
-
-  durationTime.textContent =
-    formatTime(
-      duration
-    );
-
-
-  expandedDurationTime.textContent =
-    formatTime(
-      duration
-    );
-
+  playerSetText(
+    expandedDurationTime,
+    formatTime(duration)
+  );
 }
 
-
-/* ========================================
-   SEEK
-======================================== */
-
 function seekAudio(value) {
+  if (!audioPlayer) return;
+
+  const duration = audioPlayer.duration;
 
   if (
-    !audioPlayer ||
-    !audioPlayer.duration
+    !Number.isFinite(duration) ||
+    duration <= 0
   ) {
     return;
   }
 
+  const percent = Math.min(
+    100,
+    Math.max(0, Number(value) || 0)
+  );
 
   audioPlayer.currentTime =
-    (
-      Number(value) /
-      100
-    ) * audioPlayer.duration;
+    (percent / 100) * duration;
 
+  resetListeningPosition();
 }
-
-
-/* ========================================
-   RESET PROGRESS
-======================================== */
 
 function resetProgress() {
+  playerSetValue(playerProgress, 0);
+  playerSetValue(expandedProgress, 0);
 
-  playerProgress.value =
-    0;
+  playerSetText(currentTime, "0:00");
+  playerSetText(expandedCurrentTime, "0:00");
 
-
-  expandedProgress.value =
-    0;
-
-
-  currentTime.textContent =
-    "0:00";
-
-
-  expandedCurrentTime.textContent =
-    "0:00";
-
-
-  durationTime.textContent =
-    "0:00";
-
-
-  expandedDurationTime.textContent =
-    "0:00";
-
+  playerSetText(durationTime, "0:00");
+  playerSetText(expandedDurationTime, "0:00");
 }
 
-
-/* ========================================
-   VOLUME
-======================================== */
+/* =========================================================
+   11. VOLUME
+========================================================= */
 
 function setVolume(value) {
+  if (!audioPlayer) return;
 
-  const volume =
-    Number(value);
+  const volume = Math.min(
+    1,
+    Math.max(0, Number(value) || 0)
+  );
 
+  audioPlayer.volume = volume;
 
-  if (!audioPlayer) {
-    return;
-  }
-
-
-  audioPlayer.volume =
-    volume;
-
-
-  volumeSlider.value =
-    volume;
-
-
-  expandedVolumeSlider.value =
-    volume;
-
+  playerSetValue(volumeSlider, volume);
+  playerSetValue(expandedVolumeSlider, volume);
 }
 
-
-/* ========================================
-   NEXT SONG
-======================================== */
+/* =========================================================
+   12. NEXT / PREVIOUS
+========================================================= */
 
 function playNextSong() {
-
   if (!currentQueue.length) {
     return;
   }
 
+  const nextIndex = currentSongIndex + 1;
 
-  const nextIndex =
-    currentSongIndex + 1;
-
-
-  if (
-    nextIndex >=
-    currentQueue.length
-  ) {
+  if (nextIndex >= currentQueue.length) {
     return;
   }
-
 
   playSong(
     currentQueue[nextIndex],
     currentQueue
   );
-
 }
 
-
-/* ========================================
-   PREVIOUS SONG
-======================================== */
-
 function playPreviousSong() {
-
   if (!currentQueue.length) {
     return;
   }
 
-
   const previousIndex =
     currentSongIndex - 1;
 
-
-  if (
-    previousIndex < 0
-  ) {
+  if (previousIndex < 0) {
     return;
   }
-
 
   playSong(
     currentQueue[previousIndex],
     currentQueue
   );
-
 }
 
-
-/* ========================================
-   OPEN NOW PLAYING
-======================================== */
+/* =========================================================
+   13. EXPANDED PLAYER
+========================================================= */
 
 function openNowPlaying() {
-
-  if (
-    !currentSong ||
-    !nowPlayingOverlay
-  ) {
+  if (!currentSong || !nowPlayingOverlay) {
     return;
   }
 
-
-  nowPlayingOverlay.classList.add(
-    "active"
-  );
-
+  nowPlayingOverlay.classList.add("active");
 
   nowPlayingOverlay.setAttribute(
     "aria-hidden",
     "false"
   );
 
-
-  document.body.style.overflow =
-    "hidden";
-
+  document.body.style.overflow = "hidden";
 }
 
-
-/* ========================================
-   CLOSE NOW PLAYING
-======================================== */
-
 function closeNowPlaying() {
+  if (!nowPlayingOverlay) return;
 
-  if (!nowPlayingOverlay) {
-    return;
-  }
-
-
-  nowPlayingOverlay.classList.remove(
-    "active"
-  );
-
+  nowPlayingOverlay.classList.remove("active");
 
   nowPlayingOverlay.setAttribute(
     "aria-hidden",
     "true"
   );
 
-
   closeQueue();
 
-
-  document.body.style.overflow =
-    "";
-
+  document.body.style.overflow = "";
 }
+
+/* =========================================================
+   14. QUEUE
+========================================================= */
 
 
 /* ========================================
@@ -1299,19 +1018,18 @@ function closeNowPlaying() {
 ======================================== */
 
 function openQueue() {
-
-  if (!queuePanel) {
-    return;
-  }
-
+  if (!queuePanel) return;
 
   renderQueue();
 
+  queuePanel.classList.add("active");
 
-  queuePanel.classList.add(
-    "active"
-  );
-
+  if (queueToggleButton) {
+    queueToggleButton.setAttribute(
+      "aria-expanded",
+      "true"
+    );
+  }
 }
 
 
@@ -1320,1378 +1038,1192 @@ function openQueue() {
 ======================================== */
 
 function closeQueue() {
+  if (!queuePanel) return;
 
-  if (!queuePanel) {
-    return;
+  queuePanel.classList.remove("active");
+
+  if (queueToggleButton) {
+    queueToggleButton.setAttribute(
+      "aria-expanded",
+      "false"
+    );
   }
-
-
-  queuePanel.classList.remove(
-    "active"
-  );
-
 }
 
 
 /* ========================================
-   RENDER QUEUE
+   RENDER QUEUE — SECURE R2 ARTWORK
 ======================================== */
 
 function renderQueue() {
+  if (!queueList) return;
 
-  if (!queueList) {
-    return;
-  }
+  queueList.replaceChildren();
 
-
-  queueList.innerHTML =
-    "";
-
-
+  // Display an empty message when
+  // no songs are available.
   if (!currentQueue.length) {
+    const empty = document.createElement("div");
 
-    queueList.innerHTML = `
-      <div class="queue-empty">
-        Your queue is empty.
-      </div>
-    `;
+    empty.className = "queue-empty";
+    empty.textContent = "Your queue is empty.";
+
+    queueList.appendChild(empty);
 
     return;
-
   }
 
+  currentQueue.forEach((song, index) => {
 
-  currentQueue.forEach(
-    (song, index) => {
-
-      const item =
-        document.createElement(
-          "button"
-        );
-
-
-      item.type =
-        "button";
-
-
-      item.className =
-        "queue-item";
-
-
-      if (
-        index ===
-        currentSongIndex
-      ) {
-
-        item.classList.add(
-          "active"
-        );
-
-      }
-
-
-      const release =
-        song.releaseId || {};
-
-
-      const artistName =
-        getPlayerArtistNames(
-          song.primaryArtists
-        ) || "Artist";
-
-
-      const coverImage =
-        release.coverImage ||
-        "https://placehold.co/600x600/111612/35e67a?text=EmnetMusic";
-
-
-      item.innerHTML = `
-        <img
-          src="${coverImage}"
-          alt=""
-        >
-
-        <div>
-
-          <h4>
-            ${escapePlayerHTML(
-              song.title ||
-              "Untitled"
-            )}
-          </h4>
-
-          <p>
-            ${escapePlayerHTML(
-              artistName
-            )}
-          </p>
-
-        </div>
-
-        <span class="queue-playing">
-          ${
-            index ===
-            currentSongIndex
-              ? "●"
-              : ""
-          }
-        </span>
-      `;
-
-
-      item.addEventListener(
-        "click",
-        () => {
-
-          playSong(
-            song,
-            currentQueue
-          );
-
-        }
-      );
-
-
-      queueList.appendChild(
-        item
-      );
-
+    if (!song || !song._id) {
+      return;
     }
-  );
 
+    // Create queue item.
+    const item = document.createElement("button");
+
+    item.type = "button";
+    item.className = "queue-item";
+
+    // Highlight currently playing song.
+    if (index === currentSongIndex) {
+      item.classList.add("active");
+    }
+
+    // Get release information.
+    const release = playerRelease(song);
+    const releaseId = playerReleaseId(song);
+
+    // Create artwork image.
+    const cover = document.createElement("img");
+
+    cover.alt = "";
+    cover.loading = "lazy";
+
+    // Important:
+    // Identifies the release associated
+    // with this artwork element.
+    cover.dataset.emnetReleaseId =
+      String(releaseId || "");
+
+    // Display legacy artwork or placeholder
+    // while secure artwork is loading.
+    const fallbackCover = playerSafeImage(
+      release.coverImage ||
+      PLAYER_FALLBACK_COVER
+    );
+
+    playerSetImage(
+      cover,
+      fallbackCover
+    );
+
+    // Create song details container.
+    const details = document.createElement("div");
+
+    // Song title.
+    const title = document.createElement("h4");
+
+    title.textContent =
+      song.title || "Untitled";
+
+    // Artist name.
+    const artist = document.createElement("p");
+
+    artist.textContent =
+      getPlayerArtistNames(song.primaryArtists) ||
+      "Artist";
+
+    details.append(title, artist);
+
+    // Currently playing indicator.
+    const indicator = document.createElement("span");
+
+    indicator.className = "queue-playing";
+
+    indicator.textContent =
+      index === currentSongIndex
+        ? "●"
+        : "";
+
+    // Add elements to queue item.
+    item.append(
+      cover,
+      details,
+      indicator
+    );
+
+    // Play selected song from queue.
+    item.addEventListener("click", () => {
+      playSong(song, currentQueue);
+    });
+
+    // Display queue item.
+    queueList.appendChild(item);
+
+    // Retrieve signed artwork URL
+    // from the backend.
+    if (releaseId) {
+      EmnetSecureMedia.setArtwork(
+        releaseId,
+        [cover],
+        fallbackCover
+      );
+    }
+
+  });
 }
 
 
-/* ========================================
-   LOAD LIKED SONGS
-======================================== */
+/* =========================================================
+   15. LOAD LIKED SONGS
+========================================================= */
 
 async function loadLikedSongs() {
-
-  const token =
-    getToken();
-
+  const token = playerToken();
 
   if (!token) {
+    likedSongIds = new Set();
+    updateLikeButtons();
     return;
   }
 
-
   try {
-
     const response = await fetch(
       `${API_BASE_URL}/listener/likes`,
       {
         headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       }
     );
 
+    if (playerHandleUnauthorized(response)) {
+      return;
+    }
 
     if (!response.ok) {
-
       console.warn(
         "Unable to load liked songs."
       );
-
       return;
-
     }
 
-
-    const data =
-      await response.json();
-
+    const data = await playerReadResponse(response);
 
     const likes =
-      data.likes ||
-      data.songs ||
-      [];
+      data.likes || data.songs || [];
 
+    if (!Array.isArray(likes)) {
+      return;
+    }
 
-    likedSongIds =
-      new Set();
-
+    likedSongIds = new Set();
 
     likes.forEach((item) => {
+      const song = item?.songId || item;
 
-      /*
-        Depending on how your backend
-        returns likes, the song may
-        either be item.songId or item.
-      */
+      const id = typeof song === "string"
+        ? song
+        : song?._id;
 
-      const song =
-        item.songId || item;
-
-
-      const songId =
-        typeof song === "string"
-          ? song
-          : song?._id;
-
-
-      if (songId) {
-
-        likedSongIds.add(
-          songId
-        );
-
+      if (id) {
+        likedSongIds.add(String(id));
       }
-
     });
-
 
     updateLikeButtons();
 
-
   } catch (error) {
-
     console.error(
       "Unable to load liked songs:",
       error
     );
-
   }
-
 }
 
-
-
-/* ========================================
-   TOGGLE CURRENT SONG LIKE
-======================================== */
+/* =========================================================
+   16. LIKE / UNLIKE
+========================================================= */
 
 async function toggleCurrentSongLike() {
-
-  if (!currentSong) {
+  if (!currentSong || likeRequestPending) {
     return;
   }
 
-
-  const token =
-    getToken();
-
+  const token = playerToken();
 
   if (!token) {
-
-    window.location.href =
-      "login.html";
-
+    playerLoginRedirect();
     return;
-
   }
 
-
-  const songId =
-    currentSong._id;
-
+  const songId = String(currentSong._id);
 
   const alreadyLiked =
     likedSongIds.has(songId);
 
+  likeRequestPending = true;
 
   try {
-
     const response = await fetch(
-      `${API_BASE_URL}/listener/likes/${songId}`,
+      `${API_BASE_URL}/listener/likes/${encodeURIComponent(
+        songId
+      )}`,
       {
-        method:
-          alreadyLiked
-            ? "DELETE"
-            : "POST",
+        method: alreadyLiked
+          ? "DELETE"
+          : "POST",
 
         headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       }
     );
 
+    if (playerHandleUnauthorized(response)) {
+      return;
+    }
 
-    const data =
-      await response.json();
-
+    const data = await playerReadResponse(response);
 
     if (!response.ok) {
-
-      console.error(
+      throw new Error(
         data.message ||
         "Unable to update like."
       );
-
-      return;
-
     }
-
 
     if (alreadyLiked) {
-
-      likedSongIds.delete(
-        songId
-      );
-
+      likedSongIds.delete(songId);
     } else {
-
-      likedSongIds.add(
-        songId
-      );
-
+      likedSongIds.add(songId);
     }
-
 
     updateLikeButtons();
 
-
   } catch (error) {
-
-    console.error(
-      "Like error:",
-      error
-    );
-
+    console.error("Like error:", error);
+  } finally {
+    likeRequestPending = false;
   }
-
 }
-
-
-
-/* ========================================
-   UPDATE LIKE BUTTONS
-======================================== */
 
 function updateLikeButtons() {
+  const liked = currentSong
+    ? likedSongIds.has(String(currentSong._id))
+    : false;
 
-  if (
-    !currentSong ||
-    !miniLikeButton ||
-    !expandedLikeButton
-  ) {
-    return;
-  }
+  if (miniLikeButton) {
+    miniLikeButton.textContent =
+      liked ? "♥" : "♡";
 
-
-  const liked =
-    likedSongIds.has(
-      currentSong._id
-    );
-
-
-  miniLikeButton.textContent =
-    liked
-      ? "♥"
-      : "♡";
-
-
-  const expandedIcon =
-    expandedLikeButton.querySelector(
-      "span"
-    );
-
-
-  if (expandedIcon) {
-
-    expandedIcon.textContent =
+    miniLikeButton.classList.toggle(
+      "liked",
       liked
-        ? "♥"
-        : "♡";
-
+    );
   }
 
+  if (expandedLikeButton) {
+    const icon =
+      expandedLikeButton.querySelector("span");
 
-  miniLikeButton.classList.toggle(
-    "liked",
-    liked
-  );
+    if (icon) {
+      icon.textContent =
+        liked ? "♥" : "♡";
+    }
 
-
-  expandedLikeButton.classList.toggle(
-    "liked",
-    liked
-  );
-
+    expandedLikeButton.classList.toggle(
+      "liked",
+      liked
+    );
+  }
 }
 
-/* ========================================
-   MORE SONG MENU
-======================================== */
+/* =========================================================
+   17. MORE SONG MENU
+========================================================= */
 
 function openSongMoreMenu() {
-
-  if (!currentSong) {
-
+  if (!currentSong || !songMoreModal) {
     return;
-
   }
 
-
-  if (!songMoreModal) {
-
-    return;
-
-  }
-
-
-  if (songMoreTitle) {
-
-    songMoreTitle.textContent =
-      currentSong.title ||
-      "Song";
-
-  }
-
-
-  if (songMoreMessage) {
-
-    songMoreMessage.classList.remove(
-      "active"
-    );
-
-    songMoreMessage.textContent =
-      "";
-
-  }
-
-
-  songMoreModal.classList.add(
-    "active"
+  playerSetText(
+    songMoreTitle,
+    currentSong.title || "Song"
   );
 
+  if (songMoreMessage) {
+    songMoreMessage.textContent = "";
+    songMoreMessage.classList.remove("active");
+  }
+
+  songMoreModal.classList.add("active");
 
   songMoreModal.setAttribute(
     "aria-hidden",
     "false"
   );
-
 }
 
-
 function closeSongMoreMenu() {
+  if (!songMoreModal) return;
 
-  if (!songMoreModal) {
-
-    return;
-
-  }
-
-
-  songMoreModal.classList.remove(
-    "active"
-  );
-
+  songMoreModal.classList.remove("active");
 
   songMoreModal.setAttribute(
     "aria-hidden",
     "true"
   );
-
 }
 
+function showSongMoreMessage(message) {
+  if (!songMoreMessage) return;
 
+  songMoreMessage.textContent = message;
+  songMoreMessage.classList.add("active");
+}
 
-/* ========================================
-   GO TO ARTIST
-======================================== */
+/* =========================================================
+   18. ARTIST AND RELEASE NAVIGATION
+========================================================= */
 
 function goToCurrentSongArtist() {
+  if (!currentSong) return;
 
-  if (!currentSong) {
-
-    return;
-
-  }
-
-
-  const artists =
-    currentSong.primaryArtists;
-
-
-  if (
-    !Array.isArray(artists) ||
-    !artists.length
-  ) {
-
-    showSongMoreMessage(
-      "Artist information is unavailable."
-    );
-
-    return;
-
-  }
-
+  const artists = currentSong.primaryArtists;
 
   const firstArtist =
-    artists[0];
-
+    Array.isArray(artists)
+      ? artists[0]
+      : null;
 
   const artistId =
     typeof firstArtist === "string"
       ? firstArtist
       : firstArtist?._id;
 
-
   if (!artistId) {
-
     showSongMoreMessage(
       "Artist information is unavailable."
     );
-
     return;
-
   }
-
 
   window.location.href =
     `/artist?id=${encodeURIComponent(
       artistId
     )}`;
-
 }
 
-
-
-/* ========================================
-   GO TO RELEASE
-======================================== */
-
 function goToCurrentSongRelease() {
-
-  if (!currentSong) {
-
-    return;
-
-  }
-
-
-  const release =
-    currentSong.releaseId;
-
-
-  if (!release) {
-
-    showSongMoreMessage(
-      "Release information is unavailable."
-    );
-
-    return;
-
-  }
-
+  if (!currentSong) return;
 
   const releaseId =
-    typeof release === "string"
-      ? release
-      : release?._id;
-
+    playerReleaseId(currentSong);
 
   if (!releaseId) {
-
     showSongMoreMessage(
       "Release information is unavailable."
     );
-
     return;
-
   }
-
 
   window.location.href =
     `/release?id=${encodeURIComponent(
       releaseId
     )}`;
-
 }
 
-
-
-/* ========================================
-   SHARE SONG
-======================================== */
+/* =========================================================
+   19. SHARE SONG
+========================================================= */
 
 async function shareCurrentSong() {
-
-  if (!currentSong) {
-
-    return;
-
-  }
-
+  if (!currentSong) return;
 
   const artistName =
     getPlayerArtistNames(
       currentSong.primaryArtists
     ) || "EmnetMusic";
 
-
   const shareTitle =
-    currentSong.title ||
-    "EmnetMusic";
-
+    currentSong.title || "EmnetMusic";
 
   const shareText =
     `Listen to ${shareTitle} by ${artistName} on EmnetMusic.`;
 
-
-  const shareUrl =
-    window.location.href;
-
+  // Preserve existing page-sharing behavior.
+  const shareUrl = window.location.href;
 
   try {
-
     if (navigator.share) {
-
       await navigator.share({
         title: shareTitle,
         text: shareText,
-        url: shareUrl,
+        url: shareUrl
       });
 
-
       closeSongMoreMenu();
-
       return;
-
     }
-
 
     await navigator.clipboard.writeText(
       `${shareText} ${shareUrl}`
     );
 
-
     showSongMoreMessage(
       "Share link copied."
     );
 
-
   } catch (error) {
-
-    if (
-      error.name ===
-      "AbortError"
-    ) {
-
+    if (error.name === "AbortError") {
       return;
-
     }
 
-
-    console.error(
-      "Share error:",
-      error
-    );
-
+    console.error("Share error:", error);
 
     showSongMoreMessage(
       "Unable to share this song."
     );
-
   }
-
 }
 
-
-
-/* ========================================
-   MORE MENU MESSAGE
-======================================== */
-
-function showSongMoreMessage(
-  message
-) {
-
-  if (!songMoreMessage) {
-
-    return;
-
-  }
-
-
-  songMoreMessage.textContent =
-    message;
-
-
-  songMoreMessage.classList.add(
-    "active"
-  );
-
-}
-
-/* ========================================
-   OPEN ADD TO PLAYLIST
-======================================== */
+/* =========================================================
+   20. ADD TO PLAYLIST MODAL
+========================================================= */
 
 async function openAddToPlaylistModal() {
+  if (!currentSong) return;
 
-  if (!currentSong) {
-
+  if (!playerLoggedIn()) {
+    playerLoginRedirect();
     return;
-
   }
-
-
-  const token =
-    getToken();
-
-
-  if (!token) {
-
-    window.location.href =
-      "login.html";
-
-    return;
-
-  }
-
 
   if (
     !playerPlaylistModal ||
     !playerPlaylistList
   ) {
-
     console.error(
       "Playlist modal was not found."
     );
-
     return;
-
   }
 
+  playerPlaylistSongId =
+    String(currentSong._id);
 
-  playerPlaylistMessage.className =
-    "player-playlist-message";
+  const requestId = ++playerPlaylistRequestId;
 
+  if (playerPlaylistMessage) {
+    playerPlaylistMessage.className =
+      "player-playlist-message";
 
-  playerPlaylistMessage.textContent =
-    "";
+    playerPlaylistMessage.textContent = "";
+  }
 
-
-  playerPlaylistSongName.textContent =
-    `Add "${currentSong.title || "this song"}" to:`;
-
-
-  playerPlaylistList.innerHTML = `
-    <div class="player-playlist-loading">
-      Loading playlists...
-    </div>
-  `;
-
-
-  playerPlaylistModal.classList.add(
-    "active"
+  playerSetText(
+    playerPlaylistSongName,
+    `Add "${currentSong.title || "this song"}" to:`
   );
 
+  playerPlaylistList.replaceChildren();
+
+  const loading = document.createElement("div");
+
+  loading.className = "player-playlist-loading";
+  loading.textContent = "Loading playlists...";
+
+  playerPlaylistList.appendChild(loading);
+
+  playerPlaylistModal.classList.add("active");
 
   playerPlaylistModal.setAttribute(
     "aria-hidden",
     "false"
   );
 
-
-  await loadPlayerPlaylists();
-
+  await loadPlayerPlaylists(requestId);
 }
-
-
-
-/* ========================================
-   CLOSE ADD TO PLAYLIST
-======================================== */
 
 function closeAddToPlaylistModal() {
+  ++playerPlaylistRequestId;
 
-  if (!playerPlaylistModal) {
+  playerPlaylistSongId = null;
 
-    return;
+  if (playerPlaylistModal) {
+    playerPlaylistModal.classList.remove("active");
 
+    playerPlaylistModal.setAttribute(
+      "aria-hidden",
+      "true"
+    );
   }
 
+  if (playerPlaylistMessage) {
+    playerPlaylistMessage.className =
+      "player-playlist-message";
 
-  playerPlaylistModal.classList.remove(
-    "active"
-  );
-
-
-  playerPlaylistModal.setAttribute(
-    "aria-hidden",
-    "true"
-  );
-
-
-  playerPlaylistMessage.className =
-    "player-playlist-message";
-
-
-  playerPlaylistMessage.textContent =
-    "";
-
+    playerPlaylistMessage.textContent = "";
+  }
 }
 
+/* =========================================================
+   21. LOAD USER PLAYLISTS
+========================================================= */
 
-
-/* ========================================
-   LOAD USER PLAYLISTS
-======================================== */
-
-async function loadPlayerPlaylists() {
-
-  const token =
-    getToken();
-
+async function loadPlayerPlaylists(
+  requestId = playerPlaylistRequestId
+) {
+  const token = playerToken();
 
   if (!token) {
-
+    playerLoginRedirect();
     return;
-
   }
 
-
   try {
-
-    const response =
-      await fetch(
-        `${API_BASE_URL}/playlists`,
-        {
-          headers: {
-
-            Authorization:
-              `Bearer ${token}`,
-
-          },
+    const response = await fetch(
+      `${API_BASE_URL}/playlists`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    console.log(
-      "Player playlists:",
-      data
+      }
     );
 
+    if (playerHandleUnauthorized(response)) {
+      return;
+    }
+
+    const data = await playerReadResponse(response);
 
     if (!response.ok) {
-
       throw new Error(
         data.message ||
         "Unable to load playlists."
       );
-
     }
 
-
-    const playlists =
-      Array.isArray(
-        data.playlists
+    if (
+      requestId !== playerPlaylistRequestId ||
+      !playerPlaylistModal?.classList.contains(
+        "active"
       )
-        ? data.playlists
-        : [];
-
+    ) {
+      return;
+    }
 
     renderPlayerPlaylists(
-      playlists
+      Array.isArray(data.playlists)
+        ? data.playlists
+        : []
     );
 
-
   } catch (error) {
-
     console.error(
       "Player playlist error:",
       error
     );
 
+    if (
+      requestId !== playerPlaylistRequestId ||
+      !playerPlaylistList
+    ) {
+      return;
+    }
 
-    playerPlaylistList.innerHTML = `
-      <div class="player-playlist-empty">
-        ${escapePlayerHTML(
-          error.message ||
-          "Unable to load playlists."
-        )}
-      </div>
-    `;
+    playerPlaylistList.replaceChildren();
 
+    const empty = document.createElement("div");
+
+    empty.className = "player-playlist-empty";
+
+    empty.textContent =
+      error.message ||
+      "Unable to load playlists.";
+
+    playerPlaylistList.appendChild(empty);
   }
-
 }
 
+/* =========================================================
+   22. RENDER USER PLAYLISTS
+========================================================= */
 
+function renderPlayerPlaylists(playlists) {
+  if (!playerPlaylistList) return;
 
-/* ========================================
-   RENDER USER PLAYLISTS
-======================================== */
-
-function renderPlayerPlaylists(
-  playlists
-) {
-
-  playerPlaylistList.innerHTML =
-    "";
-
+  playerPlaylistList.replaceChildren();
 
   if (!playlists.length) {
+    const empty = document.createElement("div");
 
-    playerPlaylistList.innerHTML = `
-      <div class="player-playlist-empty">
+    empty.className = "player-playlist-empty";
 
-        You don't have any playlists yet.
+    const message = document.createElement("p");
 
-        <br><br>
+    message.textContent =
+      "You don't have any playlists yet.";
 
-        <a
-          href="playlists.html"
-          style="
-            color:#35e67a;
-            text-decoration:none;
-            font-weight:800;
-          "
-        >
-          Create a playlist
-        </a>
+    const link = document.createElement("a");
 
-      </div>
-    `;
+    link.href = "playlists.html";
+    link.textContent = "Create a playlist";
 
+    link.style.color = "#35e67a";
+    link.style.textDecoration = "none";
+    link.style.fontWeight = "800";
 
+    empty.append(message, link);
+
+    playerPlaylistList.appendChild(empty);
     return;
-
   }
 
+  playlists.forEach((playlist) => {
+    if (!playlist?._id) return;
 
-  playlists.forEach(
-    (playlist) => {
+    const count = Array.isArray(playlist.songs)
+      ? playlist.songs.length
+      : 0;
 
-      const songCount =
-        Array.isArray(
-          playlist.songs
-        )
-          ? playlist.songs.length
-          : 0;
+    const button = document.createElement("button");
 
+    button.type = "button";
+    button.className = "player-playlist-item";
 
-      const button =
-        document.createElement(
-          "button"
-        );
+    const icon = document.createElement("div");
 
+    icon.className = "player-playlist-icon";
+    icon.textContent = "♪";
 
-      button.type =
-        "button";
+    const details = document.createElement("div");
 
+    details.className = "player-playlist-details";
 
-      button.className =
-        "player-playlist-item";
+    const title = document.createElement("h4");
 
+    title.textContent =
+      playlist.name || "Playlist";
 
-      button.innerHTML = `
-        <div class="player-playlist-icon">
-          ♪
-        </div>
+    const description = document.createElement("p");
 
-        <div class="player-playlist-details">
+    description.textContent =
+      `${count} ${count === 1 ? "song" : "songs"}` +
+      (playlist.isPublic
+        ? " • Public"
+        : " • Private");
 
-          <h4>
-            ${escapePlayerHTML(
-              playlist.name ||
-              "Playlist"
-            )}
-          </h4>
+    details.append(title, description);
 
-          <p>
-            ${songCount}
-            ${
-              songCount === 1
-                ? "song"
-                : "songs"
-            }
+    const addIcon = document.createElement("span");
 
-            ${
-              playlist.isPublic
-                ? " • Public"
-                : " • Private"
-            }
-          </p>
+    addIcon.className = "player-playlist-add";
+    addIcon.textContent = "+";
 
-        </div>
+    button.append(icon, details, addIcon);
 
-        <span class="player-playlist-add">
-          +
-        </span>
-      `;
-
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          addCurrentSongToPlaylist(
-            playlist._id,
-            button
-          );
-
-        }
-      );
-
-
-      playerPlaylistList.appendChild(
+    button.addEventListener("click", () => {
+      addCurrentSongToPlaylist(
+        playlist._id,
         button
       );
+    });
 
-    }
-  );
-
+    playerPlaylistList.appendChild(button);
+  });
 }
 
-
-
-/* ========================================
-   ADD CURRENT SONG TO PLAYLIST
-======================================== */
+/* =========================================================
+   23. ADD SONG TO SELECTED PLAYLIST
+========================================================= */
 
 async function addCurrentSongToPlaylist(
   playlistId,
   button
 ) {
+  const songId = playerPlaylistSongId;
+  const token = playerToken();
 
   if (
-    !currentSong ||
-    !currentSong._id
+    !songId ||
+    !playlistId ||
+    !token ||
+    playerPlaylistBusy
   ) {
-
-    return;
-
-  }
-
-
-  const token =
-    getToken();
-
-
-  if (!token) {
-
-    window.location.href =
-      "login.html";
-
-    return;
-
-  }
-
-
-  if (!playlistId) {
-
-    return;
-
-  }
-
-
-  const originalHTML =
-    button.innerHTML;
-
-
-  try {
-
-    button.disabled =
-      true;
-
-
-    const addIcon =
-      button.querySelector(
-        ".player-playlist-add"
-      );
-
-
-    if (addIcon) {
-
-      addIcon.textContent =
-        "...";
-
+    if (!token) {
+      playerLoginRedirect();
     }
 
+    return;
+  }
 
+  playerPlaylistBusy = true;
+
+  button.disabled = true;
+
+  const addIcon =
+    button.querySelector(".player-playlist-add");
+
+  if (addIcon) {
+    addIcon.textContent = "...";
+  }
+
+  if (playerPlaylistMessage) {
     playerPlaylistMessage.className =
       "player-playlist-message";
 
+    playerPlaylistMessage.textContent = "";
+  }
 
-    playerPlaylistMessage.textContent =
-      "";
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/playlists/${encodeURIComponent(
+        playlistId
+      )}/songs/${encodeURIComponent(songId)}`,
+      {
+        method: "POST",
 
-
-    const response =
-      await fetch(
-        `${API_BASE_URL}/playlists/${playlistId}/songs/${currentSong._id}`,
-        {
-          method: "POST",
-
-          headers: {
-
-            Authorization:
-              `Bearer ${token}`,
-
-          },
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      );
+      }
+    );
 
+    if (playerHandleUnauthorized(response)) {
+      return;
+    }
 
-    const data =
-      await response.json();
-
+    const data = await playerReadResponse(response);
 
     if (!response.ok) {
-
       throw new Error(
         data.message ||
         "Unable to add song to playlist."
       );
-
     }
 
+    if (playerPlaylistMessage) {
+      playerPlaylistMessage.className =
+        "player-playlist-message success";
 
-    playerPlaylistMessage.className =
-      "player-playlist-message success";
-
-
-    playerPlaylistMessage.textContent =
-      "Song added to playlist.";
-
-
-    const addIconAfter =
-      button.querySelector(
-        ".player-playlist-add"
-      );
-
-
-    if (addIconAfter) {
-
-      addIconAfter.textContent =
-        "✓";
-
+      playerPlaylistMessage.textContent =
+        "Song added to playlist.";
     }
 
+    if (addIcon) {
+      addIcon.textContent = "✓";
+    }
 
-    setTimeout(
-      () => {
+    // Keep the original successful-add behavior.
+    const modalRequestId = playerPlaylistRequestId;
 
+    setTimeout(() => {
+      if (
+        modalRequestId === playerPlaylistRequestId
+      ) {
         closeAddToPlaylistModal();
-
-      },
-      900
-    );
-
+      }
+    }, 900);
 
   } catch (error) {
-
     console.error(
       "Add song to playlist error:",
       error
     );
 
+    if (playerPlaylistMessage) {
+      playerPlaylistMessage.className =
+        "player-playlist-message error";
 
-    playerPlaylistMessage.className =
-      "player-playlist-message error";
+      playerPlaylistMessage.textContent =
+        error.message ||
+        "Unable to add song to playlist.";
+    }
 
-
-    playerPlaylistMessage.textContent =
-      error.message ||
-      "Unable to add song to playlist.";
-
-
-    button.innerHTML =
-      originalHTML;
-
+    if (addIcon) {
+      addIcon.textContent = "+";
+    }
 
   } finally {
-
-    button.disabled =
-      false;
-
+    playerPlaylistBusy = false;
+    button.disabled = false;
   }
-
 }
 
+/* =========================================================
+   24. GUEST IDENTIFIER
+========================================================= */
 
-/* ========================================
-   RECORD PLAY
-======================================== */
+function getOrCreateMusicGuestId() {
+  const key = "emnetGuestId";
 
-async function recordSongPlay(
-  songId
-) {
+  const validGuestId =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  const token =
-    getToken();
+  let guestId = null;
 
+  try {
+    guestId = localStorage.getItem(key);
+
+    if (!guestId || !validGuestId.test(guestId)) {
+      guestId = crypto.randomUUID();
+
+      localStorage.setItem(key, guestId);
+    }
+  } catch (error) {
+    console.warn(
+      "Unable to persist guest identifier:",
+      error
+    );
+
+    if (typeof crypto.randomUUID === "function") {
+      guestId = crypto.randomUUID();
+    }
+  }
+
+  return guestId;
+}
+
+/* =========================================================
+   25. CREATE PLAY SESSION
+========================================================= */
+
+function createSongPlaySession(song) {
+  const token = playerToken();
+
+  return {
+    songId: String(song._id),
+    token,
+    guestId: token
+      ? null
+      : getOrCreateMusicGuestId(),
+
+    sessionToken: null,
+    minimumSeconds: 30,
+
+    listenedSeconds: 0,
+    lastMediaTime: 0,
+    lastWallTime: Date.now(),
+
+    submitted: false,
+    submitting: false,
+    ended: false
+  };
+}
+
+/* =========================================================
+   26. START BACKEND PLAY SESSION
+========================================================= */
+
+async function beginSongPlaySession(session) {
+  if (!session) return;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/plays/songs/${encodeURIComponent(
+        session.songId
+      )}/start`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+
+          ...(session.token
+            ? {
+                Authorization:
+                  `Bearer ${session.token}`
+              }
+            : {})
+        },
+
+        body: JSON.stringify(
+          session.token
+            ? {}
+            : { guestId: session.guestId }
+        )
+      }
+    );
+
+    const data = await playerReadResponse(response);
+
+    if (!response.ok) {
+      console.warn(
+        "Unable to start song play session:",
+        data.message
+      );
+      return;
+    }
+
+    session.sessionToken =
+      data.sessionToken || null;
+
+    session.minimumSeconds =
+      Number(data.minimumSeconds) > 0
+        ? Number(data.minimumSeconds)
+        : 30;
+
+    if (session.ended) {
+      setTimeout(() => {
+        submitQualifiedSongPlay(session);
+      }, 1500);
+    } else {
+      submitQualifiedSongPlay(session);
+    }
+
+  } catch (error) {
+    console.error(
+      "Song play session error:",
+      error
+    );
+  }
+}
+
+/* =========================================================
+   27. RESET LISTENING REFERENCE
+========================================================= */
+
+function resetListeningPosition() {
+  const session = activeSongPlaySession;
+
+  if (!session || !audioPlayer) {
+    return;
+  }
+
+  session.lastMediaTime =
+    audioPlayer.currentTime;
+
+  session.lastWallTime = Date.now();
+}
+
+/* =========================================================
+   28. TRACK ACTUAL LISTENING TIME
+========================================================= */
+
+function trackSongListeningTime() {
+  const session = activeSongPlaySession;
 
   if (
-    !token ||
-    !songId
+    !session ||
+    !audioPlayer ||
+    session.ended
   ) {
     return;
   }
 
+  const mediaTime = audioPlayer.currentTime;
+  const now = Date.now();
 
-  try {
+  const mediaDelta =
+    mediaTime - session.lastMediaTime;
 
-    const response =
-      await fetch(
-        `${API_BASE_URL}/plays/songs/${songId}`,
-        {
-          method: "POST",
+  const wallDelta =
+    (now - session.lastWallTime) / 1000;
 
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
-
-
-    if (!response.ok) {
-
-      const data =
-        await response.json();
-
-
-      console.warn(
-        "Play was not recorded:",
-        data.message
-      );
-
-    }
-
-
-  } catch (error) {
-
-    console.error(
-      "Unable to record play:",
-      error
-    );
-
-  }
-
-}
-
-
-/* ========================================
-   FORMAT TIME
-======================================== */
-
-function formatTime(seconds) {
+  session.lastMediaTime = mediaTime;
+  session.lastWallTime = now;
 
   if (
-    !Number.isFinite(seconds)
+    audioPlayer.paused ||
+    audioPlayer.seeking ||
+    mediaDelta <= 0 ||
+    wallDelta <= 0
   ) {
-
-    return "0:00";
-
+    return;
   }
 
-
-  const minutes =
-    Math.floor(
-      seconds / 60
-    );
-
-
-  const remainingSeconds =
-    Math.floor(
-      seconds % 60
+  const creditedSeconds = Math.max(
+    0,
+    Math.min(
+      mediaDelta,
+      wallDelta + 0.25
     )
-      .toString()
-      .padStart(
-        2,
-        "0"
-      );
-
-
-  return (
-    `${minutes}:${remainingSeconds}`
   );
 
+  session.listenedSeconds +=
+    creditedSeconds;
+
+  submitQualifiedSongPlay(session);
 }
 
+/* =========================================================
+   29. FINISH SONG LISTENING SESSION
+========================================================= */
 
-/* ========================================
-   GET ARTIST NAMES
-======================================== */
+function finishSongListeningSession() {
+  const session = activeSongPlaySession;
 
-function getPlayerArtistNames(
-  artists
-) {
-
-  if (
-    !Array.isArray(artists)
-  ) {
-
-    return "";
-
+  if (!session || session.ended) {
+    return;
   }
 
+  session.ended = true;
+
+  // Allow time for the backend's elapsed-time check.
+  setTimeout(() => {
+    submitQualifiedSongPlay(session);
+  }, 1500);
+}
+
+/* =========================================================
+   30. SUBMIT QUALIFIED SONG PLAY
+========================================================= */
+
+async function submitQualifiedSongPlay(session) {
+  if (
+    !session ||
+    !session.sessionToken ||
+    session.submitted ||
+    session.submitting
+  ) {
+    return;
+  }
+
+  const requiredSeconds = session.ended
+    ? Math.max(
+        0,
+        session.minimumSeconds - 0.75
+      )
+    : session.minimumSeconds + 1;
+
+  if (
+    session.listenedSeconds < requiredSeconds
+  ) {
+    return;
+  }
+
+  session.submitting = true;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/plays/songs/${encodeURIComponent(
+        session.songId
+      )}`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+
+          ...(session.token
+            ? {
+                Authorization:
+                  `Bearer ${session.token}`
+              }
+            : {})
+        },
+
+        body: JSON.stringify({
+          sessionToken: session.sessionToken,
+
+          ...(session.token
+            ? {}
+            : {
+                guestId: session.guestId
+              })
+        })
+      }
+    );
+
+    const data = await playerReadResponse(response);
+
+    if (!response.ok) {
+      console.warn(
+        "Song play was not counted:",
+        data.message
+      );
+      return;
+    }
+
+    session.submitted = true;
+
+    if (data.counted) {
+      console.log(
+        "Song play counted:",
+        session.songId
+      );
+    }
+
+  } catch (error) {
+    console.error(
+      "Unable to submit song play:",
+      error
+    );
+  } finally {
+    session.submitting = false;
+  }
+}
+
+/* =========================================================
+   31. FORMAT TIME
+========================================================= */
+
+function formatTime(seconds) {
+  if (
+    !Number.isFinite(seconds) ||
+    seconds < 0
+  ) {
+    return "0:00";
+  }
+
+  const minutes = Math.floor(seconds / 60);
+
+  const remainingSeconds =
+    Math.floor(seconds % 60)
+      .toString()
+      .padStart(2, "0");
+
+  return `${minutes}:${remainingSeconds}`;
+}
+
+/* =========================================================
+   32. GET ARTIST NAMES
+========================================================= */
+
+function getPlayerArtistNames(artists) {
+  if (!Array.isArray(artists)) {
+    return "";
+  }
 
   return artists
     .map((artist) => {
-
       if (
-        typeof artist ===
-        "string"
+        !artist ||
+        typeof artist === "string"
       ) {
-
         return "";
-
       }
-
 
       return (
         artist.stageName ||
         artist.fullName ||
         ""
       );
-
     })
     .filter(Boolean)
     .join(", ");
-
 }
 
-
-/* ========================================
-   ESCAPE HTML
-======================================== */
+/* =========================================================
+   33. ESCAPE HTML
+========================================================= */
 
 function escapePlayerHTML(value) {
-
   if (
     value === null ||
     value === undefined
   ) {
-
     return "";
-
   }
 
-
   return String(value)
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
-
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }

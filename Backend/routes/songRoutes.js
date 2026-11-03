@@ -1,3 +1,4 @@
+
 const express = require("express");
 const router = express.Router();
 
@@ -5,6 +6,7 @@ const {
   addSongToRelease,
   getPublicSongs,
   getPublicSongById,
+  getSongsByReleaseForArtist,
 } = require("../controllers/songController");
 
 const {
@@ -34,6 +36,7 @@ router.get(
   authorize("artist"),
   getSongsByReleaseForArtist
 );
+
 
 // Public - get one approved song
 router.get(

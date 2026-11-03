@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const songSchema = new mongoose.Schema(
@@ -35,9 +36,17 @@ const songSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Legacy audio URLs remain supported.
+    // R2 songs use audioUploadId instead.
     audioUrl: {
       type: String,
-      required: true,
+      default: "",
+    },
+
+    audioUploadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MediaUpload",
+      default: null,
     },
 
     duration: {
@@ -77,30 +86,42 @@ const songSchema = new mongoose.Schema(
     },
 
     visibilityStatus: {
-  type: String,
-  enum: ["visible", "hidden", "takedown"],
-  default: "visible",
-},
+      type: String,
+      enum: ["visible", "hidden", "takedown"],
+      default: "visible",
+    },
 
-moderationReason: {
-  type: String,
-  default: "",
-  trim: true,
-},
+    moderationReason: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-moderatedBy: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  default: null,
-},
+    moderatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
 
-moderatedAt: {
-  type: Date,
-  default: null,
-},
-},
+    moderatedAt: {
+      type: Date,
+      default: null,
+    },
+  },
   {
     timestamps: true,
+  }
+);
+
+// Prevent the same R2 upload from being
+// attached to multiple songs.
+songSchema.index(
+  { audioUploadId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      audioUploadId: { $type: "objectId" },
+    },
   }
 );
 

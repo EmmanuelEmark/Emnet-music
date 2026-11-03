@@ -4,6 +4,8 @@ const router = express.Router();
 const {
   createVideo,
   submitVideoForReview,
+  getMyVideos,
+  updateMyVideo,
   getPendingVideos,
   approveVideo,
   rejectVideo,
@@ -68,6 +70,20 @@ router.patch(
   rejectVideo
 );
 
+router.patch(
+  "/:videoId",
+  protect,
+  authorize("artist"),
+  updateMyVideo
+);
+
+// Artist - view own videos
+router.get(
+  "/mine",
+  protect,
+  authorize("artist"),
+  getMyVideos
+);
 
 // Public - one approved video
 router.get(

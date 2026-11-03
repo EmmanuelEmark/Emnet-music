@@ -162,10 +162,7 @@ if (loginForm) {
           await response.json();
 
 
-        console.log(
-          "Login response:",
-          data
-        );
+        
 
 
         /*
@@ -247,6 +244,53 @@ if (loginForm) {
 
         setTimeout(
           () => {
+
+
+            
+/*
+  RETURN LISTENERS TO THEIR VIDEO
+  AFTER LOGIN
+*/
+
+const redirectParam = new URLSearchParams(
+  window.location.search
+).get("redirect");
+
+if (
+  data.user.role === "listener" &&
+  redirectParam
+) {
+  try {
+    const targetUrl = new URL(
+      redirectParam,
+      window.location.href
+    );
+
+    const allowedVideoUrl = new URL(
+      "video.html",
+      window.location.href
+    );
+
+    // Only allow redirects to our own
+    // video watch page.
+    if (
+      targetUrl.origin === window.location.origin &&
+      targetUrl.pathname === allowedVideoUrl.pathname &&
+      targetUrl.searchParams.has("id")
+    ) {
+      window.location.href = targetUrl.href;
+      return;
+    }
+  } catch (error) {
+    console.warn(
+      "Invalid login redirect:",
+      error.message
+    );
+  }
+}
+
+
+
 
             /*
               SUPERADMIN

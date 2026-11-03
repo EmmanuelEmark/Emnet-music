@@ -1,6 +1,14 @@
+
+const mongoose = require("mongoose");
+
 const Song = require("../models/song");
 const Release = require("../models/Release");
 const Artist = require("../models/Artist");
+const MediaUpload = require("../models/MediaUpload");
+
+// ========================================
+// ADD SONG TO RELEASE
+// ========================================
 
 const addSongToRelease = async (req, res) => {
   try {
@@ -10,29 +18,59 @@ const addSongToRelease = async (req, res) => {
       title,
       genre,
       audioUrl,
+      audioUploadId,
       duration,
       trackNumber,
       primaryArtists,
       featuredArtists,
       isrc,
-    } = req.body;
+    } = req.body || {};
 
-    // Check required fields
+    if (!mongoose.isValidObjectId(releaseId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid release ID.",
+      });
+    }
+
     if (
-      !title ||
-      !genre ||
-      !audioUrl ||
-      !duration ||
-      !trackNumber
+      typeof title !== "string" ||
+      !title.trim() ||
+      typeof genre !== "string" ||
+      !genre.trim() ||
+      !Number.isFinite(duration) ||
+      duration < 1 ||
+      !Number.isSafeInteger(trackNumber) ||
+      trackNumber < 1
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Title, genre, audio URL, duration and track number are required.",
+          "Valid title, genre, duration and track number are required.",
       });
     }
 
-    // Find the release
+    const hasUpload =
+      audioUploadId !== undefined &&
+      audioUploadId !== null &&
+      audioUploadId !== "";
+
+    const hasUrl =
+      typeof audioUrl === "string" &&
+      audioUrl.trim().length > 0;
+
+    if (hasUpload === hasUrl) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Provide either audioUploadId or audioUrl, but not both.",
+      });
+    }
+
+    // ========================================
+    // FIND RELEASE
+    // ========================================
+
     const release = await Release.findById(releaseId);
 
     if (!release) {
@@ -42,7 +80,6 @@ const addSongToRelease = async (req, res) => {
       });
     }
 
-    // Make sure the logged-in user owns this release
     if (
       release.submittedBy.toString() !==
       req.user._id.toString()
@@ -54,7 +91,6 @@ const addSongToRelease = async (req, res) => {
       });
     }
 
-    // Only allow editing while the release is still a draft
     if (release.status !== "draft") {
       return res.status(400).json({
         success: false,
@@ -63,7 +99,10 @@ const addSongToRelease = async (req, res) => {
       });
     }
 
-    // Find the logged-in artist profile
+    // ========================================
+    // CHECK APPROVED ARTIST
+    // ========================================
+
     const artist = await Artist.findOne({
       userId: req.user._id,
       approvalStatus: "approved",
@@ -77,7 +116,52 @@ const addSongToRelease = async (req, res) => {
       });
     }
 
-    // A single release can contain only one song
+    // ========================================
+    // CHECK R2 UPLOAD OWNERSHIP
+    // ========================================
+
+    let verifiedUpload = null;
+
+    if (hasUpload) {
+      if (!mongoose.isValidObjectId(audioUploadId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid audio upload ID.",
+        });
+      }
+
+      verifiedUpload = await MediaUpload.findOne({
+        _id: audioUploadId,
+        userId: req.user._id,
+        kind: "audio",
+        status: "ready",
+      });
+
+      if (!verifiedUpload) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Audio upload is not confirmed or does not belong to you.",
+        });
+      }
+
+      const alreadyUsed = await Song.exists({
+        audioUploadId: verifiedUpload._id,
+      });
+
+      if (alreadyUsed) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This audio upload is already attached to a song.",
+        });
+      }
+    }
+
+    // ========================================
+    // SINGLE RELEASE RULE
+    // ========================================
+
     if (release.releaseType === "single") {
       const existingSong = await Song.findOne({
         releaseId: release._id,
@@ -92,7 +176,10 @@ const addSongToRelease = async (req, res) => {
       }
     }
 
-    // Prevent duplicate track numbers in the same release
+    // ========================================
+    // TRACK NUMBER RULE
+    // ========================================
+
     const existingTrackNumber = await Song.findOne({
       releaseId: release._id,
       trackNumber,
@@ -106,16 +193,52 @@ const addSongToRelease = async (req, res) => {
       });
     }
 
-    // If no primary artist is supplied,
-    // use the logged-in artist
+    // ========================================
+    // ARTIST INFORMATION
+    // ========================================
+
     let finalPrimaryArtists = primaryArtists;
 
     if (
-      !finalPrimaryArtists ||
+      !Array.isArray(finalPrimaryArtists) ||
       finalPrimaryArtists.length === 0
     ) {
       finalPrimaryArtists = [artist._id];
     }
+
+    if (
+      !Array.isArray(featuredArtists) &&
+      featuredArtists !== undefined
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Featured artists must be an array.",
+      });
+    }
+
+    const finalFeaturedArtists =
+      featuredArtists || [];
+
+    const allArtistIds = [
+      ...finalPrimaryArtists,
+      ...finalFeaturedArtists,
+    ];
+
+    if (
+      allArtistIds.some(
+        (id) => !mongoose.isValidObjectId(id)
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid artist ID.",
+      });
+    }
+
+    // ========================================
+    // CREATE SONG
+    // ========================================
 
     const song = new Song({
       title: title.trim(),
@@ -124,11 +247,15 @@ const addSongToRelease = async (req, res) => {
 
       primaryArtists: finalPrimaryArtists,
 
-      featuredArtists: featuredArtists || [],
+      featuredArtists: finalFeaturedArtists,
 
       genre: genre.trim(),
 
-      audioUrl,
+      audioUrl: hasUrl ? audioUrl.trim() : "",
+
+      audioUploadId: verifiedUpload
+        ? verifiedUpload._id
+        : null,
 
       duration,
 
@@ -161,7 +288,15 @@ const addSongToRelease = async (req, res) => {
       song: populatedSong,
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("Add song error:", error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Duplicate audio upload detected.",
+      });
+    }
 
     return res.status(500).json({
       success: false,
@@ -170,6 +305,9 @@ const addSongToRelease = async (req, res) => {
   }
 };
 
+// ========================================
+// GET PUBLIC SONGS
+// ========================================
 
 const getPublicSongs = async (req, res) => {
   try {
@@ -188,15 +326,14 @@ const getPublicSongs = async (req, res) => {
       )
       .populate(
         "releaseId",
-        "title releaseType coverImage releaseDate status"
+        "title releaseType coverImage releaseDate status visibilityStatus"
       );
 
-    // Extra safety:
-    // only return songs whose release is also approved
     const publicSongs = songs.filter(
       (song) =>
         song.releaseId &&
-        song.releaseId.status === "approved"
+        song.releaseId.status === "approved" &&
+        song.releaseId.visibilityStatus === "visible"
     );
 
     return res.status(200).json({
@@ -204,7 +341,7 @@ const getPublicSongs = async (req, res) => {
       songs: publicSongs,
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("Get public songs error:", error);
 
     return res.status(500).json({
       success: false,
@@ -213,10 +350,20 @@ const getPublicSongs = async (req, res) => {
   }
 };
 
+// ========================================
+// GET PUBLIC SONG BY ID
+// ========================================
 
 const getPublicSongById = async (req, res) => {
   try {
     const { songId } = req.params;
+
+    if (!mongoose.isValidObjectId(songId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid song ID.",
+      });
+    }
 
     const song = await Song.findOne({
       _id: songId,
@@ -233,13 +380,14 @@ const getPublicSongById = async (req, res) => {
       )
       .populate(
         "releaseId",
-        "title releaseType coverImage releaseDate status"
+        "title releaseType coverImage releaseDate status visibilityStatus"
       );
 
     if (
       !song ||
       !song.releaseId ||
-      song.releaseId.status !== "approved"
+      song.releaseId.status !== "approved" ||
+      song.releaseId.visibilityStatus !== "visible"
     ) {
       return res.status(404).json({
         success: false,
@@ -252,7 +400,7 @@ const getPublicSongById = async (req, res) => {
       song,
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("Get song error:", error);
 
     return res.status(500).json({
       success: false,
@@ -261,11 +409,25 @@ const getPublicSongById = async (req, res) => {
   }
 };
 
-const getSongsByReleaseForArtist = async (req, res, next) => {
+// ========================================
+// GET SONGS IN ARTIST RELEASE
+// ========================================
+
+const getSongsByReleaseForArtist = async (
+  req,
+  res,
+  next
+) => {
   try {
     const { releaseId } = req.params;
 
-    // Confirm that this release belongs to the logged-in artist.
+    if (!mongoose.isValidObjectId(releaseId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid release ID.",
+      });
+    }
+
     const release = await Release.findOne({
       _id: releaseId,
       submittedBy: req.user._id,
@@ -274,12 +436,14 @@ const getSongsByReleaseForArtist = async (req, res, next) => {
     if (!release) {
       return res.status(404).json({
         success: false,
-        message: "Release not found or access denied.",
+        message:
+          "Release not found or access denied.",
       });
     }
 
-    // Get all tracks in their correct order.
-    const songs = await Song.find({ releaseId }).sort({
+    const songs = await Song.find({
+      releaseId,
+    }).sort({
       trackNumber: 1,
     });
 
@@ -290,6 +454,7 @@ const getSongsByReleaseForArtist = async (req, res, next) => {
         title: release.title,
         releaseType: release.releaseType,
         coverImage: release.coverImage,
+        coverUploadId: release.coverUploadId,
         releaseDate: release.releaseDate,
         status: release.status,
       },

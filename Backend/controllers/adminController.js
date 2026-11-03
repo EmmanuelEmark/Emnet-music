@@ -1,168 +1,296 @@
+
 const User = require("../models/User");
 const Release = require("../models/Release");
 const Song = require("../models/song");
 const Video = require("../models/video");
 
+// ========================================
+// HELPERS
+// ========================================
+
+const platformRoles = [
+  "listener",
+  "artist",
+  "distributor",
+];
+
+const isValidId = (id) => {
+  return (
+    typeof id === "string" &&
+    /^[0-9a-f]{24}$/i.test(id)
+  );
+};
+
+const userResponse = (user) => ({
+  id: user._id,
+  fullName: user.fullName,
+  email: user.email,
+  role: user.role,
+  accountStatus: user.accountStatus,
+});
+
+const serverError = (res, label, error) => {
+  console.error(`${label}:`, error.message);
+
+  return res.status(500).json({
+    success: false,
+    message: "Server error.",
+  });
+};
+
+// ========================================
+// GET ADMINS
+// ========================================
 
 const getAdmins = async (req, res) => {
   try {
     const admins = await User.find({
       role: "admin",
-    }).select(
-      "-password"
-    );
+    }).select("-password");
 
     return res.status(200).json({
       success: true,
       admins,
     });
-  } catch (error) {
-    console.error(error.message);
 
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
+  } catch (error) {
+    return serverError(res, "Get admins error", error);
   }
 };
 
+// ========================================
+// PROMOTE USER TO ADMIN
+// SUPERADMIN ONLY
+// ========================================
 
 const promoteToAdmin = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId);
+    if (!isValidId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID.",
+      });
+    }
+
+    // Update only an active ordinary user.
+    // The role condition is checked atomically.
+    const user = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        role: { $in: platformRoles },
+        accountStatus: "active",
+      },
+      {
+        $set: { role: "admin" },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
+      const existing = await User.findById(userId);
 
-    if (user.role === "superadmin") {
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found.",
+        });
+      }
+
+      if (existing.role === "superadmin") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A superadmin account cannot be changed to admin.",
+        });
+      }
+
+      if (existing.role === "admin") {
+        return res.status(400).json({
+          success: false,
+          message: "This user is already an admin.",
+        });
+      }
+
       return res.status(400).json({
         success: false,
         message:
-          "A superadmin account cannot be changed to admin.",
+          "Only active platform users can be promoted to admin.",
       });
     }
-
-    if (user.role === "admin") {
-      return res.status(400).json({
-        success: false,
-        message:
-          "This user is already an admin.",
-      });
-    }
-
-    user.role = "admin";
-
-    await user.save();
 
     return res.status(200).json({
       success: true,
-      message:
-        "User promoted to admin successfully.",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        accountStatus: user.accountStatus,
-      },
+      message: "User promoted to admin successfully.",
+      user: userResponse(user),
     });
-  } catch (error) {
-    console.error(error.message);
 
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
+  } catch (error) {
+    return serverError(res, "Promote admin error", error);
   }
 };
 
+// ========================================
+// SUSPEND ADMIN
+// SUPERADMIN ONLY
+// ========================================
 
 const suspendAdmin = async (req, res) => {
   try {
     const { adminId } = req.params;
 
-    const admin = await User.findOne({
-      _id: adminId,
-      role: "admin",
-    });
-
-    if (!admin) {
-      return res.status(404).json({
+    if (!isValidId(adminId)) {
+      return res.status(400).json({
         success: false,
-        message: "Admin not found.",
+        message: "Invalid admin ID.",
       });
     }
 
-    admin.accountStatus = "suspended";
+    const admin = await User.findOneAndUpdate(
+      {
+        _id: adminId,
+        role: "admin",
+        accountStatus: "active",
+      },
+      {
+        $set: { accountStatus: "suspended" },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
-    await admin.save();
+    if (!admin) {
+      const existing = await User.findOne({
+        _id: adminId,
+        role: "admin",
+      });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: "Admin not found.",
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message:
+          existing.accountStatus === "suspended"
+            ? "This admin is already suspended."
+            : "Only active admin accounts can be suspended.",
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message:
-        "Admin suspended successfully.",
+      message: "Admin suspended successfully.",
     });
-  } catch (error) {
-    console.error(error.message);
 
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
+  } catch (error) {
+    return serverError(res, "Suspend admin error", error);
   }
 };
 
+// ========================================
+// REACTIVATE ADMIN
+// SUPERADMIN ONLY
+// ========================================
 
 const reactivateAdmin = async (req, res) => {
   try {
     const { adminId } = req.params;
 
-    const admin = await User.findOne({
-      _id: adminId,
-      role: "admin",
-    });
-
-    if (!admin) {
-      return res.status(404).json({
+    if (!isValidId(adminId)) {
+      return res.status(400).json({
         success: false,
-        message: "Admin not found.",
+        message: "Invalid admin ID.",
       });
     }
 
-    admin.accountStatus = "active";
+    const admin = await User.findOneAndUpdate(
+      {
+        _id: adminId,
+        role: "admin",
+        accountStatus: "suspended",
+      },
+      {
+        $set: { accountStatus: "active" },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
-    await admin.save();
+    if (!admin) {
+      const existing = await User.findOne({
+        _id: adminId,
+        role: "admin",
+      });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: "Admin not found.",
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message:
+          existing.accountStatus === "active"
+            ? "This admin is already active."
+            : "Disabled admin accounts cannot be reactivated here.",
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message:
-        "Admin reactivated successfully.",
+      message: "Admin reactivated successfully.",
     });
-  } catch (error) {
-    console.error(error.message);
 
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
+  } catch (error) {
+    return serverError(res, "Reactivate admin error", error);
   }
 };
 
+// ========================================
+// REMOVE ADMIN PRIVILEGES
+// SUPERADMIN ONLY
+// ========================================
 
 const removeAdminRole = async (req, res) => {
   try {
     const { adminId } = req.params;
 
-    const admin = await User.findOne({
-      _id: adminId,
-      role: "admin",
-    });
+    if (!isValidId(adminId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid admin ID.",
+      });
+    }
+
+    // Change only the role.
+    // Preserve the existing account status.
+    const admin = await User.findOneAndUpdate(
+      {
+        _id: adminId,
+        role: "admin",
+      },
+      {
+        $set: { role: "listener" },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!admin) {
       return res.status(404).json({
@@ -171,26 +299,20 @@ const removeAdminRole = async (req, res) => {
       });
     }
 
-    admin.role = "listener";
-    admin.accountStatus = "active";
-
-    await admin.save();
-
     return res.status(200).json({
       success: true,
-      message:
-        "Admin privileges removed successfully.",
+      message: "Admin privileges removed successfully.",
     });
-  } catch (error) {
-    console.error(error.message);
 
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
+  } catch (error) {
+    return serverError(res, "Remove admin role error", error);
   }
 };
 
+// ========================================
+// DASHBOARD STATISTICS
+// SUPERADMIN ONLY
+// ========================================
 
 const getDashboardStats = async (req, res) => {
   try {
@@ -210,8 +332,9 @@ const getDashboardStats = async (req, res) => {
       User.countDocuments({ role: "artist" }),
       User.countDocuments({ role: "admin" }),
       User.countDocuments({ role: "superadmin" }),
-      User.countDocuments({ accountStatus: "suspended" }),
-
+      User.countDocuments({
+        accountStatus: "suspended",
+      }),
       Song.countDocuments(),
       Release.countDocuments(),
       Video.countDocuments(),
@@ -231,44 +354,24 @@ const getDashboardStats = async (req, res) => {
         totalVideos,
       },
     });
-  } catch (error) {
-    console.error(error.message);
 
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
+  } catch (error) {
+    return serverError(res, "Dashboard stats error", error);
   }
 };
 
-/* ========================================
-   GET PLATFORM USERS
-======================================== */
+// ========================================
+// GET PLATFORM USERS
+// ADMIN AND SUPERADMIN
+// ========================================
 
 const getUsers = async (req, res) => {
   try {
-
-    /*
-      Only normal platform accounts.
-
-      Admin and superadmin accounts
-      are managed separately.
-    */
-
     const users = await User.find({
-      role: {
-        $in: [
-          "listener",
-          "artist",
-          "distributor",
-        ],
-      },
+      role: { $in: platformRoles },
     })
       .select("-password")
-      .sort({
-        createdAt: -1,
-      });
-
+      .sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -277,234 +380,155 @@ const getUsers = async (req, res) => {
     });
 
   } catch (error) {
-
-    console.error(
-      "Get users error:",
-      error.message
-    );
-
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
-
+    return serverError(res, "Get users error", error);
   }
 };
 
-
-
-/* ========================================
-   SUSPEND PLATFORM USER
-======================================== */
+// ========================================
+// SUSPEND PLATFORM USER
+// ADMIN AND SUPERADMIN
+// ========================================
 
 const suspendUser = async (req, res) => {
   try {
+    const { userId } = req.params;
 
-    const {
-      userId,
-    } = req.params;
+    if (!isValidId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID.",
+      });
+    }
 
-
-    const user = await User.findById(
-      userId
+    // Both role and status are checked
+    // in the same atomic database operation.
+    const user = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        role: { $in: platformRoles },
+        accountStatus: "active",
+      },
+      {
+        $set: { accountStatus: "suspended" },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
     );
 
-
     if (!user) {
+      const existing = await User.findById(userId);
 
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found.",
+        });
+      }
 
-    }
-
-
-    /*
-      Do not allow this endpoint
-      to modify admins or superadmins.
-    */
-
-    if (
-      [
-        "admin",
-        "superadmin",
-      ].includes(
-        user.role
-      )
-    ) {
-
-      return res.status(403).json({
-        success: false,
-        message:
-          "Administrative accounts cannot be suspended from the Users section.",
-      });
-
-    }
-
-
-    if (
-      user.accountStatus ===
-      "suspended"
-    ) {
+      if (!platformRoles.includes(existing.role)) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Administrative accounts cannot be suspended from the Users section.",
+        });
+      }
 
       return res.status(400).json({
         success: false,
         message:
-          "This user is already suspended.",
+          existing.accountStatus === "suspended"
+            ? "This user is already suspended."
+            : "Only active user accounts can be suspended.",
       });
-
     }
-
-
-    user.accountStatus =
-      "suspended";
-
-
-    await user.save();
-
 
     return res.status(200).json({
       success: true,
-
-      message:
-        "User suspended successfully.",
-
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        accountStatus:
-          user.accountStatus,
-      },
+      message: "User suspended successfully.",
+      user: userResponse(user),
     });
 
   } catch (error) {
-
-    console.error(
-      "Suspend user error:",
-      error.message
-    );
-
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
-
+    return serverError(res, "Suspend user error", error);
   }
 };
 
+// ========================================
+// REACTIVATE PLATFORM USER
+// ADMIN AND SUPERADMIN
+// ========================================
 
-
-/* ========================================
-   REACTIVATE PLATFORM USER
-======================================== */
-
-const reactivateUser = async (
-  req,
-  res
-) => {
+const reactivateUser = async (req, res) => {
   try {
+    const { userId } = req.params;
 
-    const {
-      userId,
-    } = req.params;
+    if (!isValidId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID.",
+      });
+    }
 
-
-    const user = await User.findById(
-      userId
+    // Only suspended ordinary users
+    // can be reactivated here.
+    const user = await User.findOneAndUpdate(
+      {
+        _id: userId,
+        role: { $in: platformRoles },
+        accountStatus: "suspended",
+      },
+      {
+        $set: { accountStatus: "active" },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
     );
 
-
     if (!user) {
+      const existing = await User.findById(userId);
 
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found.",
+        });
+      }
 
-    }
-
-
-    /*
-      Admin and superadmin accounts
-      must be handled separately.
-    */
-
-    if (
-      [
-        "admin",
-        "superadmin",
-      ].includes(
-        user.role
-      )
-    ) {
-
-      return res.status(403).json({
-        success: false,
-        message:
-          "Administrative accounts cannot be reactivated from the Users section.",
-      });
-
-    }
-
-
-    if (
-      user.accountStatus ===
-      "active"
-    ) {
+      if (!platformRoles.includes(existing.role)) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Administrative accounts cannot be reactivated from the Users section.",
+        });
+      }
 
       return res.status(400).json({
         success: false,
         message:
-          "This user account is already active.",
+          existing.accountStatus === "active"
+            ? "This user account is already active."
+            : "Disabled accounts cannot be reactivated here.",
       });
-
     }
-
-
-    user.accountStatus =
-      "active";
-
-
-    await user.save();
-
 
     return res.status(200).json({
       success: true,
-
-      message:
-        "User reactivated successfully.",
-
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        accountStatus:
-          user.accountStatus,
-      },
+      message: "User reactivated successfully.",
+      user: userResponse(user),
     });
 
   } catch (error) {
-
-    console.error(
-      "Reactivate user error:",
-      error.message
-    );
-
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error.",
-    });
-
+    return serverError(res, "Reactivate user error", error);
   }
 };
 
+// ========================================
+// EXPORT CONTROLLERS
+// ========================================
 
 module.exports = {
   getAdmins,
@@ -513,7 +537,6 @@ module.exports = {
   reactivateAdmin,
   removeAdminRole,
   getDashboardStats,
-
   getUsers,
   suspendUser,
   reactivateUser,

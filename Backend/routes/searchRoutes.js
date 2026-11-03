@@ -5,8 +5,14 @@ const {
   search,
 } = require("../controllers/searchController");
 
+const {
+  protect,
+} = require("../middleware/authMiddleware");
+
+// Search is available only to authenticated users.
 router.get(
   "/",
+  protect,
   search
 );
 

@@ -1,770 +1,966 @@
-if (!protectPage()) {
 
-  throw new Error(
-    "Authentication required."
-  );
+/* =====================================================
+   EMNET MUSIC — LISTENER LIBRARY
+   Secure Artwork + Playback + Playlists
+===================================================== */
 
-}
+/* =====================================================
+   1. AUTHENTICATION
+===================================================== */
 
+const libraryAuthorized =
+  typeof protectPage === "function"
+    ? protectPage()
+    : Boolean(
+        typeof getToken === "function"
+          ? getToken()
+          : localStorage.getItem("token")
+      );
 
-/* ========================================
-   ELEMENTS
-======================================== */
+/* =====================================================
+   2. ELEMENTS
+===================================================== */
 
 const libraryMessage =
-  document.getElementById(
-    "libraryMessage"
-  );
-
+  document.getElementById("libraryMessage");
 
 const likedSongsList =
-  document.getElementById(
-    "likedSongsList"
-  );
-
+  document.getElementById("likedSongsList");
 
 const followedArtistsGrid =
-  document.getElementById(
-    "followedArtistsGrid"
-  );
-
+  document.getElementById("followedArtistsGrid");
 
 const playlistsGrid =
-  document.getElementById(
-    "playlistsGrid"
-  );
-
+  document.getElementById("playlistsGrid");
 
 const likedSongsSection =
-  document.getElementById(
-    "likedSongsSection"
-  );
-
+  document.getElementById("likedSongsSection");
 
 const followedArtistsSection =
-  document.getElementById(
-    "followedArtistsSection"
-  );
-
+  document.getElementById("followedArtistsSection");
 
 const playlistsSection =
-  document.getElementById(
-    "playlistsSection"
-  );
-
+  document.getElementById("playlistsSection");
 
 const logoutButton =
-  document.getElementById(
-    "logoutButton"
-  );
+  document.getElementById("logoutButton");
 
-
-/* ========================================
-   STATE
-======================================== */
+/* =====================================================
+   3. STATE
+===================================================== */
 
 let likedSongs = [];
-
 let followedArtists = [];
-
 let myPlaylists = [];
 
+const LIBRARY_PLACEHOLDER =
+  "https://placehold.co/600x600/111612/35e67a?text=EmnetMusic";
 
-/* ========================================
-   START
-======================================== */
+const libraryArtworkCache = new Map();
 
-startLibraryPage();
+/* =====================================================
+   4. START LIBRARY
+===================================================== */
 
-
-async function startLibraryPage() {
-
-  await loadPlayerComponent();
-
-  await loadLibrary();
-
+if (libraryAuthorized) {
+  startLibraryPage();
 }
 
+async function startLibraryPage() {
+  if (typeof loadPlayerComponent === "function") {
+    try {
+      await loadPlayerComponent();
+    } catch (error) {
+      console.warn(
+        "Music player component unavailable:",
+        error
+      );
+    }
+  }
 
-/* ========================================
-   LOGOUT
-======================================== */
+  await loadLibrary();
+}
 
-if (logoutButton) {
+/* =====================================================
+   5. AUTHENTICATION HELPERS
+===================================================== */
 
+function getLibraryToken() {
+  if (typeof getToken === "function") {
+    return getToken();
+  }
+
+  return localStorage.getItem("token");
+}
+
+function redirectLibraryLogin() {
+  window.location.href =
+    `login.html?redirect=${encodeURIComponent(
+      window.location.pathname +
+      window.location.search
+    )}`;
+}
+
+if (
+  logoutButton &&
+  typeof logout === "function"
+) {
   logoutButton.addEventListener(
     "click",
     logout
   );
-
 }
 
-
-/* ========================================
-   LOAD LIBRARY
-======================================== */
+/* =====================================================
+   6. LOAD LIBRARY
+===================================================== */
 
 async function loadLibrary() {
-
-  const token =
-    getToken();
-
+  const token = getLibraryToken();
 
   if (!token) {
-
-    window.location.href =
-      "login.html";
-
+    redirectLibraryLogin();
     return;
-
   }
 
+  showLibraryMessage(
+    "Loading your library..."
+  );
 
   try {
+    const headers = {
+      Authorization: `Bearer ${token}`
+    };
 
     const [
-      likesResponse,
-      followsResponse,
-      playlistsResponse,
-    ] =
-      await Promise.all([
+      likesResult,
+      followsResult,
+      playlistsResult
+    ] = await Promise.allSettled([
+      fetch(
+        `${API_BASE_URL}/listener/likes`,
+        { headers }
+      ),
 
-        fetch(
-          `${API_BASE_URL}/listener/likes`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          }
-        ),
+      fetch(
+        `${API_BASE_URL}/listener/follows`,
+        { headers }
+      ),
 
-        fetch(
-          `${API_BASE_URL}/listener/follows`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          }
-        ),
+      fetch(
+        `${API_BASE_URL}/playlists`,
+        { headers }
+      )
+    ]);
 
-        fetch(
-          `${API_BASE_URL}/playlists`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          }
-        ),
+    const responses = [
+      likesResult,
+      followsResult,
+      playlistsResult
+    ];
 
-      ]);
-
-
-    const likesData =
-      await likesResponse.json();
-
-
-    const followsData =
-      await followsResponse.json();
-
-
-    const playlistsData =
-      await playlistsResponse.json();
-
-
-    console.log(
-      "Library likes:",
-      likesData
-    );
-
-
-    console.log(
-      "Library follows:",
-      followsData
-    );
-
-
-    console.log(
-      "Library playlists:",
-      playlistsData
-    );
-
-
-    if (!likesResponse.ok) {
-
-      throw new Error(
-        likesData.message ||
-        "Unable to load liked songs."
+    const sessionExpired =
+      responses.some((result) =>
+        result.status === "fulfilled" &&
+        result.value.status === 401
       );
 
+    if (sessionExpired) {
+      redirectLibraryLogin();
+      return;
     }
 
+    const errors = [];
 
-    if (!followsResponse.ok) {
+    /* LIKED SONGS */
 
-      throw new Error(
-        followsData.message ||
-        "Unable to load followed artists."
+    if (likesResult.status === "fulfilled") {
+      try {
+        const response = likesResult.value;
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            "Unable to load liked songs."
+          );
+        }
+
+        const items =
+          data.songs ??
+          data.likedSongs ??
+          data.likes ??
+          data.data ??
+          [];
+
+        likedSongs = Array.isArray(items)
+          ? items
+          : [];
+
+      } catch (error) {
+        likedSongs = [];
+        errors.push(error.message);
+      }
+
+    } else {
+      likedSongs = [];
+      errors.push(
+        "Unable to connect to liked songs."
       );
-
     }
 
+    /* FOLLOWED ARTISTS */
 
-    if (!playlistsResponse.ok) {
+    if (followsResult.status === "fulfilled") {
+      try {
+        const response = followsResult.value;
+        const data = await response.json();
 
-      throw new Error(
-        playlistsData.message ||
-        "Unable to load playlists."
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            "Unable to load followed artists."
+          );
+        }
+
+        const items =
+          data.artists ??
+          data.followedArtists ??
+          data.follows ??
+          data.data ??
+          [];
+
+        followedArtists =
+          Array.isArray(items)
+            ? items
+            : [];
+
+      } catch (error) {
+        followedArtists = [];
+        errors.push(error.message);
+      }
+
+    } else {
+      followedArtists = [];
+      errors.push(
+        "Unable to connect to followed artists."
       );
-
     }
 
+    /* PLAYLISTS */
 
-    /*
-      We make this flexible because
-      your controllers may return
-      slightly different property names.
-    */
+    if (playlistsResult.status === "fulfilled") {
+      try {
+        const response = playlistsResult.value;
+        const data = await response.json();
 
-    likedSongs =
-      likesData.songs ||
-      likesData.likedSongs ||
-      likesData.likes ||
-      [];
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+            "Unable to load playlists."
+          );
+        }
 
+        const items =
+          data.playlists ??
+          data.data ??
+          [];
 
-    followedArtists =
-      followsData.artists ||
-      followsData.followedArtists ||
-      followsData.follows ||
-      [];
+        myPlaylists = Array.isArray(items)
+          ? items
+          : [];
 
+      } catch (error) {
+        myPlaylists = [];
+        errors.push(error.message);
+      }
 
-    myPlaylists =
-      playlistsData.playlists ||
-      playlistsData.data ||
-      [];
-
+    } else {
+      myPlaylists = [];
+      errors.push(
+        "Unable to connect to playlists."
+      );
+    }
 
     renderLikedSongs();
-
     renderFollowedArtists();
-
     renderPlaylists();
 
-
-    libraryMessage.style.display =
-      "none";
-
+    if (errors.length) {
+      showLibraryMessage(
+        errors.join(" ")
+      );
+    } else {
+      hideLibraryMessage();
+    }
 
   } catch (error) {
-
     console.error(
       "Library error:",
       error
     );
 
-
-    libraryMessage.textContent =
+    showLibraryMessage(
       error.message ||
-      "Unable to load your library.";
-
+      "Unable to load your library."
+    );
   }
-
 }
 
+/* =====================================================
+   7. LIBRARY MESSAGES
+===================================================== */
 
-/* ========================================
-   LIKED SONGS
-======================================== */
+function showLibraryMessage(message) {
+  if (!libraryMessage) return;
 
-function renderLikedSongs() {
+  libraryMessage.textContent = message;
+  libraryMessage.style.display = "block";
+}
 
-  likedSongsList.innerHTML =
-    "";
+function hideLibraryMessage() {
+  if (!libraryMessage) return;
 
+  libraryMessage.textContent = "";
+  libraryMessage.style.display = "none";
+}
+
+/* =====================================================
+   8. NORMALIZE LIBRARY DATA
+===================================================== */
+
+function getLibrarySong(item) {
+  const song =
+    item?.songId ??
+    item?.song ??
+    item;
 
   if (
-    !Array.isArray(likedSongs) ||
-    likedSongs.length === 0
+    !song ||
+    typeof song !== "object" ||
+    !song._id
   ) {
-
-    likedSongsList.innerHTML = `
-      <div class="library-empty">
-        You haven't liked any songs yet.
-      </div>
-    `;
-
-    return;
-
+    return null;
   }
 
+  return song;
+}
 
-  likedSongs.forEach(
-    (item) => {
+function getLibraryArtist(item) {
+  const artist =
+    item?.artistId ??
+    item?.artist ??
+    item;
 
-      /*
-        Some APIs return the Song directly.
-        Others may return:
-        { songId: populatedSong }
-      */
+  if (
+    !artist ||
+    typeof artist !== "object" ||
+    !artist._id
+  ) {
+    return null;
+  }
 
-      const song =
-        item.songId ||
-        item.song ||
-        item;
+  return artist;
+}
 
+function getLibraryRelease(song) {
+  const release = song?.releaseId;
 
-      if (!song) {
-        return;
-      }
+  return release &&
+    typeof release === "object"
+      ? release
+      : {};
+}
 
+function getLibraryReleaseId(song) {
+  const release = song?.releaseId;
 
-      const release =
-        song.releaseId || {};
+  if (typeof release === "string") {
+    return release;
+  }
 
+  return release?._id || null;
+}
 
-      const artistName =
-        getLibraryArtistNames(
-          song.primaryArtists
-        );
+/* =====================================================
+   9. SECURE ARTWORK REQUEST
+===================================================== */
 
-
-      const row =
-        document.createElement(
-          "div"
-        );
-
-
-      row.className =
-        "library-song-row";
-
-
-      row.innerHTML = `
-        <img
-          class="library-song-cover"
-          src="${safeLibraryImage(
-            release.coverImage
-          )}"
-          alt="${escapeLibraryHTML(
-            song.title ||
-            "Song"
-          )}"
-        >
-
-        <div class="library-song-main">
-
-          <h3>
-            ${escapeLibraryHTML(
-              song.title ||
-              "Untitled"
-            )}
-          </h3>
-
-          <p>
-            ${escapeLibraryHTML(
-              artistName ||
-              "Artist"
-            )}
-          </p>
-
-        </div>
-
-        <div class="library-song-release">
-          ${escapeLibraryHTML(
-            release.title ||
-            ""
-          )}
-        </div>
-
-        <button
-          type="button"
-          class="library-song-play"
-          data-song-id="${song._id}"
-        >
-          ▶
-        </button>
-      `;
-
-
-      likedSongsList.appendChild(
-        row
-      );
-
+async function requestLibraryArtwork(releaseId) {
+  const response = await fetch(
+    `${API_BASE_URL}/media/releases/${encodeURIComponent(
+      releaseId
+    )}/artwork`,
+    {
+      method: "GET",
+      cache: "no-store"
     }
   );
 
+  const data = await response.json();
 
-  likedSongsList
-    .querySelectorAll(
-      ".library-song-play"
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Unable to load secure artwork."
+    );
+  }
+
+  const artworkUrl =
+    data.mediaUrl ||
+    data.playbackUrl;
+
+  if (!artworkUrl) {
+    throw new Error(
+      "Artwork URL was not returned."
+    );
+  }
+
+  return {
+    url: artworkUrl,
+    expiresIn: Number(data.expiresIn)
+  };
+}
+
+/* =====================================================
+   10. ARTWORK CACHE
+===================================================== */
+
+async function getLibraryArtwork(releaseId) {
+  const cached =
+    libraryArtworkCache.get(releaseId);
+
+  if (
+    cached &&
+    (
+      cached.expiresAt === null ||
+      Date.now() < cached.expiresAt
     )
-    .forEach(
-      (button) => {
+  ) {
+    return cached.url;
+  }
 
-        button.addEventListener(
-          "click",
-          () => {
+  const result =
+    await requestLibraryArtwork(releaseId);
 
-            const playableSongs =
-              likedSongs
-                .map(
-                  (item) =>
-                    item.songId ||
-                    item.song ||
-                    item
-                )
-                .filter(Boolean);
+  const expiresAt =
+    Number.isFinite(result.expiresIn) &&
+    result.expiresIn > 0
+      ? Date.now() +
+        Math.max(
+          result.expiresIn - 30,
+          0
+        ) * 1000
+      : null;
 
+  libraryArtworkCache.set(releaseId, {
+    url: result.url,
+    expiresAt
+  });
 
-            const selectedSong =
-              playableSongs.find(
-                (song) =>
-                  song._id ===
-                  button.dataset.songId
-              );
+  return result.url;
+}
 
+async function applyLibraryArtwork(image, song) {
+  const releaseId =
+    getLibraryReleaseId(song);
 
-            if (!selectedSong) {
+  if (!image || !releaseId) {
+    return;
+  }
 
-              return;
+  try {
+    const artworkUrl =
+      await getLibraryArtwork(releaseId);
 
-            }
+    if (image.isConnected) {
+      image.src =
+        safeLibraryImage(artworkUrl);
+    }
 
+  } catch (error) {
+    console.warn(
+      "Library artwork unavailable:",
+      releaseId,
+      error.message
+    );
 
-            playSong(
-              selectedSong,
-              playableSongs
-            );
+    // Keep existing legacy artwork or placeholder.
+  }
+}
 
-          }
+/* =====================================================
+   11. IMAGE HELPERS
+===================================================== */
+
+function safeLibraryImage(imageUrl) {
+  if (
+    typeof imageUrl !== "string" ||
+    !imageUrl.trim()
+  ) {
+    return LIBRARY_PLACEHOLDER;
+  }
+
+  try {
+    const parsed = new URL(
+      imageUrl,
+      window.location.href
+    );
+
+    if (
+      parsed.protocol === "http:" ||
+      parsed.protocol === "https:"
+    ) {
+      return parsed.href;
+    }
+
+  } catch {
+    // Use placeholder.
+  }
+
+  return LIBRARY_PLACEHOLDER;
+}
+
+function addLibraryImageFallback(image) {
+  image.addEventListener(
+    "error",
+    () => {
+      if (
+        image.src !== LIBRARY_PLACEHOLDER
+      ) {
+        image.src =
+          LIBRARY_PLACEHOLDER;
+      }
+    }
+  );
+}
+
+/* =====================================================
+   12. LIKED SONGS
+===================================================== */
+
+function renderLikedSongs() {
+  if (!likedSongsList) {
+    return;
+  }
+
+  likedSongsList.innerHTML = "";
+
+  const playableSongs =
+    likedSongs
+      .map(getLibrarySong)
+      .filter(Boolean);
+
+  if (!playableSongs.length) {
+    showLibraryEmpty(
+      likedSongsList,
+      "You haven't liked any songs yet."
+    );
+
+    return;
+  }
+
+  const fragment =
+    document.createDocumentFragment();
+
+  playableSongs.forEach((song) => {
+    const release =
+      getLibraryRelease(song);
+
+    const artistName =
+      getLibraryArtistNames(
+        song.primaryArtists
+      );
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "library-song-row";
+
+    /* COVER IMAGE */
+
+    const image =
+      document.createElement("img");
+
+    image.className =
+      "library-song-cover";
+
+    image.alt =
+      song.title || "Song";
+
+    image.loading = "lazy";
+
+    image.src =
+      safeLibraryImage(
+        release.coverImage
+      );
+
+    addLibraryImageFallback(image);
+
+    /* SONG INFORMATION */
+
+    const main =
+      document.createElement("div");
+
+    main.className =
+      "library-song-main";
+
+    const title =
+      document.createElement("h3");
+
+    title.textContent =
+      song.title || "Untitled";
+
+    const artist =
+      document.createElement("p");
+
+    artist.textContent =
+      artistName || "Artist";
+
+    main.append(title, artist);
+
+    /* RELEASE NAME */
+
+    const releaseName =
+      document.createElement("div");
+
+    releaseName.className =
+      "library-song-release";
+
+    releaseName.textContent =
+      release.title || "";
+
+    /* PLAY BUTTON */
+
+    const playButton =
+      document.createElement("button");
+
+    playButton.type = "button";
+
+    playButton.className =
+      "library-song-play";
+
+    playButton.dataset.songId =
+      song._id;
+
+    playButton.setAttribute(
+      "aria-label",
+      `Play ${song.title || "song"}`
+    );
+
+    playButton.textContent = "▶";
+
+    playButton.addEventListener(
+      "click",
+      () => {
+        playLibrarySong(
+          song._id,
+          playableSongs
         );
-
       }
     );
 
+    row.append(
+      image,
+      main,
+      releaseName,
+      playButton
+    );
+
+    fragment.appendChild(row);
+
+    applyLibraryArtwork(image, song);
+  });
+
+  likedSongsList.appendChild(fragment);
 }
 
+/* =====================================================
+   13. PLAY LIKED SONG
+===================================================== */
 
-/* ========================================
-   FOLLOWED ARTISTS
-======================================== */
+function playLibrarySong(songId, songs) {
+  if (typeof playSong !== "function") {
+    console.error(
+      "Music player is unavailable."
+    );
 
-function renderFollowedArtists() {
-
-  followedArtistsGrid.innerHTML =
-    "";
-
-
-  if (
-    !Array.isArray(
-      followedArtists
-    ) ||
-    followedArtists.length === 0
-  ) {
-
-    followedArtistsGrid.innerHTML = `
-      <div class="library-empty">
-        You aren't following any artists yet.
-      </div>
-    `;
+    showLibraryMessage(
+      "Music player is unavailable."
+    );
 
     return;
-
   }
 
+  const queue = songs.map((song) => ({
+    ...song,
+    releaseId: song.releaseId
+  }));
 
-  followedArtists.forEach(
-    (item) => {
+  const selectedSong =
+    queue.find((song) =>
+      String(song._id) === String(songId)
+    );
 
-      const artist =
-        item.artistId ||
-        item.artist ||
-        item;
+  if (!selectedSong) {
+    return;
+  }
 
+  // player.js handles secure signed audio URLs.
+  playSong(selectedSong, queue);
+}
 
-      if (!artist) {
+/* =====================================================
+   14. FOLLOWED ARTISTS
+===================================================== */
+
+function renderFollowedArtists() {
+  if (!followedArtistsGrid) {
+    return;
+  }
+
+  followedArtistsGrid.innerHTML = "";
+
+  const artists =
+    followedArtists
+      .map(getLibraryArtist)
+      .filter(Boolean);
+
+  if (!artists.length) {
+    showLibraryEmpty(
+      followedArtistsGrid,
+      "You aren't following any artists yet."
+    );
+
+    return;
+  }
+
+  const fragment =
+    document.createDocumentFragment();
+
+  artists.forEach((artist) => {
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "library-artist-card";
+
+    card.style.cursor = "pointer";
+
+    const image =
+      document.createElement("img");
+
+    image.src =
+      safeLibraryImage(
+        artist.profileImage
+      );
+
+    image.alt =
+      artist.stageName || "Artist";
+
+    image.loading = "lazy";
+
+    addLibraryImageFallback(image);
+
+    const name =
+      document.createElement("h3");
+
+    name.textContent =
+      artist.stageName || "Artist";
+
+    const description =
+      document.createElement("p");
+
+    description.textContent =
+      artist.verified
+        ? "Verified artist"
+        : "Artist";
+
+    card.append(
+      image,
+      name,
+      description
+    );
+
+    card.addEventListener(
+      "click",
+      () => {
+        sessionStorage.setItem(
+          "selectedArtistId",
+          artist._id
+        );
+
+        window.location.href =
+          `artist.html?id=${encodeURIComponent(
+            artist._id
+          )}`;
+      }
+    );
+
+    fragment.appendChild(card);
+  });
+
+  followedArtistsGrid.appendChild(fragment);
+}
+
+/* =====================================================
+   15. PLAYLISTS
+===================================================== */
+
+function renderPlaylists() {
+  if (!playlistsGrid) {
+    return;
+  }
+
+  playlistsGrid.innerHTML = "";
+
+  if (
+    !Array.isArray(myPlaylists) ||
+    !myPlaylists.length
+  ) {
+    showLibraryEmpty(
+      playlistsGrid,
+      "You haven't created any playlists yet."
+    );
+
+    return;
+  }
+
+  const fragment =
+    document.createDocumentFragment();
+
+  myPlaylists
+    .slice(0, 6)
+    .forEach((playlist) => {
+      if (!playlist?._id) {
         return;
       }
 
+      const songCount =
+        Array.isArray(playlist.songs)
+          ? playlist.songs.length
+          : 0;
 
       const card =
-        document.createElement(
-          "div"
-        );
-
+        document.createElement("div");
 
       card.className =
-        "library-artist-card";
+        "library-playlist-card";
 
+      card.style.cursor = "pointer";
 
-      card.innerHTML = `
-        <img
-          src="${safeLibraryImage(
-            artist.profileImage
-          )}"
-          alt="${escapeLibraryHTML(
-            artist.stageName ||
-            "Artist"
-          )}"
-        >
+      const cover =
+        document.createElement("div");
 
-        <h3>
-          ${escapeLibraryHTML(
-            artist.stageName ||
-            "Artist"
-          )}
-        </h3>
+      cover.className =
+        "library-playlist-cover";
 
-        <p>
-          ${
-            artist.verified
-              ? "Verified artist"
-              : "Artist"
-          }
-        </p>
-      `;
+      const icon =
+        document.createElement("span");
 
+      icon.textContent = "♪";
+
+      cover.appendChild(icon);
+
+      const title =
+        document.createElement("h3");
+
+      title.textContent =
+        playlist.name ||
+        playlist.title ||
+        "Playlist";
+
+      const description =
+        document.createElement("p");
+
+      description.textContent =
+        `${songCount} ${
+          songCount === 1
+            ? "song"
+            : "songs"
+        }`;
+
+      card.append(
+        cover,
+        title,
+        description
+      );
 
       card.addEventListener(
         "click",
         () => {
-
-          if (!artist._id) {
-            return;
-          }
-
-
           window.location.href =
-            `/artist?id=${encodeURIComponent(
-              artist._id
+            `playlist.html?id=${encodeURIComponent(
+              playlist._id
             )}`;
-
         }
       );
 
+      fragment.appendChild(card);
+    });
 
-      followedArtistsGrid.appendChild(
-        card
-      );
-
-    }
-  );
-
+  playlistsGrid.appendChild(fragment);
 }
 
+/* =====================================================
+   16. EMPTY SECTION MESSAGE
+===================================================== */
 
-/* ========================================
-   PLAYLISTS
-======================================== */
+function showLibraryEmpty(container, message) {
+  const empty =
+    document.createElement("div");
 
-function renderPlaylists() {
+  empty.className = "library-empty";
+  empty.textContent = message;
 
-  playlistsGrid.innerHTML =
-    "";
-
-
-  if (
-    !Array.isArray(myPlaylists) ||
-    myPlaylists.length === 0
-  ) {
-
-    playlistsGrid.innerHTML = `
-      <div class="library-empty">
-        You haven't created any playlists yet.
-      </div>
-    `;
-
-    return;
-
-  }
-
-
-  myPlaylists
-    .slice(0, 6)
-    .forEach(
-      (playlist) => {
-
-        const songCount =
-          Array.isArray(
-            playlist.songs
-          )
-            ? playlist.songs.length
-            : 0;
-
-
-        const card =
-          document.createElement(
-            "div"
-          );
-
-
-        card.className =
-          "library-playlist-card";
-
-
-        card.innerHTML = `
-          <div class="library-playlist-cover">
-            <span>♪</span>
-          </div>
-
-          <h3>
-            ${escapeLibraryHTML(
-              playlist.name ||
-              playlist.title ||
-              "Playlist"
-            )}
-          </h3>
-
-          <p>
-            ${songCount} ${
-              songCount === 1
-                ? "song"
-                : "songs"
-            }
-          </p>
-        `;
-
-
-        card.addEventListener(
-          "click",
-          () => {
-
-            if (!playlist._id) {
-              return;
-            }
-
-
-            window.location.href =
-      `/playlist?id=${encodeURIComponent(
-        playlist._id
-      )}`;
-
-          }
-        );
-
-
-        playlistsGrid.appendChild(
-          card
-        );
-
-      }
-    );
-
+  container.appendChild(empty);
 }
 
+/* =====================================================
+   17. ARTIST NAMES
+===================================================== */
 
-/* ========================================
-   ARTIST NAMES
-======================================== */
-
-function getLibraryArtistNames(
-  artists
-) {
-
+function getLibraryArtistNames(artists) {
   if (!Array.isArray(artists)) {
-
     return "";
-
   }
-
 
   return artists
-    .map(
-      (artist) => {
-
-        if (
-          typeof artist ===
-          "string"
-        ) {
-
-          return "";
-
-        }
-
-
-        return (
-          artist.stageName ||
-          artist.fullName ||
-          ""
-        );
-
+    .map((artist) => {
+      if (
+        !artist ||
+        typeof artist !== "object"
+      ) {
+        return "";
       }
-    )
+
+      return (
+        artist.stageName ||
+        artist.fullName ||
+        ""
+      );
+    })
     .filter(Boolean)
     .join(", ");
-
 }
 
+/* =====================================================
+   18. HTML ESCAPING
+===================================================== */
 
-/* ========================================
-   IMAGE
-======================================== */
-
-function safeLibraryImage(
-  imageUrl
-) {
-
-  if (
-    imageUrl &&
-    typeof imageUrl ===
-      "string"
-  ) {
-
-    return imageUrl;
-
-  }
-
-
-  return (
-    "https://placehold.co/" +
-    "600x600/111612/" +
-    "35e67a?text=EmnetMusic"
-  );
-
-}
-
-
-/* ========================================
-   ESCAPE HTML
-======================================== */
-
-function escapeLibraryHTML(
-  value
-) {
-
+function escapeLibraryHTML(value) {
   if (
     value === null ||
     value === undefined
   ) {
-
     return "";
-
   }
 
-
   return String(value)
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
-
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }

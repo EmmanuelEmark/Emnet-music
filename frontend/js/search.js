@@ -1,285 +1,329 @@
-if (!protectPage()) {
-  throw new Error(
-    "Authentication required."
-  );
-}
 
+/* ==========================================================
+   EMNET MUSIC — AUTHENTICATED SEARCH
+   Songs, Artists, Releases and Videos
+   Secure Cloudflare R2 Artwork and Thumbnails
+========================================================== */
+
+/* ==========================================================
+   1. AUTHENTICATION
+========================================================== */
+
+const searchPageAuthorized =
+  typeof protectPage === "function"
+    ? protectPage()
+    : Boolean(
+        typeof getToken === "function"
+          ? getToken()
+          : localStorage.getItem("token")
+      );
+
+/* ==========================================================
+   2. PAGE ELEMENTS
+========================================================== */
 
 const searchInput =
-  document.getElementById(
-    "searchInput"
-  );
+  document.getElementById("searchInput");
 
 const clearSearchButton =
-  document.getElementById(
-    "clearSearchButton"
-  );
+  document.getElementById("clearSearchButton");
 
 const searchHelper =
-  document.getElementById(
-    "searchHelper"
-  );
+  document.getElementById("searchHelper");
 
 const searchEmptyScreen =
-  document.getElementById(
-    "searchEmptyScreen"
-  );
+  document.getElementById("searchEmptyScreen");
 
 const searchResults =
-  document.getElementById(
-    "searchResults"
-  );
+  document.getElementById("searchResults");
 
 const songResults =
-  document.getElementById(
-    "songResults"
-  );
+  document.getElementById("songResults");
 
 const artistResults =
-  document.getElementById(
-    "artistResults"
-  );
+  document.getElementById("artistResults");
 
 const releaseResults =
-  document.getElementById(
-    "releaseResults"
-  );
+  document.getElementById("releaseResults");
 
 const videoResults =
-  document.getElementById(
-    "videoResults"
-  );
+  document.getElementById("videoResults");
 
 const songResultsSection =
-  document.getElementById(
-    "songResultsSection"
-  );
+  document.getElementById("songResultsSection");
 
 const artistResultsSection =
-  document.getElementById(
-    "artistResultsSection"
-  );
+  document.getElementById("artistResultsSection");
 
 const releaseResultsSection =
-  document.getElementById(
-    "releaseResultsSection"
-  );
+  document.getElementById("releaseResultsSection");
 
 const videoResultsSection =
-  document.getElementById(
-    "videoResultsSection"
-  );
+  document.getElementById("videoResultsSection");
 
 const noSearchResults =
-  document.getElementById(
-    "noSearchResults"
-  );
+  document.getElementById("noSearchResults");
 
 const logoutButton =
-  document.getElementById(
-    "logoutButton"
-  );
+  document.getElementById("logoutButton");
 
 const profileInitial =
-  document.getElementById(
-    "profileInitial"
-  );
+  document.getElementById("profileInitial");
 
+/* ==========================================================
+   3. STATE
+========================================================== */
 
 let searchTimer = null;
+let searchRequestController = null;
+let searchRequestSequence = 0;
 
 let currentSearchSongs = [];
 
+const SEARCH_PLACEHOLDER =
+  "https://placehold.co/600x600/111612/35e67a?text=EmnetMusic";
 
-/* ========================================
-   START PAGE
-======================================== */
+const SEARCH_VIDEO_PLACEHOLDER =
+  "https://placehold.co/1280x720/111612/35e67a?text=EmnetMusic";
 
-startSearchPage();
+const searchArtworkCache = new Map();
+const searchThumbnailCache = new Map();
 
+/* ==========================================================
+   4. START SEARCH PAGE
+========================================================== */
 
-async function startSearchPage() {
-
-  await loadPlayerComponent();
-
-  await loadSearchUser();
-
+if (searchPageAuthorized) {
+  startSearchPage();
 }
 
+async function startSearchPage() {
+  try {
+    const user = await loadSearchUser();
 
-/* ========================================
-   LOAD USER
-======================================== */
+    if (!user) {
+      return;
+    }
+
+    if (typeof loadPlayerComponent === "function") {
+      await loadPlayerComponent();
+    }
+
+    setupSearchEvents();
+
+  } catch (error) {
+    console.error(
+      "Search initialization error:",
+      error
+    );
+
+    setSearchHelper(
+      "Unable to initialize search."
+    );
+  }
+}
+
+/* ==========================================================
+   5. LOAD CURRENT USER
+========================================================== */
 
 async function loadSearchUser() {
+  if (typeof getCurrentUser !== "function") {
+    setSearchHelper(
+      "Authentication service is unavailable."
+    );
 
-  const user =
-    await getCurrentUser();
-
-
-  if (!user) {
-    return;
+    return null;
   }
 
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return null;
+  }
 
   const firstName =
     user.fullName
-      ? user.fullName.split(" ")[0]
+      ? user.fullName.trim().split(/\s+/)[0]
       : "E";
 
+  if (profileInitial) {
+    profileInitial.textContent =
+      firstName.charAt(0).toUpperCase();
+  }
 
-  profileInitial.textContent =
-    firstName
-      .charAt(0)
-      .toUpperCase();
-
+  return user;
 }
 
+/* ==========================================================
+   6. LOGOUT
+========================================================== */
 
-/* ========================================
-   LOGOUT
-======================================== */
-
-logoutButton.addEventListener(
-  "click",
-  logout
-);
-
-
-/* ========================================
-   SEARCH INPUT
-======================================== */
-
-searchInput.addEventListener(
-  "input",
-  () => {
-
-    const query =
-      searchInput.value.trim();
-
-
-    clearTimeout(
-      searchTimer
-    );
-
-
-    if (!query) {
-
-      resetSearchPage();
-
-      return;
-
-    }
-
-
-    searchHelper.textContent =
-      `Searching for "${query}"...`;
-
-
-    searchTimer =
-      setTimeout(
-        () => {
-
-          searchEmnetMusic(
-            query
-          );
-
-        },
-        350
-      );
-
-  }
-);
-
-
-/* ========================================
-   CLEAR SEARCH
-======================================== */
-
-clearSearchButton.addEventListener(
-  "click",
-  () => {
-
-    searchInput.value = "";
-
-    searchInput.focus();
-
-    resetSearchPage();
-
-  }
-);
-
-
-/* ========================================
-   SEARCH BACKEND
-======================================== */
-
-async function searchEmnetMusic(
-  query
+if (
+  logoutButton &&
+  typeof logout === "function"
 ) {
+  logoutButton.addEventListener(
+    "click",
+    logout
+  );
+}
+
+/* ==========================================================
+   7. SEARCH EVENTS
+========================================================== */
+
+function setupSearchEvents() {
+  if (searchInput) {
+    searchInput.addEventListener(
+      "input",
+      handleSearchInput
+    );
+  }
+
+  if (clearSearchButton) {
+    clearSearchButton.addEventListener(
+      "click",
+      clearSearch
+    );
+  }
+}
+
+function handleSearchInput() {
+  const query =
+    searchInput.value.trim();
+
+  clearTimeout(searchTimer);
+
+  cancelActiveSearch();
+
+  if (!query) {
+    resetSearchPage();
+    return;
+  }
+
+  setSearchHelper(
+    `Searching for "${query}"...`
+  );
+
+  searchTimer = setTimeout(() => {
+    searchEmnetMusic(query);
+  }, 350);
+}
+
+function clearSearch() {
+  if (!searchInput) return;
+
+  searchInput.value = "";
+  searchInput.focus();
+
+  clearTimeout(searchTimer);
+
+  cancelActiveSearch();
+  resetSearchPage();
+}
+
+function cancelActiveSearch() {
+  searchRequestSequence += 1;
+
+  if (searchRequestController) {
+    searchRequestController.abort();
+    searchRequestController = null;
+  }
+}
+
+/* ==========================================================
+   8. SEARCH BACKEND
+========================================================== */
+
+async function searchEmnetMusic(query) {
+  const requestId =
+    ++searchRequestSequence;
+
+  const controller =
+    new AbortController();
+
+  searchRequestController = controller;
 
   try {
+    const token =
+      typeof getToken === "function"
+        ? getToken()
+        : localStorage.getItem("token");
 
-    const response =
-      await fetch(
-        `${API_BASE_URL}/search?q=${encodeURIComponent(
-          query
-        )}`
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.message ||
-        "Search failed."
-      );
-
+    if (!token) {
+      redirectSearchLogin();
+      return;
     }
 
+    const response = await fetch(
+      `${API_BASE_URL}/search?q=${encodeURIComponent(
+        query
+      )}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        signal: controller.signal
+      }
+    );
+
+    if (
+      response.status === 401 ||
+      response.status === 403
+    ) {
+      redirectSearchLogin();
+      return;
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Search failed."
+      );
+    }
+
+    if (
+      requestId !== searchRequestSequence
+    ) {
+      return;
+    }
 
     const results =
-      data.results ||
-      data;
-
+      data.results || data;
 
     const songs =
-      results.songs || [];
+      Array.isArray(results.songs)
+        ? results.songs
+        : [];
 
     const artists =
-      results.artists || [];
+      Array.isArray(results.artists)
+        ? results.artists
+        : [];
 
     const releases =
-      results.releases || [];
+      Array.isArray(results.releases)
+        ? results.releases
+        : [];
 
     const videos =
-      results.videos || [];
+      Array.isArray(results.videos)
+        ? results.videos
+        : [];
 
+    // Preserve release information for player.js.
+    currentSearchSongs = songs.map((song) => ({
+      ...song,
+      releaseId: song.releaseId
+    }));
 
-    currentSearchSongs =
-      songs;
-
-
-    renderSearchSongs(
-      songs
-    );
-
-    renderSearchArtists(
-      artists
-    );
-
-    renderSearchReleases(
-      releases
-    );
-
-    renderSearchVideos(
-      videos
-    );
-
+    renderSearchSongs(currentSearchSongs);
+    renderSearchArtists(artists);
+    renderSearchReleases(releases);
+    renderSearchVideos(videos);
 
     const totalResults =
       songs.length +
@@ -287,659 +331,785 @@ async function searchEmnetMusic(
       releases.length +
       videos.length;
 
+    if (searchEmptyScreen) {
+      searchEmptyScreen.style.display = "none";
+    }
 
-    searchEmptyScreen.style.display =
-      "none";
+    if (searchResults) {
+      searchResults.classList.add("active");
+    }
 
+    if (noSearchResults) {
+      noSearchResults.classList.toggle(
+        "active",
+        totalResults === 0
+      );
+    }
 
-    searchResults.classList.add(
-      "active"
-    );
-
-
-    noSearchResults.classList.toggle(
-      "active",
-      totalResults === 0
-    );
-
-
-    searchHelper.textContent =
+    setSearchHelper(
       totalResults
         ? `${totalResults} result${
-            totalResults === 1
-              ? ""
-              : "s"
+            totalResults === 1 ? "" : "s"
           } found`
-        : "No matching results found.";
-
+        : "No matching results found."
+    );
 
   } catch (error) {
+    if (error.name === "AbortError") {
+      return;
+    }
+
+    if (
+      requestId !== searchRequestSequence
+    ) {
+      return;
+    }
 
     console.error(
       "Search error:",
       error
     );
 
+    setSearchHelper(
+      "Unable to search EmnetMusic."
+    );
 
-    searchHelper.textContent =
-      "Unable to search EmnetMusic.";
-
+  } finally {
+    if (
+      searchRequestController === controller
+    ) {
+      searchRequestController = null;
+    }
   }
-
 }
 
+function redirectSearchLogin() {
+  window.location.href =
+    `login.html?redirect=${encodeURIComponent(
+      window.location.pathname +
+      window.location.search
+    )}`;
+}
 
-/* ========================================
-   SONG RESULTS
-======================================== */
+/* ==========================================================
+   9. SECURE MEDIA REQUESTS
+========================================================== */
 
-function renderSearchSongs(
-  songs
+async function requestSearchMedia(endpoint) {
+  const response = await fetch(
+    `${API_BASE_URL}${endpoint}`,
+    {
+      method: "GET",
+      cache: "no-store"
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Unable to load media."
+    );
+  }
+
+  const mediaUrl =
+    data.mediaUrl ||
+    data.playbackUrl;
+
+  if (!mediaUrl) {
+    throw new Error(
+      "Media URL was not returned."
+    );
+  }
+
+  return {
+    url: mediaUrl,
+    expiresIn: data.expiresIn
+  };
+}
+
+async function resolveSearchMedia(
+  cache,
+  mediaId,
+  endpoint
 ) {
+  const cached = cache.get(mediaId);
+
+  if (
+    cached &&
+    (
+      cached.expiresAt === null ||
+      Date.now() < cached.expiresAt
+    )
+  ) {
+    return cached.url;
+  }
+
+  const result =
+    await requestSearchMedia(endpoint);
+
+  const expiresAt =
+    Number.isFinite(result.expiresIn) &&
+    result.expiresIn > 0
+      ? Date.now() +
+        Math.max(
+          result.expiresIn - 30,
+          0
+        ) * 1000
+      : null;
+
+  cache.set(mediaId, {
+    url: result.url,
+    expiresAt
+  });
+
+  return result.url;
+}
+
+/* ==========================================================
+   10. SECURE RELEASE ARTWORK
+========================================================== */
+
+async function applySearchReleaseArtwork(
+  image,
+  release
+) {
+  const releaseId =
+    typeof release === "string"
+      ? release
+      : release?._id;
+
+  if (!image || !releaseId) {
+    return;
+  }
+
+  try {
+    const url = await resolveSearchMedia(
+      searchArtworkCache,
+      releaseId,
+      `/media/releases/${encodeURIComponent(
+        releaseId
+      )}/artwork`
+    );
+
+    if (image.isConnected) {
+      image.src = safeSearchImage(url);
+    }
+
+  } catch (error) {
+    console.warn(
+      "Search release artwork unavailable:",
+      releaseId,
+      error.message
+    );
+  }
+}
+
+/* ==========================================================
+   11. SECURE VIDEO THUMBNAILS
+========================================================== */
+
+async function applySearchVideoThumbnail(
+  image,
+  video
+) {
+  if (!image || !video?._id) {
+    return;
+  }
+
+  try {
+    const url = await resolveSearchMedia(
+      searchThumbnailCache,
+      video._id,
+      `/media/videos/${encodeURIComponent(
+        video._id
+      )}/thumbnail`
+    );
+
+    if (image.isConnected) {
+      image.src = safeSearchImage(url);
+    }
+
+  } catch (error) {
+    console.warn(
+      "Search video thumbnail unavailable:",
+      video._id,
+      error.message
+    );
+  }
+}
+
+/* ==========================================================
+   12. SONG RESULTS
+========================================================== */
+
+function renderSearchSongs(songs) {
+  if (!songResults) return;
 
   songResults.innerHTML = "";
 
+  if (songResultsSection) {
+    songResultsSection.style.display =
+      songs.length ? "" : "none";
+  }
 
-  songResultsSection.style.display =
-    songs.length
-      ? ""
-      : "none";
+  const fragment =
+    document.createDocumentFragment();
 
+  songs.forEach((song) => {
+    const row =
+      document.createElement("div");
 
-  songs.forEach(
-    (song) => {
+    row.className = "search-song-row";
 
-      const row =
-        document.createElement(
-          "div"
-        );
+    const release =
+      song.releaseId || {};
 
-
-      row.className =
-        "search-song-row";
-
-
-      const release =
-        song.releaseId || {};
-
-
-      const artistName =
-        getSearchArtistNames(
-          song.primaryArtists
-        );
-
-
-      row.innerHTML = `
-        <img
-          class="search-song-cover"
-          src="${safeSearchImage(
-            release.coverImage
-          )}"
-          alt="${escapeSearchHTML(
-            song.title
-          )}"
-        >
-
-        <div class="search-song-info">
-
-          <h3>
-            ${escapeSearchHTML(
-              song.title ||
-              "Untitled"
-            )}
-          </h3>
-
-          <p>
-            ${escapeSearchHTML(
-              artistName ||
-              "Artist"
-            )}
-          </p>
-
-        </div>
-
-        <div class="search-release-name">
-          ${escapeSearchHTML(
-            release.title ||
-            ""
-          )}
-        </div>
-
-        <button
-          type="button"
-          class="search-play-button"
-          data-song-id="${song._id}"
-          aria-label="Play song"
-        >
-          ▶
-        </button>
-      `;
-
-
-      songResults.appendChild(
-        row
+    const artistName =
+      getSearchArtistNames(
+        song.primaryArtists
       );
 
-    }
-  );
+    const image =
+      document.createElement("img");
 
+    image.className =
+      "search-song-cover";
 
-  songResults
-    .querySelectorAll(
-      ".search-play-button"
-    )
-    .forEach(
-      (button) => {
+    image.alt =
+      song.title || "Song";
 
-        button.addEventListener(
-          "click",
-          () => {
+    image.loading = "lazy";
 
-            const songId =
-              button.dataset.songId;
+    image.src =
+      safeSearchImage(
+        typeof release === "object"
+          ? release.coverImage
+          : null
+      );
 
+    addSearchImageFallback(image);
 
-            const selectedSong =
-              currentSearchSongs.find(
-                (song) =>
-                  song._id === songId
-              );
+    const info =
+      document.createElement("div");
 
+    info.className =
+      "search-song-info";
 
-            if (!selectedSong) {
+    const title =
+      document.createElement("h3");
 
-              console.error(
-                "Selected song was not found."
-              );
+    title.textContent =
+      song.title || "Untitled";
 
-              return;
-            }
+    const artist =
+      document.createElement("p");
 
+    artist.textContent =
+      artistName || "Artist";
 
-            playSong(
-              selectedSong,
-              currentSearchSongs
-            );
+    info.append(title, artist);
 
-          }
+    const releaseName =
+      document.createElement("div");
+
+    releaseName.className =
+      "search-release-name";
+
+    releaseName.textContent =
+      typeof release === "object"
+        ? release.title || ""
+        : "";
+
+    const playButton =
+      document.createElement("button");
+
+    playButton.type = "button";
+    playButton.className =
+      "search-play-button";
+
+    playButton.dataset.songId =
+      song._id;
+
+    playButton.setAttribute(
+      "aria-label",
+      `Play ${song.title || "song"}`
+    );
+
+    playButton.textContent = "▶";
+
+    playButton.addEventListener(
+      "click",
+      () => {
+        if (typeof playSong !== "function") {
+          console.error(
+            "Music player unavailable."
+          );
+
+          return;
+        }
+
+        playSong(
+          song,
+          currentSearchSongs
         );
-
       }
     );
 
+    row.append(
+      image,
+      info,
+      releaseName,
+      playButton
+    );
+
+    fragment.appendChild(row);
+
+    applySearchReleaseArtwork(
+      image,
+      release
+    );
+  });
+
+  songResults.appendChild(fragment);
 }
 
+/* ==========================================================
+   13. ARTIST RESULTS
+========================================================== */
 
-/* ========================================
-   ARTIST RESULTS
-======================================== */
-
-function renderSearchArtists(
-  artists
-) {
+function renderSearchArtists(artists) {
+  if (!artistResults) return;
 
   artistResults.innerHTML = "";
 
+  if (artistResultsSection) {
+    artistResultsSection.style.display =
+      artists.length ? "" : "none";
+  }
 
-  artistResultsSection.style.display =
-    artists.length
-      ? ""
-      : "none";
+  const fragment =
+    document.createDocumentFragment();
 
+  artists.forEach((artist) => {
+    const card =
+      document.createElement("div");
 
-  artists.forEach(
-    (artist) => {
+    card.className =
+      "search-artist-card";
 
-      const card =
-        document.createElement(
-          "div"
+    card.style.cursor = "pointer";
+
+    const image =
+      document.createElement("img");
+
+    image.src =
+      safeSearchImage(
+        artist.profileImage
+      );
+
+    image.alt =
+      artist.stageName || "Artist";
+
+    image.loading = "lazy";
+
+    addSearchImageFallback(image);
+
+    const title =
+      document.createElement("h3");
+
+    title.textContent =
+      artist.stageName || "Artist";
+
+    const description =
+      document.createElement("p");
+
+    description.textContent =
+      artist.verified
+        ? "Verified artist"
+        : "Artist";
+
+    card.append(
+      image,
+      title,
+      description
+    );
+
+    card.addEventListener(
+      "click",
+      () => {
+        if (!artist._id) {
+          return;
+        }
+
+        sessionStorage.setItem(
+          "selectedArtistId",
+          artist._id
         );
 
-
-      card.className =
-        "search-artist-card";
-
-
-      card.style.cursor =
-        "pointer";
-
-
-      card.innerHTML = `
-        <img
-          src="${safeSearchImage(
-            artist.profileImage
-          )}"
-          alt="${escapeSearchHTML(
-            artist.stageName ||
-            "Artist"
-          )}"
-        >
-
-        <h3>
-          ${escapeSearchHTML(
-            artist.stageName ||
-            "Artist"
-          )}
-        </h3>
-
-        <p>
-          ${
-            artist.verified
-              ? "Verified artist"
-              : "Artist"
-          }
-        </p>
-      `;
-
-
-      card.addEventListener(
-        "click",
-        () => {
-
-          if (!artist._id) {
-
-            console.error(
-              "Artist ID is missing from search result:",
-              artist
-            );
-
-            return;
-          }
-
-
-          const params =
-  new URLSearchParams(
-    window.location.search
-  );
-
-
-const artistIdFromUrl =
-  params.get("id");
-
-
-const artistIdFromStorage =
-  sessionStorage.getItem(
-    "selectedArtistId"
-  );
-
-
-const artistId =
-  artistIdFromUrl ||
-  artistIdFromStorage;
-
-
-          /*
-            Save the selected artist ID
-            before leaving Search.
-          */
-
-          sessionStorage.setItem(
-            "selectedArtistId",
+        window.location.href =
+          `artist.html?id=${encodeURIComponent(
             artist._id
-          );
+          )}`;
+      }
+    );
 
+    fragment.appendChild(card);
+  });
 
-          window.location.href =
-            "artist.html";
-
-        }
-      );
-
-
-      artistResults.appendChild(
-        card
-      );
-
-    }
-  );
-
+  artistResults.appendChild(fragment);
 }
 
-/* ========================================
-   RELEASE RESULTS
-======================================== */
+/* ==========================================================
+   14. RELEASE RESULTS
+========================================================== */
 
-function renderSearchReleases(
-  releases
-) {
+function renderSearchReleases(releases) {
+  if (!releaseResults) return;
 
   releaseResults.innerHTML = "";
 
+  if (releaseResultsSection) {
+    releaseResultsSection.style.display =
+      releases.length ? "" : "none";
+  }
 
-  releaseResultsSection.style.display =
-    releases.length
-      ? ""
-      : "none";
+  const fragment =
+    document.createDocumentFragment();
 
+  releases.forEach((release) => {
+    const card =
+      document.createElement("div");
 
-  releases.forEach(
-    (release) => {
+    card.className =
+      "search-release-card";
 
-      const card =
-        document.createElement(
-          "div"
-        );
+    card.style.cursor = "pointer";
 
+    const image =
+      document.createElement("img");
 
-      card.className =
-        "search-release-card";
+    image.src =
+      safeSearchImage(
+        release.coverImage
+      );
 
+    image.alt =
+      release.title || "Release";
 
-      card.style.cursor =
-        "pointer";
+    image.loading = "lazy";
 
+    addSearchImageFallback(image);
 
-      const artistName =
-        getSearchArtistNames(
-          release.primaryArtists
-        );
+    const title =
+      document.createElement("h3");
 
+    title.textContent =
+      release.title || "Untitled";
 
-      card.innerHTML = `
-        <img
-          src="${safeSearchImage(
-            release.coverImage
-          )}"
-          alt="${escapeSearchHTML(
-            release.title ||
-            "Release"
-          )}"
-        >
+    const artist =
+      document.createElement("p");
 
-        <h3>
-          ${escapeSearchHTML(
-            release.title ||
-            "Untitled"
-          )}
-        </h3>
+    artist.textContent =
+      getSearchArtistNames(
+        release.primaryArtists
+      ) ||
+      release.releaseType ||
+      "Release";
 
-        <p>
-          ${escapeSearchHTML(
-            artistName ||
-            release.releaseType ||
-            "Release"
-          )}
-        </p>
-      `;
+    card.append(
+      image,
+      title,
+      artist
+    );
 
-
-      card.addEventListener(
-        "click",
-        () => {
-
-          if (!release._id) {
-
-            console.error(
-              "Release ID is missing:",
-              release
-            );
-
-            return;
-
-          }
-
-window.location.href =
-  `/release?id=${encodeURIComponent(
-    release._id
-  )}`;
-
+    card.addEventListener(
+      "click",
+      () => {
+        if (!release._id) {
+          return;
         }
-      );
 
+        window.location.href =
+          `release.html?id=${encodeURIComponent(
+            release._id
+          )}`;
+      }
+    );
 
-      releaseResults.appendChild(
-        card
-      );
+    fragment.appendChild(card);
 
-    }
-  );
+    applySearchReleaseArtwork(
+      image,
+      release
+    );
+  });
 
+  releaseResults.appendChild(fragment);
 }
 
-/* ========================================
-   VIDEO RESULTS
-======================================== */
+/* ==========================================================
+   15. VIDEO RESULTS
+========================================================== */
 
-function renderSearchVideos(
-  videos
-) {
+function renderSearchVideos(videos) {
+  if (!videoResults) return;
 
   videoResults.innerHTML = "";
 
+  if (videoResultsSection) {
+    videoResultsSection.style.display =
+      videos.length ? "" : "none";
+  }
 
-  videoResultsSection.style.display =
-    videos.length
-      ? ""
-      : "none";
+  const fragment =
+    document.createDocumentFragment();
 
+  videos.forEach((video) => {
+    const card =
+      document.createElement("div");
 
-  videos.forEach(
-    (video) => {
+    card.className =
+      "search-video-card";
 
-      const card =
-        document.createElement(
-          "div"
-        );
+    card.style.cursor = "pointer";
 
+    const artistName =
+      getSearchArtistNames(
+        video.primaryArtists
+      );
 
-      card.className =
-        "search-video-card";
+    const thumbnail =
+      document.createElement("div");
 
+    thumbnail.className =
+      "search-video-thumbnail";
 
-      card.style.cursor =
-        "pointer";
+    const image =
+      document.createElement("img");
 
+    image.src =
+      safeSearchImage(
+        video.thumbnailUrl
+      );
 
-      const artistName =
-        getSearchArtistNames(
-          video.primaryArtists
-        );
+    image.alt =
+      video.title || "Video";
 
+    image.loading = "lazy";
 
-      card.innerHTML = `
-        <div class="search-video-thumbnail">
+    addSearchImageFallback(image);
 
-          <img
-            src="${safeSearchImage(
-              video.thumbnailUrl
-            )}"
-            alt="${escapeSearchHTML(
-              video.title
-            )}"
-          >
+    thumbnail.appendChild(image);
 
-          <div class="search-video-play">
-            <span>▶</span>
-          </div>
+    const overlay =
+      document.createElement("div");
 
-        </div>
+    overlay.className =
+      "search-video-play";
 
-        <h3>
-          ${escapeSearchHTML(
-            video.title ||
-            "Video"
-          )}
-        </h3>
+    const playIcon =
+      document.createElement("span");
 
-        <p>
-          ${escapeSearchHTML(
-            artistName ||
-            video.videoType ||
-            "Video"
-          )}
-        </p>
-      `;
+    playIcon.textContent = "▶";
 
+    overlay.appendChild(playIcon);
+    thumbnail.appendChild(overlay);
 
-      card.addEventListener(
-        "click",
-        () => {
+    const title =
+      document.createElement("h3");
 
-          if (!video._id) {
+    title.textContent =
+      video.title || "Video";
 
-            console.error(
-              "Video ID is missing:",
-              video
-            );
+    const description =
+      document.createElement("p");
 
-            return;
+    description.textContent =
+      artistName ||
+      video.videoType ||
+      "Video";
 
-          }
+    card.append(
+      thumbnail,
+      title,
+      description
+    );
 
-
-          window.location.href =
-            `/video?id=${encodeURIComponent(
-              video._id
-            )}`;
-
+    card.addEventListener(
+      "click",
+      () => {
+        if (!video._id) {
+          return;
         }
-      );
 
+        window.location.href =
+          `video.html?id=${encodeURIComponent(
+            video._id
+          )}`;
+      }
+    );
 
-      videoResults.appendChild(
-        card
-      );
+    fragment.appendChild(card);
 
-    }
-  );
+    applySearchVideoThumbnail(
+      image,
+      video
+    );
+  });
 
+  videoResults.appendChild(fragment);
 }
 
-
-/* ========================================
-   RESET SEARCH
-======================================== */
+/* ==========================================================
+   16. RESET SEARCH
+========================================================== */
 
 function resetSearchPage() {
-
-  searchHelper.textContent =
-    "Find music, artists and videos across EmnetMusic.";
-
-
-  searchEmptyScreen.style.display =
-    "";
-
-
-  searchResults.classList.remove(
-    "active"
+  setSearchHelper(
+    "Find music, artists and videos across EmnetMusic."
   );
 
+  if (searchEmptyScreen) {
+    searchEmptyScreen.style.display = "";
+  }
 
-  noSearchResults.classList.remove(
-    "active"
-  );
+  if (searchResults) {
+    searchResults.classList.remove(
+      "active"
+    );
+  }
 
+  if (noSearchResults) {
+    noSearchResults.classList.remove(
+      "active"
+    );
+  }
 
   currentSearchSongs = [];
 
+  if (songResults) {
+    songResults.innerHTML = "";
+  }
+
+  if (artistResults) {
+    artistResults.innerHTML = "";
+  }
+
+  if (releaseResults) {
+    releaseResults.innerHTML = "";
+  }
+
+  if (videoResults) {
+    videoResults.innerHTML = "";
+  }
 }
 
+/* ==========================================================
+   17. ARTIST NAMES
+========================================================== */
 
-/* ========================================
-   ARTIST NAMES
-======================================== */
-
-function getSearchArtistNames(
-  artists
-) {
-
+function getSearchArtistNames(artists) {
   if (!Array.isArray(artists)) {
     return "";
   }
 
-
   return artists
-    .map(
-      (artist) => {
-
-        if (
-          typeof artist ===
-          "string"
-        ) {
-          return "";
-        }
-
-
-        return (
-          artist.stageName ||
-          artist.fullName ||
-          ""
-        );
-
+    .map((artist) => {
+      if (
+        !artist ||
+        typeof artist !== "object"
+      ) {
+        return "";
       }
-    )
+
+      return (
+        artist.stageName ||
+        artist.fullName ||
+        ""
+      );
+    })
     .filter(Boolean)
     .join(", ");
-
 }
 
+/* ==========================================================
+   18. SAFE IMAGE URL
+========================================================== */
 
-/* ========================================
-   IMAGE FALLBACK
-======================================== */
-
-function safeSearchImage(
-  imageUrl
-) {
-
+function safeSearchImage(imageUrl) {
   if (
-    imageUrl &&
-    typeof imageUrl ===
-      "string"
+    typeof imageUrl !== "string" ||
+    !imageUrl.trim()
   ) {
-
-    return imageUrl;
-
+    return SEARCH_PLACEHOLDER;
   }
 
+  try {
+    const parsed = new URL(
+      imageUrl,
+      window.location.href
+    );
 
-  return (
-    "https://placehold.co/" +
-    "600x600/111612/" +
-    "35e67a?text=EmnetMusic"
-  );
+    if (
+      parsed.protocol === "https:" ||
+      parsed.protocol === "http:"
+    ) {
+      return parsed.href;
+    }
 
+  } catch {
+    // Use placeholder.
+  }
+
+  return SEARCH_PLACEHOLDER;
 }
 
+function addSearchImageFallback(image) {
+  image.addEventListener(
+    "error",
+    () => {
+      const fallback =
+        image.closest(
+          ".search-video-thumbnail"
+        )
+          ? SEARCH_VIDEO_PLACEHOLDER
+          : SEARCH_PLACEHOLDER;
 
-/* ========================================
-   ESCAPE HTML
-======================================== */
+      if (image.src !== fallback) {
+        image.src = fallback;
+      }
+    }
+  );
+}
 
-function escapeSearchHTML(
-  value
-) {
+/* ==========================================================
+   19. HELPER TEXT
+========================================================== */
 
+function setSearchHelper(message) {
+  if (searchHelper) {
+    searchHelper.textContent = message;
+  }
+}
+
+/* ==========================================================
+   20. ESCAPE HTML
+========================================================== */
+
+function escapeSearchHTML(value) {
   if (
     value === null ||
     value === undefined
   ) {
-
     return "";
-
   }
 
-
   return String(value)
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
-
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }

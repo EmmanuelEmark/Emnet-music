@@ -37,27 +37,27 @@
 
       <nav class="sidebar-nav">
 
-        <a href="home.html" class="nav-item active">
+        <a href="home.html" class="nav-item active" >
           <span class="nav-icon">⌂</span>
           <span>Home</span>
         </a>
 
-        <a href="search.html" class="nav-item">
+        <a href="search.html" class="nav-item" >
           <span class="nav-icon">⌕</span>
           <span>Search</span>
         </a>
 
-        <a href="videos.html" class="nav-item">
+        <a href="videos.html" class="nav-item" >
           <span class="nav-icon">▶</span>
           <span>Videos</span>
         </a>
 
-        <a href="library.html" class="nav-item">
+        <a href="library.html" class="nav-item" data-auth-only>
           <span class="nav-icon">▤</span>
           <span>Library</span>
         </a>
 
-        <a href="playlists.html" class="nav-item">
+        <a href="playlists.html" class="nav-item" data-auth-only>
           <span class="nav-icon">＋</span>
           <span>Playlists</span>
         </a>
@@ -65,19 +65,40 @@
       </nav>
 
 
-      <div class="sidebar-bottom">
+      
+<div class="sidebar-bottom">
 
-        <a href="profile.html" class="nav-item">
-          <span class="nav-icon">○</span>
-          <span>Profile</span>
-        </a>
+  <a
+    href="profile.html"
+    class="nav-item"
+    data-auth-only
+  >
+    <span class="nav-icon">○</span>
+    <span>Profile</span>
+  </a>
 
-        <button class="nav-item logout-button" id="logoutButton">
-          <span class="nav-icon">↗</span>
-          <span>Log out</span>
-        </button>
+  <a
+    href="login.html"
+    class="nav-item"
+    id="guestLoginLink"
+    hidden
+  >
+    <span class="nav-icon">↗</span>
+    <span>Log in</span>
+  </a>
 
-      </div>
+  <button
+    type="button"
+    class="nav-item logout-button"
+    id="logoutButton"
+    hidden
+  >
+    <span class="nav-icon">↗</span>
+    <span>Log out</span>
+  </button>
+
+</div>
+
 
     </aside>
 
@@ -111,6 +132,7 @@
             href="notifications.html"
             class="notification-button"
             aria-label="Notifications"
+            data-auth-only
           >
             ♢
           </a>
@@ -317,31 +339,40 @@
   <!-- MOBILE NAVIGATION -->
   <nav class="mobile-nav">
 
-    <a href="home.html" class="mobile-nav-item active">
+    <a href="home.html" class="mobile-nav-item active" >
       <span>⌂</span>
       <small>Home</small>
     </a>
 
-    <a href="videos.html" class="mobile-nav-item">
+    <a href="videos.html" class="mobile-nav-item" >
       <span>▶</span>
       <small>Videos</small>
     </a>
 
-    <a href="search.html" class="mobile-nav-item">
+    <a href="search.html" class="mobile-nav-item" >
       <span>⌕</span>
       <small>Search</small>
     </a>
 
-    <a href="library.html" class="mobile-nav-item">
+    <a href="library.html" class="mobile-nav-item" data-auth-only>
       <span>▤</span>
       <small>Library</small>
     </a>
 
-    <a href="profile.html" class="mobile-nav-item">
+    <a href="profile.html" class="mobile-nav-item" data-auth-only>
       <span>○</span>
       <small>Profile</small>
     </a>
 
+    <a
+  href="login.html"
+  class="mobile-nav-item"
+  id="mobileGuestLoginLink"
+  hidden
+>
+  
+  <small>Log in</small>
+</a>
   </nav>
 
 
@@ -349,6 +380,7 @@
 <div id="playerContainer"></div>
 
 <script src="js/config.js"></script>
+<script src="js/secureMedia.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/player.js"></script>
 <script src="js/home.js"></script>

@@ -5,39 +5,39 @@ const Notification = require("../models/Notification");
 const Follow = require("../models/Follow");
 
 
-/* ========================================
-   CREATE RELEASE
-======================================== */
+const mongoose = require("mongoose");
+const MediaUpload = require("../models/MediaUpload");
+
+
+// ========================================
+// CREATE RELEASE WITH R2 COVER ARTWORK
+// ========================================
 
 const createRelease = async (req, res) => {
-
   try {
-
     const {
       title,
       releaseType,
       coverImage,
+      coverUploadId,
       releaseDate,
       primaryArtists,
       collaboratingArtists,
-    } = req.body;
+    } = req.body || {};
 
-
+    // Validate required information
     if (
-      !title ||
+      typeof title !== "string" ||
+      !title.trim() ||
       !releaseType ||
-      !coverImage ||
       !releaseDate
     ) {
-
       return res.status(400).json({
         success: false,
         message:
-          "Title, release type, cover image and release date are required.",
+          "Title, release type and release date are required.",
       });
-
     }
-
 
     const allowedReleaseTypes = [
       "single",
@@ -45,151 +45,209 @@ const createRelease = async (req, res) => {
       "album",
     ];
 
-
-    if (
-      !allowedReleaseTypes.includes(
-        releaseType
-      )
-    ) {
-
+    if (!allowedReleaseTypes.includes(releaseType)) {
       return res.status(400).json({
         success: false,
         message:
           "Release type must be single, ep or album.",
       });
-
     }
 
+    const parsedReleaseDate = new Date(releaseDate);
 
-    /*
-      Find the approved artist profile
-      belonging to logged-in user.
-    */
-
-    const artist =
-      await Artist.findOne({
-        userId: req.user._id,
-        approvalStatus: "approved",
+    if (Number.isNaN(parsedReleaseDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid release date.",
       });
+    }
 
+    // ========================================
+    // CHECK APPROVED ARTIST
+    // ========================================
+
+    const artist = await Artist.findOne({
+      userId: req.user._id,
+      approvalStatus: "approved",
+    });
 
     if (!artist) {
-
       return res.status(403).json({
         success: false,
         message:
           "You must be an approved artist to create a release.",
       });
-
     }
 
+    // ========================================
+    // VERIFY COVER ARTWORK
+    // ========================================
 
-    /*
-      If primary artists were not supplied,
-      automatically use logged-in artist.
-    */
+    const hasUpload =
+      coverUploadId !== undefined &&
+      coverUploadId !== null &&
+      coverUploadId !== "";
 
-    let finalPrimaryArtists =
-      primaryArtists;
+    const hasLegacyCover =
+      typeof coverImage === "string" &&
+      coverImage.trim().length > 0;
 
-
-    if (
-      !Array.isArray(
-        finalPrimaryArtists
-      ) ||
-      finalPrimaryArtists.length === 0
-    ) {
-
-      finalPrimaryArtists = [
-        artist._id,
-      ];
-
+    if (hasUpload === hasLegacyCover) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Provide either coverUploadId or coverImage, but not both.",
+      });
     }
 
+    let verifiedCover = null;
 
-    const release =
-      new Release({
+    if (hasUpload) {
+      if (!mongoose.isValidObjectId(coverUploadId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid cover upload ID.",
+        });
+      }
 
-        title:
-          title.trim(),
-
-        releaseType,
-
-        coverImage,
-
-        releaseDate,
-
-        primaryArtists:
-          finalPrimaryArtists,
-
-        collaboratingArtists:
-          Array.isArray(
-            collaboratingArtists
-          )
-            ? collaboratingArtists
-            : [],
-
-        sourceType:
-          "artist",
-
-        submittedBy:
-          req.user._id,
-
-        status:
-          "draft",
-
-        visibilityStatus:
-          "visible",
-
+      verifiedCover = await MediaUpload.findOne({
+        _id: coverUploadId,
+        userId: req.user._id,
+        kind: "artwork",
+        status: "ready",
       });
 
+      if (!verifiedCover) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Cover artwork is not confirmed or does not belong to you.",
+        });
+      }
+
+      // Prevent reusing the same artwork upload record.
+      const alreadyUsed = await Release.exists({
+        coverUploadId: verifiedCover._id,
+      });
+
+      if (alreadyUsed) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This cover upload is already attached to a release.",
+        });
+      }
+    }
+
+    // ========================================
+    // PRIMARY ARTISTS
+    // ========================================
+
+    let finalPrimaryArtists = primaryArtists;
+
+    if (
+      !Array.isArray(finalPrimaryArtists) ||
+      finalPrimaryArtists.length === 0
+    ) {
+      finalPrimaryArtists = [artist._id];
+    }
+
+    const finalCollaboratingArtists =
+      collaboratingArtists === undefined
+        ? []
+        : collaboratingArtists;
+
+    if (!Array.isArray(finalCollaboratingArtists)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Collaborating artists must be an array.",
+      });
+    }
+
+    const allArtistIds = [
+      ...finalPrimaryArtists,
+      ...finalCollaboratingArtists,
+    ];
+
+    if (
+      allArtistIds.some(
+        (id) => !mongoose.isValidObjectId(id)
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid artist ID.",
+      });
+    }
+
+    // ========================================
+    // CREATE RELEASE
+    // ========================================
+
+    const release = new Release({
+      title: title.trim(),
+
+      releaseType,
+
+      // Old releases can still use coverImage.
+      coverImage: hasLegacyCover
+        ? coverImage.trim()
+        : "",
+
+      // New R2 releases use the upload reference.
+      coverUploadId: verifiedCover
+        ? verifiedCover._id
+        : null,
+
+      releaseDate: parsedReleaseDate,
+
+      primaryArtists: finalPrimaryArtists,
+
+      collaboratingArtists:
+        finalCollaboratingArtists,
+
+      sourceType: "artist",
+
+      submittedBy: req.user._id,
+
+      status: "draft",
+
+      visibilityStatus: "visible",
+    });
 
     await release.save();
 
+    // ========================================
+    // POPULATE ARTIST DETAILS
+    // ========================================
 
-    const populatedRelease =
-      await Release.findById(
-        release._id
+    const populatedRelease = await Release.findById(
+      release._id
+    )
+      .populate(
+        "primaryArtists",
+        "stageName profileImage verified"
       )
-        .populate(
-          "primaryArtists",
-          "stageName profileImage verified"
-        )
-        .populate(
-          "collaboratingArtists",
-          "stageName profileImage verified"
-        );
-
+      .populate(
+        "collaboratingArtists",
+        "stageName profileImage verified"
+      );
 
     return res.status(201).json({
-
       success: true,
-
-      message:
-        "Release created successfully.",
-
-      release:
-        populatedRelease,
-
+      message: "Release created successfully.",
+      release: populatedRelease,
     });
 
-
   } catch (error) {
-
-    console.error(
-      "Create release error:",
-      error
-    );
-
+    console.error("Create release error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Server error.",
+      message: "Server error.",
     });
-
   }
-
 };
 
 

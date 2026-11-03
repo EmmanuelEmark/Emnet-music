@@ -264,10 +264,11 @@
           </label>
 
           <input
-            type="text"
-            id="editPlaylistName"
-            required
-          >
+          type="text"
+          id="editPlaylistName"
+          maxlength="100"
+          required
+        >
 
         </div>
 
@@ -281,6 +282,7 @@
           <textarea
             id="editPlaylistDescription"
             rows="4"
+            maxlength="300"
           ></textarea>
 
         </div>
@@ -355,6 +357,7 @@
 
 
   <script src="js/config.js"></script>
+  <script src="js/secureMedia.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/player.js"></script>
   <script src="js/playlist.js"></script>

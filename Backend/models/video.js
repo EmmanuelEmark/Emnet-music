@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const videoSchema = new mongoose.Schema(
@@ -19,14 +20,30 @@ const videoSchema = new mongoose.Schema(
       default: "music_video",
     },
 
+    // Existing URL-based videos remain supported.
     videoUrl: {
       type: String,
-      required: true,
+      default: "",
     },
 
+    // Verified R2 video upload.
+    videoUploadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MediaUpload",
+      default: null,
+    },
+
+    // Existing thumbnail URLs remain supported.
     thumbnailUrl: {
       type: String,
-      required: true,
+      default: "",
+    },
+
+    // Verified R2 thumbnail upload.
+    thumbnailUploadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MediaUpload",
+      default: null,
     },
 
     duration: {
@@ -79,43 +96,52 @@ const videoSchema = new mongoose.Schema(
     },
 
     rightsConfirmed: {
-  type: Boolean,
-  default: false,
-},
+      type: Boolean,
+      default: false,
+    },
 
-rightsConfirmedAt: {
-  type: Date,
-  default: null,
-},
+    rightsConfirmedAt: {
+      type: Date,
+      default: null,
+    },
 
     status: {
       type: String,
-      enum: ["draft", "pending", "approved", "rejected"],
+      enum: [
+        "draft",
+        "pending",
+        "approved",
+        "rejected",
+      ],
       default: "draft",
     },
 
     visibilityStatus: {
-  type: String,
-  enum: ["visible", "hidden", "takedown"],
-  default: "visible",
-},
+      type: String,
+      enum: [
+        "visible",
+        "hidden",
+        "takedown",
+      ],
+      default: "visible",
+    },
 
-moderationReason: {
-  type: String,
-  default: "",
-  trim: true,
-},
+    moderationReason: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-moderatedBy: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  default: null,
-},
+    moderatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
 
-moderatedAt: {
-  type: Date,
-  default: null,
-},
+    moderatedAt: {
+      type: Date,
+      default: null,
+    },
 
     submittedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -125,6 +151,18 @@ moderatedAt: {
   },
   {
     timestamps: true,
+  }
+);
+
+// Prevent an R2 video upload from being
+// attached to multiple video records.
+videoSchema.index(
+  { videoUploadId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      videoUploadId: { $type: "objectId" },
+    },
   }
 );
 

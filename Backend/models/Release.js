@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const releaseSchema = new mongoose.Schema(
@@ -16,7 +17,13 @@ const releaseSchema = new mongoose.Schema(
 
     coverImage: {
       type: String,
-      required: true,
+      default: "",
+    },
+
+    coverUploadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MediaUpload",
+      default: null,
     },
 
     coverHash: {
@@ -57,14 +64,14 @@ const releaseSchema = new mongoose.Schema(
     },
 
     rightsConfirmed: {
-  type: Boolean,
-  default: false,
-},
+      type: Boolean,
+      default: false,
+    },
 
-rightsConfirmedAt: {
-  type: Date,
-  default: null,
-},
+    rightsConfirmedAt: {
+      type: Date,
+      default: null,
+    },
 
     status: {
       type: String,
@@ -72,30 +79,28 @@ rightsConfirmedAt: {
       default: "draft",
     },
 
-
     visibilityStatus: {
-  type: String,
-  enum: ["visible", "hidden", "takedown"],
-  default: "visible",
-},
+      type: String,
+      enum: ["visible", "hidden", "takedown"],
+      default: "visible",
+    },
 
-moderationReason: {
-  type: String,
-  default: "",
-  trim: true,
-},
+    moderationReason: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-moderatedBy: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  default: null,
-},
+    moderatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
 
-moderatedAt: {
-  type: Date,
-  default: null,
-},
-
+    moderatedAt: {
+      type: Date,
+      default: null,
+    },
 
     submittedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -108,6 +113,8 @@ moderatedAt: {
   }
 );
 
-const Release = mongoose.model("Release", releaseSchema);
+const Release =
+  mongoose.models.Release ||
+  mongoose.model("Release", releaseSchema);
 
 module.exports = Release;

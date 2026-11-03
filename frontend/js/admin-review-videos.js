@@ -693,31 +693,47 @@ async function approvePendingVideo(
    REJECT
 ======================================== */
 
-async function rejectPendingVideo(
-  videoId,
-  button
-) {
 
-  const confirmed =
-    window.confirm(
-      "Reject this video submission?"
-    );
+async function rejectPendingVideo(videoId, button) {
+  const reason = window.prompt(
+    "Why are you rejecting this video? The artist will see this reason."
+  );
 
-
-  if (!confirmed) {
-
+  // Cancel means do not reject.
+  if (reason === null) {
     return;
-
   }
 
+  const cleanReason = reason.trim();
+
+  if (!cleanReason) {
+    alert("Please provide a reason for rejecting this video.");
+    return;
+  }
+
+  if (cleanReason.length > 1000) {
+    alert("The rejection reason must not exceed 1000 characters.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Reject this video and send the reason to the artist?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
 
   await runVideoAction(
     `${API_BASE_URL}/videos/${videoId}/reject`,
     button,
-    "Rejecting..."
+    "Rejecting...",
+    {
+      reason: cleanReason
+    }
   );
-
 }
+
 
 
 /* ========================================
@@ -727,8 +743,9 @@ async function rejectPendingVideo(
 async function runVideoAction(
   url,
   button,
-  loadingText
-) {
+  loadingText,
+  payload = null
+)  {
 
   const token =
     getToken();
@@ -778,20 +795,21 @@ async function runVideoAction(
       loadingText;
 
 
-    const response =
-      await fetch(
-        url,
-        {
-          method: "PATCH",
+    
+const response = await fetch(url, {
+  method: "PATCH",
 
-          headers: {
+  headers: {
+    Authorization: `Bearer ${token}`,
+    ...(payload ? {
+      "Content-Type": "application/json"
+    } : {})
+  },
 
-            Authorization:
-              `Bearer ${token}`,
-
-          },
-        }
-      );
+  ...(payload ? {
+    body: JSON.stringify(payload)
+  } : {})
+});
 
 
     const data =

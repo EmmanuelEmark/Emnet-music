@@ -1294,3 +1294,11 @@ button {
   }
 
 }
+
+
+/* Authentication-aware navigation */
+.sidebar .nav-item[hidden],
+.mobile-nav .mobile-nav-item[hidden],
+.topbar-actions [hidden] {
+  display: none !important;
+}

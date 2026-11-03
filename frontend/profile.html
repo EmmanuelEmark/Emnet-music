@@ -168,7 +168,7 @@
           id="logoutButton"
         >
           <span class="nav-icon">
-            ↗
+            
           </span>
 
           <span>
@@ -310,10 +310,11 @@
               </label>
 
               <input
-                type="text"
-                id="fullName"
-                required
-              >
+              type="text"
+              id="fullName"
+              autocomplete="name"
+              required
+            >
 
             </div>
 
@@ -370,10 +371,12 @@
             </div>
 
 
-            <div
-              class="profile-form-message"
-              id="profileFormMessage"
-            ></div>
+                 <div
+                class="profile-form-message"
+                id="profileFormMessage"
+                role="status"
+                aria-live="polite"
+              ></div>
 
 
             <button
@@ -489,7 +492,69 @@
 
         </section>
 
+        <!-- EMAIL PREFERENCES -->
 
+<section class="profile-section">
+
+  <div class="profile-section-heading">
+    <div>
+      <p class="profile-section-label">
+        COMMUNICATION
+      </p>
+
+      <h2>Email preferences</h2>
+    </div>
+  </div>
+
+  <form class="profile-form" id="emailPreferencesForm">
+
+    <div class="profile-field">
+      <label for="birthdayGreetings">
+        <input
+          type="checkbox"
+          id="birthdayGreetings"
+        >
+        Receive birthday greetings
+      </label>
+
+      <small>
+        Get a birthday message from Emnet Music.
+      </small>
+    </div>
+
+    <div class="profile-field">
+      <label for="monthlyGreetings">
+        <input
+          type="checkbox"
+          id="monthlyGreetings"
+        >
+        Receive new-month greetings
+      </label>
+
+      <small>
+        Receive a greeting at the beginning of
+        each month. You can opt out anytime.
+      </small>
+    </div>
+
+    <div
+      class="profile-form-message"
+      id="emailPreferencesMessage"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <button
+      type="submit"
+      class="profile-primary-button"
+      id="saveEmailPreferencesButton"
+    >
+      Save email preferences
+    </button>
+
+  </form>
+
+</section>
 
         <!-- ACCOUNT -->
 
@@ -587,6 +652,7 @@
 
 
   <script src="js/config.js"></script>
+  <script src="js/secureMedia.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/player.js"></script>
   <script src="js/profile.js"></script>

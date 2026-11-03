@@ -1,486 +1,556 @@
-if (!protectPage()) {
 
-  throw new Error(
-    "Authentication required."
-  );
+/* ==========================================================
+   EMNET MUSIC — PROFILE & ACCOUNT
+   Profile Details, Email Preferences, Password and Logout
+========================================================== */
 
-}
+/* ==========================================================
+   1. AUTHENTICATION
+========================================================== */
 
+const profilePageAuthorized =
+  typeof protectPage === "function"
+    ? protectPage()
+    : Boolean(
+        typeof getToken === "function" &&
+        getToken()
+      );
 
-/* ========================================
-   ELEMENTS
-======================================== */
+/* ==========================================================
+   2. PAGE ELEMENTS
+========================================================== */
 
 const profileLoading =
-  document.getElementById(
-    "profileLoading"
-  );
-
+  document.getElementById("profileLoading");
 
 const profileError =
-  document.getElementById(
-    "profileError"
-  );
-
+  document.getElementById("profileError");
 
 const profileContent =
-  document.getElementById(
-    "profileContent"
-  );
-
+  document.getElementById("profileContent");
 
 const profileAvatar =
-  document.getElementById(
-    "profileAvatar"
-  );
-
+  document.getElementById("profileAvatar");
 
 const profileAvatarPlaceholder =
-  document.getElementById(
-    "profileAvatarPlaceholder"
-  );
-
+  document.getElementById("profileAvatarPlaceholder");
 
 const profileName =
-  document.getElementById(
-    "profileName"
-  );
-
+  document.getElementById("profileName");
 
 const profileEmail =
-  document.getElementById(
-    "profileEmail"
-  );
-
+  document.getElementById("profileEmail");
 
 const profileRole =
-  document.getElementById(
-    "profileRole"
-  );
-
+  document.getElementById("profileRole");
 
 const verificationBadge =
-  document.getElementById(
-    "verificationBadge"
-  );
-
+  document.getElementById("verificationBadge");
 
 const profileForm =
-  document.getElementById(
-    "profileForm"
-  );
-
+  document.getElementById("profileForm");
 
 const fullName =
-  document.getElementById(
-    "fullName"
-  );
-
+  document.getElementById("fullName");
 
 const profileEmailField =
-  document.getElementById(
-    "profileEmailField"
-  );
-
+  document.getElementById("profileEmailField");
 
 const dateOfBirth =
-  document.getElementById(
-    "dateOfBirth"
-  );
-
+  document.getElementById("dateOfBirth");
 
 const profileImage =
-  document.getElementById(
-    "profileImage"
-  );
-
+  document.getElementById("profileImage");
 
 const profileFormMessage =
-  document.getElementById(
-    "profileFormMessage"
-  );
-
+  document.getElementById("profileFormMessage");
 
 const saveProfileButton =
-  document.getElementById(
-    "saveProfileButton"
-  );
-
+  document.getElementById("saveProfileButton");
 
 const passwordForm =
-  document.getElementById(
-    "passwordForm"
-  );
-
+  document.getElementById("passwordForm");
 
 const currentPassword =
-  document.getElementById(
-    "currentPassword"
-  );
-
+  document.getElementById("currentPassword");
 
 const newPassword =
-  document.getElementById(
-    "newPassword"
-  );
-
+  document.getElementById("newPassword");
 
 const confirmNewPassword =
-  document.getElementById(
-    "confirmNewPassword"
-  );
-
+  document.getElementById("confirmNewPassword");
 
 const passwordFormMessage =
-  document.getElementById(
-    "passwordFormMessage"
-  );
-
+  document.getElementById("passwordFormMessage");
 
 const changePasswordButton =
-  document.getElementById(
-    "changePasswordButton"
-  );
-
+  document.getElementById("changePasswordButton");
 
 const logoutButton =
-  document.getElementById(
-    "logoutButton"
-  );
-
+  document.getElementById("logoutButton");
 
 const profileLogoutButton =
-  document.getElementById(
-    "profileLogoutButton"
-  );
+  document.getElementById("profileLogoutButton");
 
+/* ==========================================================
+   3. EMAIL PREFERENCES ELEMENTS
+========================================================== */
 
-/* ========================================
-   STATE
-======================================== */
+const emailPreferencesForm =
+  document.getElementById("emailPreferencesForm");
+
+const birthdayGreetings =
+  document.getElementById("birthdayGreetings");
+
+const monthlyGreetings =
+  document.getElementById("monthlyGreetings");
+
+const emailPreferencesMessage =
+  document.getElementById("emailPreferencesMessage");
+
+const saveEmailPreferencesButton =
+  document.getElementById("saveEmailPreferencesButton");
+
+/* ==========================================================
+   4. STATE
+========================================================== */
 
 let currentUserAccount = null;
 
+let updatingProfile = false;
+let updatingPassword = false;
+let updatingEmailPreferences = false;
 
-/* ========================================
-   START PAGE
-======================================== */
+const PROFILE_BUTTON_TEXT =
+  saveProfileButton?.textContent?.trim() ||
+  "Save profile";
 
-startProfilePage();
+const PASSWORD_BUTTON_TEXT =
+  changePasswordButton?.textContent?.trim() ||
+  "Change password";
 
+const EMAIL_BUTTON_TEXT =
+  saveEmailPreferencesButton?.textContent?.trim() ||
+  "Save email preferences";
 
-async function startProfilePage() {
+/* ==========================================================
+   5. START PAGE
+========================================================== */
 
-  await loadPlayerComponent();
-
-  await loadAccount();
-
+if (profilePageAuthorized) {
+  startProfilePage();
 }
 
+async function startProfilePage() {
+  setupProfileEvents();
 
-/* ========================================
-   LOAD ACCOUNT
-======================================== */
-
-async function loadAccount() {
-
-  const token =
-    getToken();
-
-
-  if (!token) {
-
-    window.location.href =
-      "login.html";
-
-    return;
-
+  if (typeof loadPlayerComponent === "function") {
+    try {
+      await loadPlayerComponent();
+    } catch (error) {
+      console.warn(
+        "Music player component unavailable:",
+        error
+      );
+    }
   }
 
+  await loadAccount();
+}
 
-  try {
+/* ==========================================================
+   6. AUTHENTICATION HELPERS
+========================================================== */
 
-    const response =
-      await fetch(
-        `${API_BASE_URL}/account/me`,
-        {
-          headers: {
+function getProfileToken() {
+  if (typeof getToken === "function") {
+    return getToken();
+  }
 
-            Authorization:
-              `Bearer ${token}`,
+  return null;
+}
 
-          },
-        }
+function redirectProfileLogin() {
+  window.location.href =
+    `login.html?redirect=${encodeURIComponent(
+      window.location.pathname +
+      window.location.search
+    )}`;
+}
+
+function handleProfileAuthentication(response) {
+  if (response.status === 401) {
+    redirectProfileLogin();
+    return false;
+  }
+
+  return true;
+}
+
+/* ==========================================================
+   7. AUTHENTICATED ACCOUNT REQUEST
+========================================================== */
+
+async function profileRequest(
+  endpoint,
+  options = {}
+) {
+  const token = getProfileToken();
+
+  if (!token) {
+    redirectProfileLogin();
+
+    throw new Error(
+      "Authentication required."
+    );
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}${endpoint}`,
+    {
+      ...options,
+
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  if (!handleProfileAuthentication(response)) {
+    throw new Error(
+      "Your session has expired."
+    );
+  }
+
+  const responseText = await response.text();
+
+  let data = {};
+
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      throw new Error(
+        "Unexpected server response."
       );
+    }
+  }
 
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      `Request failed (${response.status}).`
+    );
+  }
 
-    const data =
-      await response.json();
+  return data;
+}
 
+/* ==========================================================
+   8. LOAD ACCOUNT
+========================================================== */
 
-    console.log(
-      "Account response:",
-      data
+async function loadAccount() {
+  try {
+    const data = await profileRequest(
+      "/account/me"
     );
 
-
-    if (!response.ok) {
-
+    if (
+      !data.user ||
+      typeof data.user !== "object"
+    ) {
       throw new Error(
-        data.message ||
-        "Unable to load account."
+        "Account information was not returned."
       );
-
     }
 
-
-    currentUserAccount =
-      data.user;
-
+    currentUserAccount = data.user;
 
     renderAccount();
 
+    if (profileLoading) {
+      profileLoading.style.display = "none";
+    }
 
-    profileLoading.style.display =
-      "none";
+    if (profileError) {
+      profileError.style.display = "none";
+    }
 
-
-    profileError.style.display =
-      "none";
-
-
-    profileContent.classList.add(
-      "active"
-    );
-
+    if (profileContent) {
+      profileContent.classList.add(
+        "active"
+      );
+    }
 
   } catch (error) {
-
     console.error(
       "Account loading error:",
       error
     );
 
-
     showProfileError(
       error.message ||
       "Unable to load your account."
     );
-
   }
-
 }
 
-
-/* ========================================
-   RENDER ACCOUNT
-======================================== */
+/* ==========================================================
+   9. RENDER ACCOUNT
+========================================================== */
 
 function renderAccount() {
-
   if (!currentUserAccount) {
-
     return;
-
   }
 
-
-  const user =
-    currentUserAccount;
-
+  const user = currentUserAccount;
 
   const name =
-    user.fullName ||
-    "EmnetMusic User";
+    user.fullName || "EmnetMusic User";
 
+  if (profileName) {
+    profileName.textContent = name;
+  }
 
-  profileName.textContent =
-    name;
+  if (profileEmail) {
+    profileEmail.textContent =
+      user.email || "";
+  }
 
+  if (profileRole) {
+    profileRole.textContent =
+      formatRole(user.role);
+  }
 
-  profileEmail.textContent =
-    user.email || "";
+  if (fullName) {
+    fullName.value =
+      user.fullName || "";
+  }
 
+  if (profileEmailField) {
+    profileEmailField.value =
+      user.email || "";
+  }
 
-  profileRole.textContent =
-    formatRole(
-      user.role
-    );
-
-
-  fullName.value =
-    user.fullName || "";
-
-
-  profileEmailField.value =
-    user.email || "";
-
-
-  profileImage.value =
-    user.profileImage || "";
-
-
-  if (user.dateOfBirth) {
-
+  if (dateOfBirth) {
     dateOfBirth.value =
       formatDateForInput(
         user.dateOfBirth
       );
-
-  } else {
-
-    dateOfBirth.value =
-      "";
-
   }
 
+  if (profileImage) {
+    profileImage.value =
+      user.profileImage || "";
+  }
 
   renderProfileImage(
     user.profileImage,
     name
   );
 
-
   renderVerification(
     user.emailVerified
   );
 
+  renderEmailPreferences(
+    user.emailPreferences
+  );
 }
 
+/* ==========================================================
+   10. PROFILE IMAGE
+========================================================== */
 
-/* ========================================
-   PROFILE IMAGE
-======================================== */
-
-function renderProfileImage(
-  imageUrl,
-  name
-) {
+function renderProfileImage(imageUrl, name) {
+  if (
+    !profileAvatar ||
+    !profileAvatarPlaceholder
+  ) {
+    return;
+  }
 
   const firstLetter =
     name
-      ? name.charAt(0)
-          .toUpperCase()
+      ? name.trim().charAt(0).toUpperCase()
       : "E";
 
-
   profileAvatarPlaceholder.textContent =
-    firstLetter;
+    firstLetter || "E";
 
+  const safeUrl =
+    safeProfileImageUrl(imageUrl);
 
-  if (!imageUrl) {
-
-    profileAvatar.style.display =
-      "none";
-
+  if (!safeUrl) {
+    profileAvatar.style.display = "none";
 
     profileAvatarPlaceholder.style.display =
       "grid";
 
+    profileAvatar.removeAttribute("src");
 
     return;
-
   }
 
+  profileAvatar.onerror = () => {
+    profileAvatar.style.display = "none";
 
-  profileAvatar.src =
-    imageUrl;
+    profileAvatarPlaceholder.style.display =
+      "grid";
+  };
 
+  profileAvatar.onload = () => {
+    profileAvatar.style.display = "block";
 
-  profileAvatar.style.display =
-    "block";
+    profileAvatarPlaceholder.style.display =
+      "none";
+  };
 
-
-  profileAvatarPlaceholder.style.display =
-    "none";
-
-
-  profileAvatar.onerror =
-    () => {
-
-      profileAvatar.style.display =
-        "none";
-
-
-      profileAvatarPlaceholder.style.display =
-        "grid";
-
-    };
-
+  profileAvatar.src = safeUrl;
 }
 
+function safeProfileImageUrl(url) {
+  if (
+    typeof url !== "string" ||
+    !url.trim()
+  ) {
+    return null;
+  }
 
-/* ========================================
-   EMAIL VERIFICATION
-======================================== */
+  try {
+    const parsed = new URL(
+      url,
+      window.location.href
+    );
 
-function renderVerification(
-  emailVerified
-) {
+    if (
+      parsed.protocol === "http:" ||
+      parsed.protocol === "https:"
+    ) {
+      return parsed.href;
+    }
+
+  } catch {
+    // Invalid URL.
+  }
+
+  return null;
+}
+
+/* ==========================================================
+   11. EMAIL VERIFICATION STATUS
+========================================================== */
+
+function renderVerification(emailVerified) {
+  if (!verificationBadge) {
+    return;
+  }
 
   verificationBadge.classList.remove(
     "verified"
   );
 
-
   if (emailVerified) {
-
     verificationBadge.textContent =
       "✓ Email verified";
-
 
     verificationBadge.classList.add(
       "verified"
     );
 
-
   } else {
-
     verificationBadge.textContent =
       "Email not verified";
-
   }
-
 }
 
+/* ==========================================================
+   12. EMAIL PREFERENCES
+========================================================== */
 
-/* ========================================
-   UPDATE PROFILE
-======================================== */
+function renderEmailPreferences(preferences) {
+  const saved =
+    preferences &&
+    typeof preferences === "object"
+      ? preferences
+      : {};
 
-profileForm.addEventListener(
-  "submit",
-  updateProfile
-);
-
-
-async function updateProfile(
-  event
-) {
-
-  event.preventDefault();
-
-
-  const token =
-    getToken();
-
-
-  if (!token) {
-
-    window.location.href =
-      "login.html";
-
-    return;
-
+  if (birthdayGreetings) {
+    birthdayGreetings.checked =
+      saved.birthdayGreetings !== false;
   }
 
+  if (monthlyGreetings) {
+    monthlyGreetings.checked =
+      saved.monthlyGreetings === true;
+  }
+}
+
+/* ==========================================================
+   13. SET UP FORM EVENTS
+========================================================== */
+
+function setupProfileEvents() {
+  if (profileForm) {
+    profileForm.addEventListener(
+      "submit",
+      updateProfile
+    );
+  }
+
+  if (passwordForm) {
+    passwordForm.addEventListener(
+      "submit",
+      changePassword
+    );
+  }
+
+  if (emailPreferencesForm) {
+    emailPreferencesForm.addEventListener(
+      "submit",
+      updateEmailPreferences
+    );
+  }
+
+  if (
+    logoutButton &&
+    typeof logout === "function"
+  ) {
+    logoutButton.addEventListener(
+      "click",
+      logout
+    );
+  }
+
+  if (
+    profileLogoutButton &&
+    typeof logout === "function"
+  ) {
+    profileLogoutButton.addEventListener(
+      "click",
+      logout
+    );
+  }
+}
+
+/* ==========================================================
+   14. UPDATE PROFILE
+========================================================== */
+
+async function updateProfile(event) {
+  event.preventDefault();
+
+  if (updatingProfile) {
+    return;
+  }
 
   const newFullName =
-    fullName.value.trim();
-
+    fullName?.value.trim() || "";
 
   if (!newFullName) {
-
     showProfileMessage(
       profileFormMessage,
       "Full name cannot be empty.",
@@ -488,90 +558,57 @@ async function updateProfile(
     );
 
     return;
-
   }
 
+  updatingProfile = true;
+
+  setProfileButtonLoading(
+    saveProfileButton,
+    true,
+    "Saving...",
+    PROFILE_BUTTON_TEXT
+  );
+
+  clearProfileMessage(
+    profileFormMessage
+  );
 
   try {
+    const changes = {
+      fullName: newFullName,
 
-    saveProfileButton.disabled =
-      true;
+      dateOfBirth:
+        dateOfBirth?.value || "",
 
+      profileImage:
+        profileImage?.value.trim() || ""
+    };
 
-    saveProfileButton.textContent =
-      "Saving...";
+    const data = await profileRequest(
+      "/account/profile",
+      {
+        method: "PATCH",
 
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
 
-    clearProfileMessage(
-      profileFormMessage
+        body: JSON.stringify(changes)
+      }
     );
-
-
-    const response =
-      await fetch(
-        `${API_BASE_URL}/account/profile`,
-        {
-          method: "PATCH",
-
-          headers: {
-
-            "Content-Type":
-              "application/json",
-
-            Authorization:
-              `Bearer ${token}`,
-
-          },
-
-          body:
-            JSON.stringify({
-              fullName:
-                newFullName,
-
-              dateOfBirth:
-                dateOfBirth.value ||
-                "",
-
-              profileImage:
-                profileImage.value.trim(),
-            }),
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    console.log(
-      "Profile update:",
-      data
-    );
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.message ||
-        "Unable to update profile."
-      );
-
-    }
-
 
     currentUserAccount = {
       ...currentUserAccount,
-      ...data.user,
+      ...changes,
+      ...(data.user || {})
     };
-
 
     renderAccount();
 
-
     updateStoredUser(
-      data.user
+      currentUserAccount
     );
-
 
     showProfileMessage(
       profileFormMessage,
@@ -580,14 +617,11 @@ async function updateProfile(
       "success"
     );
 
-
   } catch (error) {
-
     console.error(
       "Profile update error:",
       error
     );
-
 
     showProfileMessage(
       profileFormMessage,
@@ -596,70 +630,137 @@ async function updateProfile(
       "error"
     );
 
-
   } finally {
+    updatingProfile = false;
 
-    saveProfileButton.disabled =
-      false;
-
-
-    saveProfileButton.textContent =
-      "Save profile";
-
+    setProfileButtonLoading(
+      saveProfileButton,
+      false,
+      "Saving...",
+      PROFILE_BUTTON_TEXT
+    );
   }
-
 }
 
+/* ==========================================================
+   15. UPDATE EMAIL PREFERENCES
+========================================================== */
 
-/* ========================================
-   CHANGE PASSWORD
-======================================== */
-
-passwordForm.addEventListener(
-  "submit",
-  changePassword
-);
-
-
-async function changePassword(
-  event
-) {
-
+async function updateEmailPreferences(event) {
   event.preventDefault();
 
-
-  const token =
-    getToken();
-
-
-  if (!token) {
-
-    window.location.href =
-      "login.html";
-
+  if (updatingEmailPreferences) {
     return;
-
   }
 
+  updatingEmailPreferences = true;
+
+  setProfileButtonLoading(
+    saveEmailPreferencesButton,
+    true,
+    "Saving...",
+    EMAIL_BUTTON_TEXT
+  );
+
+  if (emailPreferencesMessage) {
+    emailPreferencesMessage.textContent = "";
+  }
+
+  try {
+    const changes = {
+      birthdayGreetings:
+        Boolean(birthdayGreetings?.checked),
+
+      monthlyGreetings:
+        Boolean(monthlyGreetings?.checked)
+    };
+
+    const data = await profileRequest(
+      "/account/email-preferences",
+      {
+        method: "PATCH",
+
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify(changes)
+      }
+    );
+
+    currentUserAccount = {
+      ...currentUserAccount,
+
+      emailPreferences:
+        data.emailPreferences || changes
+    };
+
+    updateStoredUser(
+      currentUserAccount
+    );
+
+    renderEmailPreferences(
+      currentUserAccount.emailPreferences
+    );
+
+    showProfileMessage(
+      emailPreferencesMessage,
+      data.message ||
+      "Email preferences saved successfully.",
+      "success"
+    );
+
+  } catch (error) {
+    console.error(
+      "Email preferences error:",
+      error
+    );
+
+    showProfileMessage(
+      emailPreferencesMessage,
+      error.message ||
+      "Unable to save preferences.",
+      "error"
+    );
+
+  } finally {
+    updatingEmailPreferences = false;
+
+    setProfileButtonLoading(
+      saveEmailPreferencesButton,
+      false,
+      "Saving...",
+      EMAIL_BUTTON_TEXT
+    );
+  }
+}
+
+/* ==========================================================
+   16. CHANGE PASSWORD
+========================================================== */
+
+async function changePassword(event) {
+  event.preventDefault();
+
+  if (updatingPassword) {
+    return;
+  }
 
   const oldPassword =
-    currentPassword.value;
-
+    currentPassword?.value || "";
 
   const password =
-    newPassword.value;
-
+    newPassword?.value || "";
 
   const confirmation =
-    confirmNewPassword.value;
-
+    confirmNewPassword?.value || "";
 
   if (
     !oldPassword ||
     !password ||
     !confirmation
   ) {
-
     showProfileMessage(
       passwordFormMessage,
       "Please complete all password fields.",
@@ -667,12 +768,9 @@ async function changePassword(
     );
 
     return;
-
   }
 
-
   if (password.length < 8) {
-
     showProfileMessage(
       passwordFormMessage,
       "New password must be at least 8 characters.",
@@ -680,15 +778,9 @@ async function changePassword(
     );
 
     return;
-
   }
 
-
-  if (
-    password !==
-    confirmation
-  ) {
-
+  if (password !== confirmation) {
     showProfileMessage(
       passwordFormMessage,
       "New passwords do not match.",
@@ -696,75 +788,42 @@ async function changePassword(
     );
 
     return;
-
   }
 
+  updatingPassword = true;
+
+  setProfileButtonLoading(
+    changePasswordButton,
+    true,
+    "Changing...",
+    PASSWORD_BUTTON_TEXT
+  );
+
+  clearProfileMessage(
+    passwordFormMessage
+  );
 
   try {
+    const data = await profileRequest(
+      "/account/password",
+      {
+        method: "PATCH",
 
-    changePasswordButton.disabled =
-      true;
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
 
-
-    changePasswordButton.textContent =
-      "Changing...";
-
-
-    clearProfileMessage(
-      passwordFormMessage
+        body: JSON.stringify({
+          currentPassword: oldPassword,
+          newPassword: password
+        })
+      }
     );
 
-
-    const response =
-      await fetch(
-        `${API_BASE_URL}/account/password`,
-        {
-          method: "PATCH",
-
-          headers: {
-
-            "Content-Type":
-              "application/json",
-
-            Authorization:
-              `Bearer ${token}`,
-
-          },
-
-          body:
-            JSON.stringify({
-              currentPassword:
-                oldPassword,
-
-              newPassword:
-                password,
-            }),
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    console.log(
-      "Password response:",
-      data
-    );
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.message ||
-        "Unable to change password."
-      );
-
+    if (passwordForm) {
+      passwordForm.reset();
     }
-
-
-    passwordForm.reset();
-
 
     showProfileMessage(
       passwordFormMessage,
@@ -773,14 +832,11 @@ async function changePassword(
       "success"
     );
 
-
   } catch (error) {
-
     console.error(
-      "Password change error:",
+      "Change password error:",
       error
     );
-
 
     showProfileMessage(
       passwordFormMessage,
@@ -789,236 +845,167 @@ async function changePassword(
       "error"
     );
 
-
   } finally {
+    updatingPassword = false;
 
-    changePasswordButton.disabled =
-      false;
-
-
-    changePasswordButton.textContent =
-      "Change password";
-
+    setProfileButtonLoading(
+      changePasswordButton,
+      false,
+      "Changing...",
+      PASSWORD_BUTTON_TEXT
+    );
   }
-
 }
 
+/* ==========================================================
+   17. UPDATE STORED USER
+========================================================== */
 
-/* ========================================
-   LOCAL STORAGE USER
-======================================== */
-
-function updateStoredUser(
-  updatedUser
-) {
-
+function updateStoredUser(updatedUser) {
   try {
-
     const storedUser =
-      getStoredUser();
-
+      typeof getStoredUser === "function"
+        ? getStoredUser()
+        : JSON.parse(
+            localStorage.getItem("emnetUser") ||
+            "null"
+          );
 
     const combinedUser = {
       ...(storedUser || {}),
-      ...(updatedUser || {}),
+      ...(updatedUser || {})
     };
-
 
     localStorage.setItem(
       "emnetUser",
-      JSON.stringify(
-        combinedUser
-      )
+      JSON.stringify(combinedUser)
     );
 
-
   } catch (error) {
-
     console.error(
       "Unable to update stored user:",
       error
     );
-
   }
-
 }
 
+/* ==========================================================
+   18. DATE FORMAT
+========================================================== */
 
-/* ========================================
-   LOGOUT
-======================================== */
-
-if (logoutButton) {
-
-  logoutButton.addEventListener(
-    "click",
-    logout
-  );
-
-}
-
-
-if (profileLogoutButton) {
-
-  profileLogoutButton.addEventListener(
-    "click",
-    logout
-  );
-
-}
-
-
-/* ========================================
-   DATE
-======================================== */
-
-function formatDateForInput(
-  dateValue
-) {
-
-  const date =
-    new Date(
-      dateValue
-    );
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
+function formatDateForInput(dateValue) {
+  if (!dateValue) {
     return "";
-
   }
 
-
-  const year =
-    date.getFullYear();
-
-
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(
-      2,
-      "0"
+  if (typeof dateValue === "string") {
+    const match = dateValue.match(
+      /^\d{4}-\d{2}-\d{2}/
     );
 
+    if (match) {
+      return match[0];
+    }
+  }
 
-  const day =
-    String(
-      date.getDate()
-    ).padStart(
-      2,
-      "0"
-    );
+  const date = new Date(dateValue);
 
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
 
-  return `${year}-${month}-${day}`;
-
+  return date.toISOString().slice(0, 10);
 }
 
+/* ==========================================================
+   19. FORMAT ROLE
+========================================================== */
 
-/* ========================================
-   ROLE
-======================================== */
-
-function formatRole(
-  role
-) {
-
+function formatRole(role) {
   if (!role) {
-
     return "Listener";
-
   }
-
 
   return String(role)
-    .replaceAll(
-      "_",
-      " "
-    )
+    .replaceAll("_", " ")
     .replace(
       /\b\w/g,
-      (letter) =>
-        letter.toUpperCase()
+      (letter) => letter.toUpperCase()
     );
-
 }
 
-
-/* ========================================
-   FORM MESSAGE
-======================================== */
+/* ==========================================================
+   20. FORM MESSAGE HELPERS
+========================================================== */
 
 function showProfileMessage(
   element,
   message,
   type
 ) {
-
   if (!element) {
-
     return;
-
   }
 
-
-  element.textContent =
-    message;
-
+  element.textContent = message;
 
   element.className =
     `profile-form-message ${type}`;
-
 }
 
-
-function clearProfileMessage(
-  element
-) {
-
+function clearProfileMessage(element) {
   if (!element) {
-
     return;
-
   }
 
-
-  element.textContent =
-    "";
-
+  element.textContent = "";
 
   element.className =
     "profile-form-message";
-
 }
 
+/* ==========================================================
+   21. BUTTON LOADING HELPER
+========================================================== */
 
-/* ========================================
-   PAGE ERROR
-======================================== */
-
-function showProfileError(
-  message
+function setProfileButtonLoading(
+  button,
+  loading,
+  loadingText,
+  normalText
 ) {
+  if (!button) {
+    return;
+  }
 
-  profileLoading.style.display =
-    "none";
+  button.disabled = loading;
 
+  button.textContent =
+    loading
+      ? loadingText
+      : normalText;
+}
 
-  profileContent.classList.remove(
-    "active"
-  );
+/* ==========================================================
+   22. PAGE ERROR
+========================================================== */
 
+function showProfileError(message) {
+  if (profileLoading) {
+    profileLoading.style.display = "none";
+  }
 
-  profileError.style.display =
-    "block";
+  if (profileContent) {
+    profileContent.classList.remove(
+      "active"
+    );
+  }
 
+  if (profileError) {
+    profileError.style.display = "block";
 
-  profileError.textContent =
-    message;
-
+    profileError.textContent =
+      message ||
+      "Unable to load your account.";
+  }
 }

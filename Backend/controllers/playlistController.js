@@ -50,8 +50,9 @@ const getMyPlaylists = async (req, res) => {
       .populate({
         path: "songs",
         match: {
-          status: "approved",
-        },
+  status: "approved",
+  visibilityStatus: "visible",
+},
         populate: [
           {
             path: "primaryArtists",
@@ -69,10 +70,25 @@ const getMyPlaylists = async (req, res) => {
         ],
       });
 
+
+      const availablePlaylists = playlists.map((playlist) => {
+  const data = playlist.toObject();
+
+  data.songs = data.songs.filter(
+    (song) =>
+      song &&
+      song.releaseId &&
+      song.releaseId.status === "approved"
+  );
+
+  return data;
+});
+
+
     return res.status(200).json({
-      success: true,
-      playlists,
-    });
+  success: true,
+  playlists: availablePlaylists,
+});
   } catch (error) {
     console.error(error.message);
 
@@ -94,8 +110,9 @@ const getMyPlaylistById = async (req, res) => {
     }).populate({
       path: "songs",
       match: {
-        status: "approved",
-      },
+  status: "approved",
+  visibilityStatus: "visible",
+},
       populate: [
         {
           path: "primaryArtists",
@@ -120,10 +137,22 @@ const getMyPlaylistById = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      playlist,
-    });
+
+    const availablePlaylist = playlist.toObject();
+
+availablePlaylist.songs = availablePlaylist.songs.filter(
+  (song) =>
+    song &&
+    song.releaseId &&
+    song.releaseId.status === "approved"
+);
+
+
+   return res.status(200).json({
+  success: true,
+  playlist: availablePlaylist,
+});
+
   } catch (error) {
     console.error(error.message);
 
@@ -154,18 +183,27 @@ const addSongToPlaylist = async (req, res) => {
       });
     }
 
-    const song = await Song.findOne({
-      _id: songId,
-      status: "approved",
-    });
+const song = await Song.findOne({
+  _id: songId,
+  status: "approved",
+  visibilityStatus: "visible",
+}).populate({
+  path: "releaseId",
+  select: "status",
+});
 
-    if (!song) {
-      return res.status(404).json({
-        success: false,
-        message: "Song not found.",
-      });
-    }
+if (
+  !song ||
+  !song.releaseId ||
+  song.releaseId.status !== "approved"
+) {
+  return res.status(404).json({
+    success: false,
+    message: "Song is not available.",
+  });
+}
 
+    
     const alreadyExists = playlist.songs.some(
       (id) => id.toString() === songId
     );
