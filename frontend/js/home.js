@@ -424,9 +424,7 @@ async function applyReleaseArtwork(
     const url = await resolveSecureImage(
       homeArtworkCache,
       releaseId,
-      `/media/releases/${encodeURIComponent(
-        releaseId
-      )}/artwork`
+      `/api/media/releases/${encodeURIComponent(releaseId)}/artwork`
     );
 
     if (image.isConnected) {
@@ -460,13 +458,15 @@ async function applyVideoThumbnail(
   }
 
   try {
-    const url = await resolveSecureImage(
-      homeThumbnailCache,
-      videoId,
-      `/media/videos/${encodeURIComponent(
-        videoId
-      )}/thumbnail`
-    );
+    
+  const url = await resolveSecureImage(
+  homeThumbnailCache,
+  videoId,
+  `/api/media/videos/${encodeURIComponent(
+    videoId
+  )}/thumbnail`
+);
+
 
     if (image.isConnected) {
       image.src = safeImage(url);
