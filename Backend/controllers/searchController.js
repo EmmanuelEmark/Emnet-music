@@ -1,7 +1,7 @@
 const Artist = require("../models/Artist");
 const Song = require("../models/song");
 const Release = require("../models/Release");
-const Video = require("../models/Video");
+const Video = require("../models/video");
 
 
 const search = async (req, res) => {
