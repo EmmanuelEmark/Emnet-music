@@ -1302,3 +1302,192 @@ button {
 .topbar-actions [hidden] {
   display: none !important;
 }
+
+
+
+/* ========================================
+   EMNET MUSIC OFFICIAL LOGO
+======================================== */
+
+/* SIDEBAR BRAND */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  /* Remove the old green box */
+  background: transparent;
+  border: none;
+  border-radius: 0;
+
+  color: inherit;
+  font-size: inherit;
+}
+
+.brand-logo {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  background: transparent;
+}
+
+/* BRAND TEXT */
+
+.brand-text {
+  min-width: 0;
+}
+
+.brand-title {
+  display: block;
+  color: #ffffff;
+}
+
+.brand-slogan {
+  display: block;
+  color: var(--muted);
+}
+
+/* ========================================
+   HERO OFFICIAL LOGO
+======================================== */
+
+.hero-symbol {
+  position: relative;
+  z-index: 4;
+
+  width: 180px;
+  height: 180px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Remove the old green tile */
+  background: transparent;
+  border: none;
+  border-radius: 0;
+
+  color: inherit;
+  font-size: inherit;
+
+  /* Preserve the logo's original orientation */
+  transform: none;
+
+  /* Remove the old rectangular glow */
+  box-shadow: none;
+}
+
+.hero-brand-logo {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  background: transparent;
+
+  filter: drop-shadow(
+    0 18px 35px rgba(53, 230, 122, 0.18)
+  );
+}
+
+/* ========================================
+   RESPONSIVE LOGO
+======================================== */
+
+@media (max-width: 900px) {
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+  }
+
+  /* The original mobile layout hides hero-art.
+     Keep that existing behavior unchanged. */
+}
+
+@media (max-width: 650px) {
+
+  .hero-symbol {
+    width: 140px;
+    height: 140px;
+  }
+
+}
+
+/* ========================================
+   ACCESSIBILITY
+======================================== */
+
+.brand:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 5px;
+  border-radius: 6px;
+}
+
+
+/* ========================================
+   MOBILE HEADER LOGO
+======================================== */
+
+.mobile-brand {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .mobile-brand-logo {
+    display: block;
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+  }
+
+  .topbar {
+    gap: 12px;
+  }
+
+  .topbar > div:first-of-type {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .mobile-brand-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .topbar h1 {
+    font-size: 18px;
+  }
+
+  .welcome-label {
+    font-size: 9px;
+  }
+}
