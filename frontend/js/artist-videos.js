@@ -12,9 +12,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const pendingVideos = document.getElementById("pendingVideos");
   const draftVideos = document.getElementById("draftVideos");
 
-  const apiBase = typeof API_BASE_URL !== "undefined"
-    ? API_BASE_URL.replace(/\/$/, "")
+  
+const apiBase =
+  typeof API_BASE_URL !== "undefined"
+    ? `${API_BASE_URL.replace(/\/$/, "")}/api`
     : "http://localhost:5000/api";
+
 
   const token = typeof getToken === "function"
     ? getToken()
@@ -390,13 +393,27 @@ actions.appendChild(editLink);
       }
     });
 
-    let result;
+    
+let result;
 
-    try {
-      result = await response.json();
-    } catch {
-      throw new Error("Invalid response from server.");
-    }
+const contentType =
+  response.headers.get("content-type") || "";
+
+if (!contentType.includes("application/json")) {
+  throw new Error(
+    `Unable to load videos. Server returned HTTP ${response.status}.`
+  );
+}
+
+try {
+  result = await response.json();
+} catch {
+  throw new Error(
+    "Unable to read the server response. Please try again."
+  );
+}
+
+
 
     if (!response.ok || result.success === false) {
       throw new Error(
