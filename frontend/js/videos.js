@@ -145,7 +145,7 @@ async function loadVideos() {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/videos`
+      `${API_BASE_URL}/api/videos`
     );
 
     const data = await response.json();
@@ -374,9 +374,10 @@ function renderVideos() {
    7. SECURE VIDEO THUMBNAILS
 ===================================================== */
 
+
 async function requestSecureThumbnail(videoId) {
   const response = await fetch(
-    `${API_BASE_URL}/media/videos/${encodeURIComponent(
+    `${API_BASE_URL}/api/media/videos/${encodeURIComponent(
       videoId
     )}/thumbnail`,
     {
@@ -410,6 +411,7 @@ async function requestSecureThumbnail(videoId) {
     expiresIn: data.expiresIn
   };
 }
+
 
 async function getCachedVideoThumbnail(videoId) {
   const cached =
