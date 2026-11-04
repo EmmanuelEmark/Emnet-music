@@ -203,22 +203,29 @@ async function loadArtistDashboard() {
     );
 
 
-    const response =
-      await fetch(
-        `${API_BASE_URL}/artists/me`,
-        {
-          headers: {
-
-            Authorization:
-              `Bearer ${token}`,
-
-          },
-        }
-      );
+    
+const response = await fetch(
+  `${API_BASE_URL}/api/artists/me`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);
 
 
-    const data =
-      await response.json();
+
+    
+const contentType =
+  response.headers.get("content-type") || "";
+
+if (!contentType.includes("application/json")) {
+  throw new Error(
+    "Unable to load artist information. Please try again."
+  );
+}
+
+const data = await response.json();
 
 
     console.log(
