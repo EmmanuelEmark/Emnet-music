@@ -184,15 +184,15 @@ async function startVideoPage() {
    6. LOAD VIDEO DETAILS
 ========================================================= */
 
-async function loadVideo() {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/videos/${encodeURIComponent(
-        videoId
-      )}`
-    );
 
-    const data = await response.json();
+async function requestSecureVideoUrl() {
+  return requestVideoMedia(
+    `/api/media/videos/${encodeURIComponent(
+      videoId
+    )}/play`
+  );
+}
+
 
     if (!response.ok) {
       throw new Error(
@@ -357,7 +357,7 @@ function getVideoDocumentId(value) {
 
 async function requestSecureVideoUrl() {
   return requestVideoMedia(
-    `/media/videos/${encodeURIComponent(
+    `/api/media/videos/${encodeURIComponent(
       videoId
     )}/play`
   );
@@ -422,7 +422,7 @@ async function loadSecureVideoThumbnail() {
 
   try {
     const result = await requestVideoMedia(
-      `/media/videos/${encodeURIComponent(
+      /api/media/videos/`${encodeURIComponent(
         videoId
       )}/thumbnail`
     );
@@ -456,7 +456,7 @@ async function applySecureReleaseArtwork(
 
   try {
     const result = await requestVideoMedia(
-      `/media/releases/${encodeURIComponent(
+      `/api/media/releases/${encodeURIComponent(
         releaseId
       )}/artwork`
     );
@@ -1041,7 +1041,7 @@ async function beginVideoViewSession() {
 
   viewStartPromise = (async () => {
     const url =
-      `${API_BASE_URL}/views/videos/${encodeURIComponent(
+      `${API_BASE_URL}/api/views/videos/${encodeURIComponent(
         videoId
       )}/start`;
 
@@ -1155,7 +1155,7 @@ async function recordVideoView() {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/views/videos/${encodeURIComponent(
+      `${API_BASE_URL}/api/views/videos/${encodeURIComponent(
         videoId
       )}`,
       {
@@ -1328,7 +1328,7 @@ async function loadVideoLikes() {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/video-likes/${encodeURIComponent(
+      `${API_BASE_URL}/api/video-likes/${encodeURIComponent(
         videoId
       )}`
     );
@@ -1358,7 +1358,7 @@ async function loadVideoLikes() {
     }
 
     const myResponse = await fetch(
-      `${API_BASE_URL}/video-likes/${encodeURIComponent(
+      `${API_BASE_URL}/api/video-likes/${encodeURIComponent(
         videoId
       )}/me`,
       {
@@ -1426,7 +1426,7 @@ async function toggleVideoLike() {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/video-likes/${encodeURIComponent(
+      `${API_BASE_URL}/api/video-likes/${encodeURIComponent(
         videoId
       )}`,
       {
@@ -1521,7 +1521,7 @@ async function loadRelatedVideoThumbnail(
 
   try {
     const result = await requestVideoMedia(
-      `/media/videos/${encodeURIComponent(
+      `/api/media/videos/${encodeURIComponent(
         relatedId
       )}/thumbnail`
     );
@@ -1656,7 +1656,7 @@ async function loadRelatedVideos() {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/videos`
+     `${API_BASE_URL}/api/videos`
     );
 
     const data = await response.json();
