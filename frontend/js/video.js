@@ -145,6 +145,7 @@ if (logoutButton) {
   logoutButton.addEventListener("click", logout);
 }
 
+
 /* =========================================================
    5. START VIDEO PAGE
 ========================================================= */
@@ -153,17 +154,6 @@ startVideoPage();
 
 async function startVideoPage() {
   updateVideoNavigation();
-
-  if (typeof loadPlayerComponent === "function") {
-    try {
-      await loadPlayerComponent();
-    } catch (error) {
-      console.warn(
-        "Music player component unavailable:",
-        error
-      );
-    }
-  }
 
   if (!videoId) {
     showVideoError("Video ID is missing.");
@@ -177,28 +167,49 @@ async function startVideoPage() {
 
   setupVideoPlayerEvents();
 
+  // Load video details immediately.
+  // Do not wait for the music player component.
   await loadVideo();
+
+  // Initialize the music player independently.
+  if (typeof loadPlayerComponent === "function") {
+    try {
+      await loadPlayerComponent();
+    } catch (error) {
+      console.warn(
+        "Music player component unavailable:",
+        error
+      );
+    }
+  }
 }
 
 /* =========================================================
    6. LOAD VIDEO DETAILS
 ========================================================= */
 
+async function loadVideo() {
+  try {
+    if (videoLoading) {
+      videoLoading.style.display = "";
+    }
 
-async function requestSecureVideoUrl() {
-  return requestVideoMedia(
-    `/api/media/videos/${encodeURIComponent(
-      videoId
-    )}/play`
-  );
-}
+    if (videoError) {
+      videoError.style.display = "none";
+      videoError.textContent = "";
+    }
 
+    const response = await fetch(
+      `${API_BASE_URL}/api/videos/${encodeURIComponent(videoId)}`
+    );
 
     if (!response.ok) {
       throw new Error(
-        data.message || "Unable to load video."
+        `Unable to load video (${response.status}).`
       );
     }
+
+    const data = await response.json();
 
     if (!data.video) {
       throw new Error(
@@ -241,7 +252,10 @@ async function requestSecureVideoUrl() {
 
   } catch (error) {
     console.error("Video page error:", error);
-    showVideoError(error.message);
+
+    showVideoError(
+      error.message || "Unable to load video."
+    );
   }
 }
 
@@ -415,6 +429,7 @@ async function loadSecureVideoPlayback() {
    10. SECURE VIDEO THUMBNAIL
 ========================================================= */
 
+
 async function loadSecureVideoThumbnail() {
   if (!currentVideo || !mainVideoPlayer) {
     return;
@@ -422,7 +437,7 @@ async function loadSecureVideoThumbnail() {
 
   try {
     const result = await requestVideoMedia(
-      /api/media/videos/`${encodeURIComponent(
+      `/api/media/videos/${encodeURIComponent(
         videoId
       )}/thumbnail`
     );
