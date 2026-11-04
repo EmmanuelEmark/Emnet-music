@@ -138,9 +138,11 @@ if (loginForm) {
           to backend.
         */
 
+        
         const response =
           await fetch(
-            `${API_BASE_URL}/auth/login`,
+            `${API_BASE_URL}/api/auth/login`,
+
             {
               method: "POST",
 
@@ -158,28 +160,53 @@ if (loginForm) {
           );
 
 
-        const data =
-          await response.json();
-
-
         
+const contentType =
+  response.headers.get("content-type") || "";
 
+if (!contentType.includes("application/json")) {
+  throw new Error(
+    "The server returned an unexpected response."
+  );
+}
 
-        /*
-          Login failed.
-        */
+const data = await response.json();
 
-        if (!response.ok) {
+/*
+  Login failed.
+*/
+if (!response.ok) {
 
-          showMessage(
-            data.message ||
-            "Unable to sign in.",
-            "error"
-          );
+  if (
+    response.status === 400 ||
+    response.status === 401
+  ) {
+    showMessage(
+      "Wrong email or password.",
+      "error"
+    );
 
-          return;
+    return;
+  }
 
-        }
+  if (response.status === 403) {
+    showMessage(
+      data.message || "Access denied.",
+      "error"
+    );
+
+    return;
+  }
+
+  showMessage(
+    data.message ||
+    "Unable to sign in. Please try again.",
+    "error"
+  );
+
+  return;
+}
+
 
 
         /*
@@ -365,10 +392,14 @@ if (
         );
 
 
-        showMessage(
-          "Unable to connect to EmnetMusic.",
-          "error"
-        );
+        
+showMessage(
+  error instanceof TypeError
+    ? "Unable to connect to Emnet Music. Please try again."
+    : "Something went wrong. Please try again later.",
+  "error"
+);
+
 
 
       } finally {
