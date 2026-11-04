@@ -172,7 +172,9 @@ async function loadMyReleases() {
     const response =
       await fetch(
 
-        `${API_BASE_URL}/releases/mine`,
+        
+      `${API_BASE_URL}/api/releases/mine`,
+
 
         {
 
@@ -188,8 +190,18 @@ async function loadMyReleases() {
       );
 
 
-    const data =
-      await response.json();
+    
+const contentType =
+  response.headers.get("content-type") || "";
+
+if (!contentType.includes("application/json")) {
+  throw new Error(
+    `Unable to load releases. Server returned HTTP ${response.status}.`
+  );
+}
+
+const data = await response.json();
+
 
 
     console.log(
@@ -722,7 +734,9 @@ async function submitRelease() {
     const response =
       await fetch(
 
-        `${API_BASE_URL}/releases/${selectedReleaseId}/submit`,
+        
+    `${API_BASE_URL}/api/releases/${encodeURIComponent(selectedReleaseId)}/submit`,
+
 
         {
 
