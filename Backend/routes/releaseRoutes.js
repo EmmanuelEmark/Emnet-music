@@ -10,7 +10,7 @@ const {
   createRelease,
 
   getMyReleases,
-
+  getMyReleaseById,
   getReleaseById,
 
   getPublicReleases,
@@ -71,6 +71,21 @@ router.get(
   authorize("artist"),
   getMyReleases
 );
+
+
+
+/* ========================================
+   ARTIST - GET ONE OWN RELEASE
+======================================== */
+
+router.get(
+  "/mine/:releaseId",
+  protect,
+  authorize("artist"),
+  getMyReleaseById
+);
+
+
 
 
 /* ========================================

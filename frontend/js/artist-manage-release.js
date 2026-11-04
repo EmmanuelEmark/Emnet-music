@@ -151,13 +151,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         try {
-            
+             
             const response = await fetch(
-                `${API_BASE_URL}/api/releases/${encodeURIComponent(releaseId)}`,
+                `${API_BASE_URL}/api/releases/mine/${encodeURIComponent(releaseId)}`,
                 {
                     method: "GET",
                     headers: {
-                        "Authorization": `Bearer ${token}`
+                        Authorization: `Bearer ${token}`
                     }
                 }
             );

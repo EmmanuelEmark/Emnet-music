@@ -354,6 +354,77 @@ const getMyReleases =
   };
 
 
+
+
+  
+/* ========================================
+   GET ONE ARTIST'S OWN RELEASE
+======================================== */
+
+const getMyReleaseById = async (req, res) => {
+  try {
+    const { releaseId } = req.params;
+
+    if (!mongoose.isValidObjectId(releaseId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid release ID."
+      });
+    }
+
+    // Only retrieve a release created by
+    // the currently authenticated artist.
+    const release = await Release.findOne({
+      _id: releaseId,
+      submittedBy: req.user._id
+    })
+      .populate(
+        "primaryArtists",
+        "stageName profileImage verified"
+      )
+      .populate(
+        "collaboratingArtists",
+        "stageName profileImage verified"
+      );
+
+    if (!release) {
+      return res.status(404).json({
+        success: false,
+        message: "Release not found or access denied."
+      });
+    }
+
+    // Include draft, pending, approved and
+    // rejected songs for the artist's release.
+    const songs = await Song.find({
+      releaseId: release._id
+    })
+      .sort({ trackNumber: 1 });
+
+    return res.status(200).json({
+      success: true,
+      release,
+      songs
+    });
+
+  } catch (error) {
+    console.error(
+      "Get my release details error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to load release details."
+    });
+  }
+};
+
+
+
+
+
+
 /* ========================================
    GET ONE PUBLIC RELEASE
 ======================================== */
@@ -1354,22 +1425,15 @@ const getPublicReleases =
    EXPORT CONTROLLERS
 ======================================== */
 
+
 module.exports = {
-
   createRelease,
-
   getMyReleases,
-
+  getMyReleaseById,
   getReleaseById,
-
   getPublicReleases,
-
   submitReleaseForReview,
-
   getPendingReleases,
-
   approveRelease,
-
-  rejectRelease,
-
+  rejectRelease
 };
