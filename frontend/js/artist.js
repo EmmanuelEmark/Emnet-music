@@ -209,11 +209,12 @@ if (logoutButton) {
 
 async function loadArtistProfile() {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/artists/profile/${encodeURIComponent(
-        artistId
-      )}`
-    );
+const response = await fetch(
+  `${API_BASE_URL}/api/artists/profile/${encodeURIComponent(
+    artistId
+  )}`
+);
+
 
     const data = await response.json();
 
@@ -463,13 +464,14 @@ async function applyArtistReleaseArtwork(
   }
 
   try {
-    const url = await resolveArtistMedia(
-      artistArtworkCache,
-      releaseId,
-      `/media/releases/${encodeURIComponent(
-        releaseId
-      )}/artwork`
-    );
+    
+const url = await resolveArtistMedia(
+  artistArtworkCache,
+  releaseId,
+  `/api/media/releases/${encodeURIComponent(
+    releaseId
+  )}/artwork`
+);
 
     if (image.isConnected) {
       image.src = safeArtistImage(url);
@@ -500,13 +502,15 @@ async function applyArtistVideoThumbnail(
   }
 
   try {
-    const url = await resolveArtistMedia(
-      artistThumbnailCache,
-      videoId,
-      `/media/videos/${encodeURIComponent(
-        videoId
-      )}/thumbnail`
-    );
+    
+const url = await resolveArtistMedia(
+  artistThumbnailCache,
+  videoId,
+  `/api/media/videos/${encodeURIComponent(
+    videoId
+  )}/thumbnail`
+);
+
 
     if (image.isConnected) {
       image.src = safeArtistImage(url);
@@ -961,10 +965,12 @@ async function toggleArtistFollow() {
   followArtistButton.disabled = true;
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/listener/follows/${encodeURIComponent(
-        artistId
-      )}`,
+    
+const response = await fetch(
+  `${API_BASE_URL}/api/listener/follows/${encodeURIComponent(
+    artistId
+  )}`,
+
       {
         method: isFollowingArtist
           ? "DELETE"

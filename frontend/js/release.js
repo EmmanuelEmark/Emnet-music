@@ -184,11 +184,13 @@ if (logoutButton) {
 
 async function loadRelease() {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/releases/${encodeURIComponent(
-        releaseId
-      )}`
-    );
+    
+const response = await fetch(
+  `${API_BASE_URL}/api/releases/${encodeURIComponent(
+    releaseId
+  )}`
+);
+
 
     const data = await response.json();
 
@@ -331,15 +333,17 @@ async function loadSecureReleaseArtwork() {
   }
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/media/releases/${encodeURIComponent(
-        releaseId
-      )}/artwork`,
-      {
-        method: "GET",
-        cache: "no-store"
-      }
-    );
+    
+const response = await fetch(
+  `${API_BASE_URL}/api/media/releases/${encodeURIComponent(
+    releaseId
+  )}/artwork`,
+  {
+    method: "GET",
+    cache: "no-store"
+  }
+);
+
 
     const data = await response.json();
 
@@ -427,17 +431,17 @@ function renderReleaseArtistLink() {
     return;
   }
 
-  releaseArtistName.style.cursor = "pointer";
+ 
+releaseArtistName.onclick = () => {
+  sessionStorage.setItem(
+    "selectedArtistId",
+    artistId
+  );
 
-  releaseArtistName.onclick = () => {
-    sessionStorage.setItem(
-      "selectedArtistId",
-      artistId
-    );
+  window.location.href =
+    `artist.html?id=${encodeURIComponent(artistId)}`;
+};
 
-    window.location.href =
-      "artist.html";
-  };
 }
 
 /* =====================================================

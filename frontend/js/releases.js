@@ -1,8 +1,4 @@
-if (!protectPage()) {
-  throw new Error(
-    "Authentication required."
-  );
-}
+
 
 
 /* ========================================
@@ -62,12 +58,22 @@ startReleasesPage();
 
 
 async function startReleasesPage() {
-
-  await loadPlayerComponent();
-
+  // Load releases immediately for guests and listeners.
   await loadAllReleases();
 
+  // Initialize the music player separately.
+  if (typeof loadPlayerComponent === "function") {
+    try {
+      await loadPlayerComponent();
+    } catch (error) {
+      console.warn(
+        "Music player component unavailable:",
+        error
+      );
+    }
+  }
 }
+
 
 
 /* ========================================
@@ -92,10 +98,11 @@ async function loadAllReleases() {
 
   try {
 
-    const response =
-      await fetch(
-        `${API_BASE_URL}/releases`
-      );
+    
+const response = await fetch(
+  `${API_BASE_URL}/api/releases`
+);
+
 
 
     const data =
@@ -127,12 +134,20 @@ async function loadAllReleases() {
       { success: true, releases: [...] }
     */
 
-    allReleases =
-      Array.isArray(
-        data.releases
-      )
-        ? data.releases
-        : [];
+    
+allReleases = Array.isArray(data.releases)
+  ? data.releases.filter((release) => {
+      return (
+        release &&
+        release._id &&
+        release.status === "approved" &&
+        (
+          release.visibilityStatus === "visible" ||
+          release.visibilityStatus == null
+        )
+      );
+    })
+  : [];
 
 
     releasesLoading.style.display =
