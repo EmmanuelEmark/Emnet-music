@@ -151,8 +151,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         try {
+            
             const response = await fetch(
-                `${API_BASE_URL}/songs/release/${encodeURIComponent(releaseId)}`,
+                `${API_BASE_URL}/api/releases/${encodeURIComponent(releaseId)}`,
                 {
                     method: "GET",
                     headers: {
@@ -161,7 +162,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             );
 
-            const data = await response.json().catch(() => ({}));
+
+           
+                    const contentType =
+                        response.headers.get("content-type") || "";
+
+                    if (!contentType.includes("application/json")) {
+                        throw new Error(
+                            `Unable to load this release. Server returned HTTP ${response.status}.`
+                        );
+                    }
+
+                    const data = await response.json();
+
 
             if (!response.ok) {
                 throw new Error(
@@ -237,17 +250,21 @@ document.addEventListener("DOMContentLoaded", async () => {
             button.textContent = "Submitting...";
 
             try {
-                const response = await fetch(
-                    `${API_BASE_URL}/releases/${encodeURIComponent(releaseId)}/submit`,
-                    {
-                        method: "PATCH",
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({})
-                    }
-                );
+               
+                    const response = await fetch(
+                        `${API_BASE_URL}/api/releases/${encodeURIComponent(releaseId)}/submit`,
+                        {
+                            method: "PATCH",
+                            headers: {
+                                "Authorization": `Bearer ${token}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                rightsConfirmed: true
+                            })
+                        }
+                    );
+
 
                 const data = await response.json().catch(() => ({}));
 
