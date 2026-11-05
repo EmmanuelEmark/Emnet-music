@@ -116,7 +116,9 @@ async function loadNotifications() {
 
     const response =
       await fetch(
-        `${API_BASE_URL}/notifications`,
+
+      `${API_BASE_URL}/api/notifications`,
+
         {
           headers: {
 
@@ -128,8 +130,18 @@ async function loadNotifications() {
       );
 
 
-    const data =
-      await response.json();
+
+const contentType =
+  response.headers.get("content-type") || "";
+
+if (!contentType.includes("application/json")) {
+  throw new Error(
+    `Unable to load notifications. Server returned HTTP ${response.status}.`
+  );
+}
+
+const data = await response.json();
+
 
 
     console.log(
@@ -413,7 +425,9 @@ async function markNotificationRead(
 
     const response =
       await fetch(
-        `${API_BASE_URL}/notifications/${notification._id}/read`,
+
+    `${API_BASE_URL}/api/notifications/${encodeURIComponent(notification._id)}/read`,
+
         {
           method: "PATCH",
 
@@ -517,7 +531,9 @@ async function markAllNotificationsRead() {
 
     const response =
       await fetch(
-        `${API_BASE_URL}/notifications/read-all`,
+
+    `${API_BASE_URL}/api/notifications/read-all`,
+
         {
           method: "PATCH",
 

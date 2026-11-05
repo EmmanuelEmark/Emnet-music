@@ -111,6 +111,27 @@ if (
   );
 }
 
+
+async function parseLibraryResponse(response) {
+  const contentType =
+    response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      `Library request failed: HTTP ${response.status}.`
+    );
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    throw new Error(
+      "Unable to read the library response."
+    );
+  }
+}
+
+
 /* =====================================================
    6. LOAD LIBRARY
 ===================================================== */
@@ -138,17 +159,19 @@ async function loadLibrary() {
       playlistsResult
     ] = await Promise.allSettled([
       fetch(
-        `${API_BASE_URL}/listener/likes`,
+
+      `${API_BASE_URL}/api/listener/likes`,
+
         { headers }
       ),
 
       fetch(
-        `${API_BASE_URL}/listener/follows`,
+        `${API_BASE_URL}/api/listener/follows`,
         { headers }
       ),
 
       fetch(
-        `${API_BASE_URL}/playlists`,
+        `${API_BASE_URL}/api/playlists`,
         { headers }
       )
     ]);
@@ -177,7 +200,7 @@ async function loadLibrary() {
     if (likesResult.status === "fulfilled") {
       try {
         const response = likesResult.value;
-        const data = await response.json();
+        const data = await parseLibraryResponse(response);
 
         if (!response.ok) {
           throw new Error(
@@ -214,7 +237,7 @@ async function loadLibrary() {
     if (followsResult.status === "fulfilled") {
       try {
         const response = followsResult.value;
-        const data = await response.json();
+       const data = await parseLibraryResponse(response);
 
         if (!response.ok) {
           throw new Error(
@@ -252,7 +275,7 @@ async function loadLibrary() {
     if (playlistsResult.status === "fulfilled") {
       try {
         const response = playlistsResult.value;
-        const data = await response.json();
+        const data = await parseLibraryResponse(response);
 
         if (!response.ok) {
           throw new Error(
@@ -385,10 +408,9 @@ function getLibraryReleaseId(song) {
 /* =====================================================
    9. SECURE ARTWORK REQUEST
 ===================================================== */
-
 async function requestLibraryArtwork(releaseId) {
   const response = await fetch(
-    `${API_BASE_URL}/media/releases/${encodeURIComponent(
+    `${API_BASE_URL}/api/media/releases/${encodeURIComponent(
       releaseId
     )}/artwork`,
     {
@@ -397,7 +419,7 @@ async function requestLibraryArtwork(releaseId) {
     }
   );
 
-  const data = await response.json();
+  const data = await parseLibraryResponse(response);
 
   if (!response.ok) {
     throw new Error(
@@ -421,6 +443,8 @@ async function requestLibraryArtwork(releaseId) {
     expiresIn: Number(data.expiresIn)
   };
 }
+
+
 
 /* =====================================================
    10. ARTWORK CACHE

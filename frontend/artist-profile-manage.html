@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Manage Artist Profile | EmnetMusic</title>
+
+  <link rel="stylesheet" href="css/artist-profile-manage.css">
+</head>
+
+<body>
+  <div class="artist-layout">
+
+    <aside class="artist-sidebar">
+      <div class="artist-brand">
+        <div class="artist-brand-mark">E</div>
+        <div>
+          <strong>EmnetMusic</strong>
+          <small>Artist Centre</small>
+        </div>
+      </div>
+
+      <nav class="artist-navigation">
+        <a href="artist-dashboard.html" class="artist-nav-item">
+          Dashboard
+        </a>
+
+        <a href="artist-releases.html" class="artist-nav-item">
+          Releases
+        </a>
+
+        <a href="artist-releases.html" class="artist-nav-item">
+          Songs
+        </a>
+
+        <a href="artist-videos.html" class="artist-nav-item">
+          Videos
+        </a>
+
+        <a href="artist-profile-manage.html"
+           class="artist-nav-item active">
+          Artist Profile
+        </a>
+
+        <a href="notifications.html" class="artist-nav-item">
+          Notifications
+        </a>
+      </nav>
+
+      <a href="artist-dashboard.html" class="back-link">
+        ← Back to Dashboard
+      </a>
+    </aside>
+
+    <main class="artist-main">
+      <header class="artist-header">
+        <p class="eyebrow">ARTIST CENTRE</p>
+        <h1>Manage artist profile</h1>
+        <p>
+          Update how listeners see you on EmnetMusic.
+        </p>
+      </header>
+
+      <div id="profileMessage"
+           class="profile-message"
+           role="status"
+           aria-live="polite"></div>
+
+      <p id="profileLoading">Loading your artist profile...</p>
+
+      <form id="artistProfileForm" hidden>
+
+        <section class="profile-card">
+          <h2>Artist information</h2>
+
+          <label for="stageName">Stage name</label>
+          <input
+            type="text"
+            id="stageName"
+            maxlength="100"
+            required
+          >
+
+          <label for="country">Country</label>
+          <input
+            type="text"
+            id="country"
+            maxlength="100"
+            required
+          >
+
+          <label for="bio">Biography</label>
+          <textarea
+            id="bio"
+            rows="6"
+            maxlength="500"
+            placeholder="Tell listeners about your music and journey"
+          ></textarea>
+        </section>
+
+        <section class="profile-card">
+          <h2>Artist images</h2>
+
+          <p class="help-text">
+            Enter the HTTPS URLs of your uploaded images.
+            Direct image uploads will be added when media
+            storage is connected to this form.
+          </p>
+
+          <label for="profileImage">Profile image URL</label>
+          <input
+            type="url"
+            id="profileImage"
+            placeholder="https://example.com/profile.jpg"
+          >
+
+          <img
+            id="profileImagePreview"
+            class="image-preview avatar-preview"
+            alt="Artist profile preview"
+            hidden
+          >
+
+          <label for="coverImage">Cover image URL</label>
+          <input
+            type="url"
+            id="coverImage"
+            placeholder="https://example.com/cover.jpg"
+          >
+
+          <img
+            id="coverImagePreview"
+            class="image-preview cover-preview"
+            alt="Artist cover preview"
+            hidden
+          >
+        </section>
+
+        <section class="profile-card">
+          <h2>Profile status</h2>
+
+          <p>
+            Approval:
+            <strong id="approvalStatus">—</strong>
+          </p>
+
+          <p>
+            Featured:
+            <strong id="featuredStatus">—</strong>
+          </p>
+
+          <p class="help-text">
+            These statuses are managed by EmnetMusic administrators.
+          </p>
+        </section>
+
+        <button
+          type="submit"
+          id="saveProfileButton"
+          class="save-button"
+        >
+          Save changes
+        </button>
+
+      </form>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/artist-profile-manage.js"></script>
+</body>
+</html>

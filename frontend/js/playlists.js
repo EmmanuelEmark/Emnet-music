@@ -145,7 +145,9 @@ async function playlistsRequest(
   }
 
   const response = await fetch(
-    `${API_BASE_URL}${endpoint}`,
+
+    `${API_BASE_URL.replace(/\/$/, "")}/api${endpoint}`,
+
     {
       ...options,
 

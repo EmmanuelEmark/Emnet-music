@@ -172,9 +172,11 @@ async function playlistRequest(
     );
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}${endpoint}`,
-    {
+
+const response = await fetch(
+  `${API_BASE_URL.replace(/\/$/, "")}/api${endpoint}`,
+  {
+
       ...options,
       headers: {
         ...(options.headers || {}),
@@ -190,30 +192,24 @@ async function playlistRequest(
   }
 
   // DELETE requests may return 204 No Content.
-  const responseText = await response.text();
 
-  let data = {};
+const contentType =
+  response.headers.get("content-type") || "";
 
-  if (responseText) {
-    try {
-      data = JSON.parse(responseText);
-    } catch {
-      if (!response.ok) {
-        throw new Error(
-          "Unexpected server response."
-        );
-      }
-    }
-  }
+if (!contentType.includes("application/json")) {
+  throw new Error(
+    `Unable to process playlists. Server returned HTTP ${response.status}.`
+  );
+}
 
-  if (!response.ok) {
-    throw new Error(
-      data.message ||
-      `Request failed (${response.status}).`
-    );
-  }
+let data;
 
-  return data;
+try {
+  data = await response.json();
+} catch {
+  throw new Error(
+    "Unable to read the playlists response. Please try again."
+  );
 }
 
 /* =====================================================
@@ -1031,26 +1027,27 @@ if (
   );
 }
 
-/* =====================================================
-   19. ERROR HANDLING
-===================================================== */
+      /* =====================================================
+        19. ERROR HANDLING
+      ===================================================== */
 
-function showPlaylistError(message) {
-  if (playlistLoading) {
-    playlistLoading.style.display = "none";
-  }
+        function showPlaylistError(message) {
+          if (playlistLoading) {
+            playlistLoading.style.display = "none";
+          }
 
-  if (playlistContent) {
-    playlistContent.classList.remove(
-      "active"
-    );
-  }
+          if (playlistContent) {
+            playlistContent.classList.remove(
+              "active"
+            );
+          }
 
-  if (playlistError) {
-    playlistError.style.display = "block";
+          if (playlistError) {
+            playlistError.style.display = "block";
 
-    playlistError.textContent =
-      message ||
-      "Unable to load playlist.";
-  }
-}
+            playlistError.textContent =
+              message ||
+              "Unable to load playlist.";
+          }
+        }
+      }

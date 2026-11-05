@@ -8,11 +8,11 @@ const {
   approveArtist,
   rejectArtist,
   getMyArtistProfile,
+  updateMyArtistProfile,
   getPublicArtistProfile,
   featureArtist,
   unfeatureArtist,
 } = require("../controllers/artistController");
-
 
 
 const {
@@ -32,6 +32,15 @@ router.get(
   authorize("artist"),
   getMyArtistProfile
 );
+
+
+router.patch(
+  "/me",
+  protect,
+  authorize("artist"),
+  updateMyArtistProfile
+);
+
 
 router.get(
   "/pending",

@@ -1,4 +1,5 @@
 const Artist = require("../models/Artist");
+
 const User = require("../models/User");
 const Release = require("../models/Release");
 const Song = require("../models/song");
@@ -196,6 +197,156 @@ const getMyArtistProfile = async (req, res) => {
 };
 
 
+
+const updateMyArtistProfile = async (req, res) => {
+  try {
+    const artist = await Artist.findOne({
+      userId: req.user._id,
+    });
+
+    if (!artist) {
+      return res.status(404).json({
+        success: false,
+        message: "Artist profile not found.",
+      });
+    }
+
+    const allowedFields = [
+      "stageName",
+      "bio",
+      "country",
+      "profileImage",
+      "coverImage",
+    ];
+
+    for (const field of allowedFields) {
+      if (!Object.prototype.hasOwnProperty.call(req.body, field)) {
+        continue;
+      }
+
+      const value = req.body[field];
+
+      if (typeof value !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: `${field} must be text.`,
+        });
+      }
+
+      const cleanedValue = value.trim();
+
+      if (field === "country" && !cleanedValue) {
+        return res.status(400).json({
+          success: false,
+          message: "Country cannot be empty.",
+        });
+      }
+
+
+
+      if (field === "stageName") {
+        if (!cleanedValue) {
+          return res.status(400).json({
+            success: false,
+            message: "Stage name cannot be empty.",
+          });
+        }
+
+        if (cleanedValue.length > 100) {
+          return res.status(400).json({
+            success: false,
+            message: "Stage name is too long.",
+          });
+        }
+
+        const normalizedStageName =
+          cleanedValue.toLowerCase();
+
+        const existingArtist = await Artist.findOne({
+          stageNameNormalized: normalizedStageName,
+          _id: { $ne: artist._id },
+        });
+
+        if (existingArtist) {
+          return res.status(409).json({
+            success: false,
+            message: "This stage name is already in use.",
+          });
+        }
+
+        artist.stageName = cleanedValue;
+        artist.stageNameNormalized = normalizedStageName;
+      } else {
+        if (
+          field === "bio" &&
+          cleanedValue.length > 500
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Biography cannot exceed 500 characters.",
+          });
+        }
+
+        if (
+          field === "country" &&
+          cleanedValue.length > 100
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Country name is too long.",
+          });
+        }
+
+        if (
+          ["profileImage", "coverImage"].includes(field) &&
+          cleanedValue &&
+          !/^https:\/\/\S+$/i.test(cleanedValue)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `${field} must be a valid HTTPS image URL.`,
+          });
+        }
+
+        artist[field] = cleanedValue;
+      }
+    }
+
+    await artist.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Artist profile updated successfully.",
+      artist,
+    });
+  } catch (error) {
+    console.error("Update artist profile error:", error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "This stage name is already in use.",
+      });
+    }
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update artist profile.",
+    });
+  }
+};
+
+
+
+
+
 const getPublicArtistProfile = async (req, res) => {
   try {
     const { artistId } = req.params;
@@ -383,12 +534,14 @@ const unfeatureArtist = async (req, res) => {
 };
 
 
+
 module.exports = {
   applyAsArtist,
   getPendingArtists,
   approveArtist,
   rejectArtist,
   getMyArtistProfile,
+  updateMyArtistProfile,
   getPublicArtistProfile,
   featureArtist,
   unfeatureArtist,

@@ -205,8 +205,10 @@ async function profileRequest(
     );
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}${endpoint}`,
+
+const response = await fetch(
+  `${API_BASE_URL.replace(/\/$/, "")}/api${endpoint}`,
+
     {
       ...options,
 
@@ -223,19 +225,21 @@ async function profileRequest(
     );
   }
 
-  const responseText = await response.text();
 
-  let data = {};
+const responseText = await response.text();
 
-  if (responseText) {
-    try {
-      data = JSON.parse(responseText);
-    } catch {
-      throw new Error(
-        "Unexpected server response."
-      );
-    }
+let data = {};
+
+if (responseText) {
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    throw new Error(
+      `Unable to process account request. Server returned HTTP ${response.status}.`
+    );
   }
+}
+
 
   if (!response.ok) {
     throw new Error(
