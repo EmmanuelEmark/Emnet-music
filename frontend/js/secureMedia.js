@@ -341,25 +341,18 @@ const THUMBNAIL_RETRY_MS = 30 * 1000;
 
     })();
 
-    pendingArtworkRequests.set(
-      key,
-      request
-    );
+       pendingArtworkRequests.set(key, request);
 
     try {
-
       return await request;
 
-    } } finally {
+    } finally {
+      pendingMediaControllers.delete(controller);
 
-  pendingMediaControllers.delete(controller);
-
-  if (pendingArtworkRequests.get(key) === request) {
-    pendingArtworkRequests.delete(key);
-  }
-
-}
-
+      if (pendingArtworkRequests.get(key) === request) {
+        pendingArtworkRequests.delete(key);
+      }
+    }
   }
 
  function getArtworkExpiry(releaseId) {

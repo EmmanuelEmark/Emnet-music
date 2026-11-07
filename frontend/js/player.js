@@ -1190,13 +1190,13 @@ async function loadLikedSongs() {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/listener/likes`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+  `${API_BASE_URL}/api/listener/likes`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);
 
     if (playerHandleUnauthorized(response)) {
       return;
@@ -1267,7 +1267,7 @@ async function toggleCurrentSongLike() {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/listener/likes/${encodeURIComponent(
+      `${API_BASE_URL}/api//listener/likes/${encodeURIComponent(
         songId
       )}`,
       {
@@ -1586,7 +1586,7 @@ async function loadPlayerPlaylists(
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/playlists`,
+      `${API_BASE_URL}/api/playlists`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -1781,7 +1781,7 @@ async function addCurrentSongToPlaylist(
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/playlists/${encodeURIComponent(
+      `${API_BASE_URL}/api/playlists/${encodeURIComponent(
         playlistId
       )}/songs/${encodeURIComponent(songId)}`,
       {
@@ -1924,7 +1924,7 @@ async function beginSongPlaySession(session) {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/plays/songs/${encodeURIComponent(
+      `${API_BASE_URL}/api/plays/songs/${encodeURIComponent(
         session.songId
       )}/start`,
       {
@@ -2100,7 +2100,7 @@ async function submitQualifiedSongPlay(session) {
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/plays/songs/${encodeURIComponent(
+      `${API_BASE_URL}/api/plays/songs/${encodeURIComponent(
         session.songId
       )}`,
       {
