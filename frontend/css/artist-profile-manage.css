@@ -222,3 +222,122 @@ textarea {
     padding: 20px;
   }
 }
+
+
+
+/* ========================================
+   ARTIST IMAGE UPLOAD CONTROLS
+======================================== */
+
+input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  background: #0e1510;
+  border: 1px dashed #3c5844;
+  border-radius: 12px;
+  color: #c7d4cb;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+input[type="file"]:hover {
+  border-color: #1ed760;
+  background: #142219;
+}
+
+input[type="file"]:focus-visible {
+  outline: 2px solid #1ed760;
+  outline-offset: 3px;
+}
+
+input[type="file"]::file-selector-button {
+  padding: 11px 17px;
+  margin-right: 14px;
+  background: #1ed760;
+  border: none;
+  border-radius: 8px;
+  color: #08110b;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: #40e67b;
+}
+
+.avatar-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid #1ed760;
+  background: #0e1510;
+  object-fit: cover;
+}
+
+.cover-preview {
+  width: 100%;
+  height: auto;
+  max-height: 260px;
+  aspect-ratio: 3 / 1;
+  border-radius: 14px;
+  border: 1px solid #35453a;
+  background: #0e1510;
+  object-fit: cover;
+}
+
+#imageUploadStatus {
+  margin-top: 22px;
+  min-height: 24px;
+  color: #1ed760;
+  font-size: 14px;
+}
+
+.save-button {
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.save-button:hover:not(:disabled) {
+  background: #40e67b;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(30, 215, 96, 0.16);
+}
+
+.save-button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+}
+
+@media (max-width: 760px) {
+  input[type="file"] {
+    font-size: 13px;
+  }
+
+  input[type="file"]::file-selector-button {
+    margin-right: 8px;
+    padding: 10px 12px;
+  }
+
+  .avatar-preview {
+    width: 105px;
+    height: 105px;
+  }
+
+  .cover-preview {
+    max-height: 190px;
+  }
+
+  .save-button {
+    width: 100%;
+  }
+}

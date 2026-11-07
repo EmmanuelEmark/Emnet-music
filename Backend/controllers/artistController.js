@@ -1,4 +1,6 @@
 const Artist = require("../models/Artist");
+const mongoose = require("mongoose");
+const MediaUpload = require("../models/MediaUpload");
 
 const User = require("../models/User");
 const Release = require("../models/Release");
@@ -197,6 +199,23 @@ const getMyArtistProfile = async (req, res) => {
 };
 
 
+const validateArtistImageUpload = async ({
+  uploadId,
+  userId,
+  kind,
+}) => {
+  if (!mongoose.isValidObjectId(uploadId)) {
+    return null;
+  }
+
+  return MediaUpload.findOne({
+    _id: uploadId,
+    userId,
+    kind,
+    status: "ready",
+  });
+};
+
 
 const updateMyArtistProfile = async (req, res) => {
   try {
@@ -212,12 +231,10 @@ const updateMyArtistProfile = async (req, res) => {
     }
 
     const allowedFields = [
-      "stageName",
-      "bio",
-      "country",
-      "profileImage",
-      "coverImage",
-    ];
+  "stageName",
+  "bio",
+  "country",
+];
 
     for (const field of allowedFields) {
       if (!Object.prototype.hasOwnProperty.call(req.body, field)) {
@@ -311,6 +328,61 @@ const updateMyArtistProfile = async (req, res) => {
         artist[field] = cleanedValue;
       }
     }
+
+    
+const imageFields = [
+  {
+    requestField: "profileImageUploadId",
+    modelField: "profileImageUploadId",
+    legacyField: "profileImage",
+    kind: "artistProfile",
+  },
+  {
+    requestField: "coverImageUploadId",
+    modelField: "coverImageUploadId",
+    legacyField: "coverImage",
+    kind: "artistCover",
+  },
+];
+
+for (const imageField of imageFields) {
+  if (
+    !Object.prototype.hasOwnProperty.call(
+      req.body,
+      imageField.requestField
+    )
+  ) {
+    continue;
+  }
+
+  const uploadId = req.body[imageField.requestField];
+
+  if (typeof uploadId !== "string") {
+    return res.status(400).json({
+      success: false,
+      message: `${imageField.requestField} must be a valid upload ID.`,
+    });
+  }
+
+  const upload = await validateArtistImageUpload({
+    uploadId,
+    userId: req.user._id,
+    kind: imageField.kind,
+  });
+
+  if (!upload) {
+    return res.status(400).json({
+      success: false,
+      message:
+        `Invalid or unconfirmed ${imageField.kind} upload.`,
+    });
+  }
+
+  artist[imageField.modelField] = upload._id;
+
+  // The new R2 image replaces the old manually entered URL.
+  artist[imageField.legacyField] = "";
+}
 
     await artist.save();
 

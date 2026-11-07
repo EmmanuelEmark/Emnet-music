@@ -57,6 +57,7 @@ const LIBRARY_PLACEHOLDER =
   "https://placehold.co/600x600/111612/35e67a?text=EmnetMusic";
 
 const libraryArtworkCache = new Map();
+const libraryArtistImageCache = new Map();
 
 /* =====================================================
    4. START LIBRARY
@@ -735,6 +736,79 @@ function playLibrarySong(songId, songs) {
   playSong(selectedSong, queue);
 }
 
+
+
+/* =====================================================
+   SECURE ARTIST PROFILE IMAGES — CLOUDFLARE R2
+===================================================== */
+
+async function getLibraryArtistImage(artistId) {
+  const cached = libraryArtistImageCache.get(artistId);
+
+  // Reuse the signed URL only while it is valid.
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.url;
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL.replace(/\/$/, "")}/api/media/artists/${encodeURIComponent(
+      artistId
+    )}/profile`,
+    {
+      method: "GET",
+      cache: "no-store"
+    }
+  );
+
+  const data = await parseLibraryResponse(response);
+
+  if (!response.ok || !data.mediaUrl) {
+    throw new Error(
+      data.message || "Unable to load artist picture."
+    );
+  }
+
+  const expiresIn = Number(data.expiresIn);
+
+  // Refresh before the signed URL expires.
+  const expiresAt =
+    Number.isFinite(expiresIn) && expiresIn > 0
+      ? Date.now() + Math.max(expiresIn - 30, 0) * 1000
+      : Date.now();
+
+  libraryArtistImageCache.set(artistId, {
+    url: data.mediaUrl,
+    expiresAt
+  });
+
+  return data.mediaUrl;
+}
+
+async function applyLibraryArtistImage(image, artist) {
+  if (!image || !artist?._id) {
+    return;
+  }
+
+  if (
+    typeof EmnetSecureMedia !== "undefined" &&
+    typeof EmnetSecureMedia.setArtistImage === "function"
+  ) {
+    await EmnetSecureMedia.setArtistImage(
+      artist._id,
+      image,
+      artist.profileImage
+    );
+
+    return;
+  }
+
+  // Fallback for older artist pictures.
+  image.src = safeLibraryImage(artist.profileImage);
+}
+
+
+
+
 /* =====================================================
    14. FOLLOWED ARTISTS
 ===================================================== */
@@ -821,7 +895,7 @@ function renderFollowedArtists() {
           )}`;
       }
     );
-
+    applyLibraryArtistImage(image, artist);
     fragment.appendChild(card);
   });
 

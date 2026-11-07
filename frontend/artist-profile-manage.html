@@ -100,43 +100,64 @@
           ></textarea>
         </section>
 
-        <section class="profile-card">
-          <h2>Artist images</h2>
+        
+<section class="profile-card">
+  <h2>Artist images</h2>
 
-          <p class="help-text">
-            Enter the HTTPS URLs of your uploaded images.
-            Direct image uploads will be added when media
-            storage is connected to this form.
-          </p>
+  <p class="help-text">
+    Select images from your device. Emnet Music will
+    automatically optimize them while preserving
+    their visual quality.
+  </p>
 
-          <label for="profileImage">Profile image URL</label>
-          <input
-            type="url"
-            id="profileImage"
-            placeholder="https://example.com/profile.jpg"
-          >
+  <label for="profileImage">
+    Profile picture
+  </label>
 
-          <img
-            id="profileImagePreview"
-            class="image-preview avatar-preview"
-            alt="Artist profile preview"
-            hidden
-          >
+  <input
+    type="file"
+    id="profileImage"
+    accept="image/jpeg,image/png,image/webp"
+  >
 
-          <label for="coverImage">Cover image URL</label>
-          <input
-            type="url"
-            id="coverImage"
-            placeholder="https://example.com/cover.jpg"
-          >
+  <p class="help-text">
+    Recommended: square image, at least 800 × 800 pixels.
+  </p>
 
-          <img
-            id="coverImagePreview"
-            class="image-preview cover-preview"
-            alt="Artist cover preview"
-            hidden
-          >
-        </section>
+  <img
+    id="profileImagePreview"
+    class="image-preview avatar-preview"
+    alt="Artist profile picture preview"
+    hidden
+  >
+
+  <label for="coverImage">
+    Cover photo
+  </label>
+
+  <input
+    type="file"
+    id="coverImage"
+    accept="image/jpeg,image/png,image/webp"
+  >
+
+  <p class="help-text">
+    Recommended: wide landscape image, approximately
+    1920 × 640 pixels.
+  </p>
+
+  <img
+    id="coverImagePreview"
+    class="image-preview cover-preview"
+    alt="Artist cover photo preview"
+    hidden
+  >
+
+  <p id="imageUploadStatus"
+     class="help-text"
+     role="status"
+     aria-live="polite"></p>
+</section>
 
         <section class="profile-card">
           <h2>Profile status</h2>
@@ -169,7 +190,8 @@
   </div>
 
   <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/artist-profile-manage.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/image-compressor.js"></script>
+<script src="js/artist-profile-manage.js"></script>
 </body>
 </html>

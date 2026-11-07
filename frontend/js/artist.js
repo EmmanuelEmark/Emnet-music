@@ -289,6 +289,140 @@ function isPublicArtistMedia(item) {
   );
 }
 
+
+/* =====================================================
+   ARTIST PROFILE AND COVER IMAGES — R2
+===================================================== */
+
+async function getPublicArtistImageUrl(artist, type) {
+  const isProfile = type === "profile";
+
+  const uploadId = isProfile
+    ? artist.profileImageUploadId
+    : artist.coverImageUploadId;
+
+  const legacyUrl = isProfile
+    ? artist.profileImage
+    : artist.coverImage;
+
+  // Existing artist images still work.
+  if (!uploadId) {
+    return legacyUrl || "";
+  }
+
+  const endpoint = isProfile ? "profile" : "cover";
+
+  const response = await fetch(
+    `${API_BASE_URL.replace(/\/$/, "")}/api/media/artists/${encodeURIComponent(
+      artist._id
+    )}/${endpoint}`,
+    { cache: "no-store" }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok || !data.mediaUrl) {
+    throw new Error(
+      data.message || "Unable to load artist image."
+    );
+  }
+
+  return data.mediaUrl;
+}
+
+async function loadPublicArtistImages() {
+  if (!currentArtist) return;
+
+  const artist = currentArtist;
+
+  // 1. Artist profile picture
+  if (artistProfileImage) {
+    artistProfileImage.onerror = () => {
+      artistProfileImage.onerror = null;
+      artistProfileImage.src = ARTIST_PLACEHOLDER;
+    };
+
+    if (
+      typeof EmnetSecureMedia !== "undefined" &&
+      typeof EmnetSecureMedia.setArtistImage === "function"
+    ) {
+      await EmnetSecureMedia.setArtistImage(
+        artist._id,
+        artistProfileImage,
+        artist.profileImage,
+        "profile"
+      );
+    } else {
+      artistProfileImage.src = safeArtistImage(
+        artist.profileImage
+      );
+    }
+  }
+
+  // 2. Artist cover photo
+  if (artistCoverBackground) {
+    const fallback =
+      artist.coverImage || artist.profileImage;
+
+    let coverImage = document.getElementById(
+      "artistCoverRenewalImage"
+    );
+
+    if (!coverImage) {
+      coverImage = document.createElement("img");
+      coverImage.id = "artistCoverRenewalImage";
+      coverImage.alt = "";
+      coverImage.setAttribute("aria-hidden", "true");
+
+      Object.assign(coverImage.style, {
+        position: "absolute",
+        width: "1px",
+        height: "1px",
+        opacity: "0",
+        pointerEvents: "none"
+      });
+
+      artistCoverBackground.appendChild(coverImage);
+    }
+
+    coverImage.onload = () => {
+      artistCoverBackground.style.backgroundImage =
+        `url(${JSON.stringify(coverImage.src)})`;
+    };
+
+    coverImage.onerror = () => {
+      if (fallback) {
+        artistCoverBackground.style.backgroundImage =
+          `url(${JSON.stringify(
+            safeArtistImage(fallback)
+          )})`;
+      }
+    };
+
+    if (
+      typeof EmnetSecureMedia !== "undefined" &&
+      typeof EmnetSecureMedia.setArtistImage === "function"
+    ) {
+      await EmnetSecureMedia.setArtistImage(
+        artist._id,
+        coverImage,
+        fallback,
+        "cover"
+      );
+    } else if (fallback) {
+      artistCoverBackground.style.backgroundImage =
+        `url(${JSON.stringify(
+          safeArtistImage(fallback)
+        )})`;
+    } else {
+      artistCoverBackground.style.backgroundImage =
+        "radial-gradient(circle at 35% 35%, rgba(53, 230, 122, 0.20), transparent 40%)";
+    }
+  }
+}
+
+
+
 /* =====================================================
    7. RENDER ARTIST PROFILE
 ===================================================== */
@@ -311,41 +445,9 @@ function renderArtist() {
       Number(currentArtist.followersCount) || 0;
   }
 
-  if (artistProfileImage) {
-    artistProfileImage.src =
-      safeArtistImage(
-        currentArtist.profileImage
-      );
+  
 
-    artistProfileImage.onerror = () => {
-      artistProfileImage.onerror = null;
-      artistProfileImage.src =
-        ARTIST_PLACEHOLDER;
-    };
-  }
-
-  if (artistCoverBackground) {
-    const coverImage =
-      currentArtist.coverImage ||
-      currentArtist.profileImage;
-
-    if (coverImage) {
-      const safeUrl =
-        safeArtistImage(coverImage);
-
-      artistCoverBackground.style.backgroundImage =
-        `url(${JSON.stringify(safeUrl)})`;
-
-    } else {
-      artistCoverBackground.style.backgroundImage = `
-        radial-gradient(
-          circle at 35% 35%,
-          rgba(53, 230, 122, 0.20),
-          transparent 40%
-        )
-      `;
-    }
-  }
+  
 
   if (verifiedBadge) {
     verifiedBadge.style.display =
@@ -354,10 +456,14 @@ function renderArtist() {
         : "none";
   }
 
-  renderArtistSongs();
-  renderArtistReleases();
-  renderArtistVideos();
-  updateFollowButton();
+ loadPublicArtistImages().catch((error) => {
+  console.error("Artist image loading error:", error);
+});
+
+renderArtistSongs();
+renderArtistReleases();
+renderArtistVideos();
+updateFollowButton();
 }
 
 /* =====================================================

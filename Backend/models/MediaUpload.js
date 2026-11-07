@@ -10,11 +10,19 @@ const mediaUploadSchema = new mongoose.Schema(
       index: true,
     },
 
-    kind: {
-      type: String,
-      enum: ["audio", "artwork", "video"],
-      required: true,
-    },
+    
+kind: {
+  type: String,
+  enum: [
+    "audio",
+    "artwork",
+    "video",
+    "artistProfile",
+    "artistCover",
+  ],
+  required: true,
+},
+
 
     objectKey: {
       type: String,

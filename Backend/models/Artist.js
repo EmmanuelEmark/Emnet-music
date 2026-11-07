@@ -30,15 +30,29 @@ const artistSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
+    
     profileImage: {
       type: String,
       default: "",
+    },
+
+    profileImageUploadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MediaUpload",
+      default: null,
     },
 
     coverImage: {
       type: String,
       default: "",
     },
+
+    coverImageUploadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "MediaUpload",
+      default: null,
+    },
+
 
     country: {
       type: String, 

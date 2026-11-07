@@ -48,6 +48,27 @@ const MEDIA_TYPES = {
     },
   },
 
+
+  
+artistProfile: {
+  maxSize: 5 * MB,
+  formats: {
+    "image/jpeg": ["jpg", "jpeg"],
+    "image/png": ["png"],
+    "image/webp": ["webp"],
+  },
+},
+
+artistCover: {
+  maxSize: 10 * MB,
+  formats: {
+    "image/jpeg": ["jpg", "jpeg"],
+    "image/png": ["png"],
+    "image/webp": ["webp"],
+  },
+},
+
+
   video: {
     maxSize: 500 * MB,
     formats: {

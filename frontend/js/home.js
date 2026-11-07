@@ -21,6 +21,7 @@ const HOME_PLACEHOLDER =
 const homeArtworkCache = new Map();
 const homeThumbnailCache = new Map();
 
+
 /* ========================================
    START PAGE
 ======================================== */
@@ -383,12 +384,13 @@ async function resolveSecureImage(
 
   const result = await fetchSecureImage(endpoint);
 
-  const expiresAt =
-    typeof result.expiresIn === "number" &&
-    result.expiresIn > 0
-      ? Date.now() +
-        Math.max(result.expiresIn - 30, 0) * 1000
-      : null;
+ const expiresIn = Number(result.expiresIn);
+
+const expiresAt =
+  Number.isFinite(expiresIn) && expiresIn > 0
+    ? Date.now() +
+      Math.max(expiresIn - 30, 0) * 1000
+    : Date.now();
 
   cache.set(cacheKey, {
     url: result.url,
@@ -739,6 +741,39 @@ function createDiscoverySection(
   return section;
 }
 
+
+/* ========================================
+   SECURE ARTIST PROFILE IMAGES
+======================================== */
+
+async function applyHomeArtistImage(image, artist) {
+  if (!image || !artist?._id) {
+    return;
+  }
+
+  // Use the shared system for signed URLs
+  // and automatic renewal.
+  if (
+    typeof EmnetSecureMedia !== "undefined" &&
+    typeof EmnetSecureMedia.setArtistImage === "function"
+  ) {
+    await EmnetSecureMedia.setArtistImage(
+      artist._id,
+      image,
+      artist.profileImage
+    );
+
+    return;
+  }
+
+  // Preserve the legacy image if the shared
+  // media script is unavailable.
+  image.src = safeImage(artist.profileImage);
+}
+
+
+
+
 /* ========================================
    FEATURED ARTISTS
 ======================================== */
@@ -806,6 +841,7 @@ function renderArtists(artists) {
     });
 
     featuredArtistsGrid.appendChild(card);
+    applyHomeArtistImage(image, artist);
   });
 }
 

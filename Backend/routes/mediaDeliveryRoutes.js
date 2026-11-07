@@ -8,6 +8,8 @@ const {
   getReleaseArtworkUrl,
   getVideoThumbnailUrl,
   getVideoPlaybackUrl,
+  getArtistProfileImageUrl,
+  getArtistCoverImageUrl,
 } = require("../controllers/mediaDeliveryController");
 
 // ========================================
@@ -44,6 +46,26 @@ router.get(
 router.get(
   "/videos/:videoId/play",
   getVideoPlaybackUrl
+);
+
+// ========================================
+// ARTIST PROFILE PICTURE
+// GET /api/media/artists/:artistId/profile
+// ========================================
+
+router.get(
+  "/artists/:artistId/profile",
+  getArtistProfileImageUrl
+);
+
+// ========================================
+// ARTIST COVER PHOTO
+// GET /api/media/artists/:artistId/cover
+// ========================================
+
+router.get(
+  "/artists/:artistId/cover",
+  getArtistCoverImageUrl
 );
 
 module.exports = router;

@@ -65,6 +65,31 @@ const EmnetSecureMedia = (() => {
 
   const pendingThumbnailRequests = new Map();
 
+  // Artist profile and cover image caches
+  const artistImageCache = new Map();
+  const pendingArtistImageRequests = new Map();
+
+  // Track unfinished media requests for cancellation.
+const pendingMediaControllers = new Set();
+
+// Identify the current generation of cached media.
+let mediaCacheGeneration = 0;
+  const artistImageStates = new WeakMap();
+
+  // Track automatic renewal for release artwork
+const artworkImageStates = new WeakMap();
+
+const ARTWORK_REFRESH_MARGIN_MS = 60 * 1000;
+const ARTWORK_RETRY_MS = 30 * 1000;
+
+// Video thumbnail automatic renewal
+const thumbnailImageStates = new WeakMap();
+
+const THUMBNAIL_REFRESH_MARGIN_MS = 60 * 1000;
+const THUMBNAIL_RETRY_MS = 30 * 1000;
+
+
+
   /* ========================================================
      4. API URL
   ======================================================== */
@@ -241,9 +266,7 @@ const EmnetSecureMedia = (() => {
     }
 
     return requestMedia(
-      `/media/songs/${encodeURIComponent(
-        songId
-      )}/play`,
+    `/api/media/songs/${encodeURIComponent(songId)}/play`,
       signal
     );
 
@@ -254,7 +277,8 @@ const EmnetSecureMedia = (() => {
   ======================================================== */
 
   async function getArtworkUrl(
-    releaseId
+    releaseId,
+    forceRefresh = false
   ) {
 
     if (!releaseId) {
@@ -268,8 +292,8 @@ const EmnetSecureMedia = (() => {
     const cached =
       artworkCache.get(key);
 
-    if (isCacheValid(cached)) {
-      return cached.url;
+    if (!forceRefresh && isCacheValid(cached)) {
+    return cached.url;
     }
 
     if (
@@ -280,13 +304,18 @@ const EmnetSecureMedia = (() => {
       );
     }
 
-    const request = (async () => {
+   const controller = new AbortController();
 
-      const data = await requestMedia(
-        `/media/releases/${encodeURIComponent(
-          key
-        )}/artwork`
-      );
+  const generation = mediaCacheGeneration;
+
+  pendingMediaControllers.add(controller);
+
+  const request = (async () => {
+
+  const data = await requestMedia(
+    `/api/media/releases/${encodeURIComponent(key)}/artwork`,
+    controller.signal
+  );
 
       const url = getMediaUrl(data);
 
@@ -296,13 +325,17 @@ const EmnetSecureMedia = (() => {
         );
       }
 
-      artworkCache.set(key, {
-        url,
-        expiresAt: getExpiresAt(
-          data,
-          DEFAULT_ARTWORK_CACHE_MS
-        )
-      });
+     const expiresIn = Number(data.expiresIn);
+
+    const isSigned = Number.isFinite(expiresIn) && expiresIn > 0;
+
+   if (generation === mediaCacheGeneration) {
+  artworkCache.set(key, {
+    url,
+    expiresAt: getExpiresAt(data, DEFAULT_ARTWORK_CACHE_MS),
+    isSigned
+  });
+}
 
       return url;
 
@@ -317,86 +350,214 @@ const EmnetSecureMedia = (() => {
 
       return await request;
 
-    } finally {
+    } } finally {
 
-      pendingArtworkRequests.delete(
-        key
-      );
+  pendingMediaControllers.delete(controller);
 
-    }
+  if (pendingArtworkRequests.get(key) === request) {
+    pendingArtworkRequests.delete(key);
+  }
+
+}
 
   }
+
+ function getArtworkExpiry(releaseId) {
+  if (!releaseId) {
+    return null;
+  }
+
+  const cached = artworkCache.get(String(releaseId));
+
+  if (!cached || !cached.isSigned) {
+    return null;
+  }
+
+  return cached.expiresAt ?? null;
+}
+
+
+
+function stopArtworkRenewal(imageElement) {
+  const state = artworkImageStates.get(imageElement);
+
+  if (!state) return;
+
+  state.stopped = true;
+
+  if (state.timer !== null) {
+    clearTimeout(state.timer);
+    state.timer = null;
+  }
+
+  artworkImageStates.delete(imageElement);
+}
+
+function scheduleArtworkRenewal(imageElement, state) {
+  if (state.timer !== null) {
+    clearTimeout(state.timer);
+    state.timer = null;
+  }
+
+  if (
+    state.stopped ||
+    artworkImageStates.get(imageElement) !== state ||
+    !imageElement.isConnected
+  ) {
+    return;
+  }
+
+  const expiresAt = getArtworkExpiry(state.releaseId);
+
+  if (!expiresAt) return;
+
+  const delay = Math.max(
+    1000,
+    expiresAt - Date.now() - ARTWORK_REFRESH_MARGIN_MS
+  );
+
+  state.timer = setTimeout(
+    () => renewArtworkImage(imageElement, state),
+    delay
+  );
+}
+
+async function renewArtworkImage(imageElement, state) {
+  if (
+    state.stopped ||
+    artworkImageStates.get(imageElement) !== state ||
+    !imageElement.isConnected
+  ) {
+    stopArtworkRenewal(imageElement);
+    return;
+  }
+
+  try {
+   const cached = artworkCache.get(state.releaseId);
+
+const shouldRefresh =
+  !cached ||
+  !isCacheValid(cached);
+
+const url = await getArtworkUrl(
+  state.releaseId,
+  shouldRefresh
+);
+
+    if (
+      state.stopped ||
+      artworkImageStates.get(imageElement) !== state ||
+      !imageElement.isConnected
+    ) {
+      return;
+    }
+
+    if (imageElement.src !== url) {
+      imageElement.src = url;
+    }
+
+    scheduleArtworkRenewal(imageElement, state);
+  } catch (error) {
+    console.warn(
+      "Unable to renew release artwork:",
+      state.releaseId,
+      error.message
+    );
+
+    if (
+      !state.stopped &&
+      artworkImageStates.get(imageElement) === state &&
+      imageElement.isConnected
+    ) {
+      state.timer = setTimeout(
+        () => renewArtworkImage(imageElement, state),
+        ARTWORK_RETRY_MS
+      );
+    }
+  }
+}
 
   /* ========================================================
      11. SET ARTWORK ON IMAGE ELEMENTS
   ======================================================== */
 
-  async function setArtwork(
-    releaseId,
-    imageElements,
-    fallbackUrl
-  ) {
+ async function setArtwork(
+  releaseId,
+  imageElements,
+  fallbackUrl
+) {
+  const elements = Array.isArray(imageElements)
+    ? imageElements.filter(Boolean)
+    : [imageElements].filter(Boolean);
 
-    const elements =
-      Array.isArray(imageElements)
-        ? imageElements.filter(Boolean)
-        : [imageElements].filter(Boolean);
+  const releaseKey = releaseId
+    ? String(releaseId)
+    : "";
 
-    const releaseKey =
-      releaseId
-        ? String(releaseId)
-        : "";
+  // Stop previous renewal timers when images are reused.
+  elements.forEach((element) => {
+    stopArtworkRenewal(element);
 
-    elements.forEach((element) => {
+    element.dataset.emnetReleaseId = releaseKey;
 
-      element.dataset.emnetReleaseId =
-        releaseKey;
+    if (fallbackUrl) {
+      element.src = fallbackUrl;
+    }
+  });
 
-      if (fallbackUrl) {
-        element.src = fallbackUrl;
+  if (!releaseKey || elements.length === 0) {
+    return;
+  }
+
+  // Create a separate renewal state for each image.
+  const imageStates = elements.map((element) => {
+    const state = {
+      releaseId: releaseKey,
+      timer: null,
+      stopped: false
+    };
+
+    artworkImageStates.set(element, state);
+
+    return { element, state };
+  });
+
+  try {
+    const url = await getArtworkUrl(releaseKey);
+
+    imageStates.forEach(({ element, state }) => {
+      // Ignore outdated requests and removed images.
+      if (
+        state.stopped ||
+        artworkImageStates.get(element) !== state ||
+        element.dataset.emnetReleaseId !== releaseKey ||
+        !element.isConnected
+      ) {
+        return;
       }
 
+      element.src = url;
+
+      // Schedule renewal before the signed URL expires.
+      scheduleArtworkRenewal(element, state);
     });
-
-    if (!releaseKey) {
-      return;
-    }
-
-    try {
-
-      const url = await getArtworkUrl(
-        releaseKey
-      );
-
-      elements.forEach((element) => {
-
-        if (
-          element.dataset.emnetReleaseId ===
-          releaseKey
-        ) {
-          element.src = url;
-        }
-
-      });
-
-    } catch (error) {
-
-      console.warn(
-        "Unable to load secure artwork:",
-        error.message
-      );
-
-    }
-
+  } catch (error) {
+    console.warn(
+      "Unable to load secure artwork:",
+      releaseKey,
+      error.message
+    );
   }
+}
 
   /* ========================================================
      12. GET SECURE VIDEO THUMBNAIL
   ======================================================== */
 
   async function getVideoThumbnailUrl(
-    videoId
-  ) {
+  videoId,
+  forceRefresh = false
+) {
 
     if (!videoId) {
       throw new Error(
@@ -409,8 +570,8 @@ const EmnetSecureMedia = (() => {
     const cached =
       thumbnailCache.get(key);
 
-    if (isCacheValid(cached)) {
-      return cached.url;
+   if (!forceRefresh && isCacheValid(cached)) {
+    return cached.url;
     }
 
     if (
@@ -421,13 +582,19 @@ const EmnetSecureMedia = (() => {
       );
     }
 
-    const request = (async () => {
+   const controller = new AbortController();
 
-      const data = await requestMedia(
-        `/media/videos/${encodeURIComponent(
-          key
-        )}/thumbnail`
-      );
+const generation = mediaCacheGeneration;
+
+pendingMediaControllers.add(controller);
+
+const request = (async () => {
+
+  const data = await requestMedia(
+    `/api/media/videos/${encodeURIComponent(key)}/thumbnail`,
+    controller.signal
+  );
+
 
       const url = getMediaUrl(data);
 
@@ -437,13 +604,18 @@ const EmnetSecureMedia = (() => {
         );
       }
 
-      thumbnailCache.set(key, {
-        url,
-        expiresAt: getExpiresAt(
-          data,
-          DEFAULT_VIDEO_CACHE_MS
-        )
-      });
+     const expiresIn = Number(data.expiresIn);
+
+const isSigned =
+  Number.isFinite(expiresIn) && expiresIn > 0;
+
+  if (generation === mediaCacheGeneration) {
+  thumbnailCache.set(key, {
+    url,
+    expiresAt: getExpiresAt(data, DEFAULT_VIDEO_CACHE_MS),
+    isSigned
+  });
+}
 
       return url;
 
@@ -460,13 +632,125 @@ const EmnetSecureMedia = (() => {
 
     } finally {
 
-      pendingThumbnailRequests.delete(
-        key
-      );
+  pendingMediaControllers.delete(controller);
 
-    }
+  if (pendingThumbnailRequests.get(key) === request) {
+    pendingThumbnailRequests.delete(key);
+  }
+
+}
 
   }
+
+ function getVideoThumbnailExpiry(videoId) {
+  if (!videoId) {
+    return null;
+  }
+
+  const cached = thumbnailCache.get(String(videoId));
+
+  if (!cached || !cached.isSigned) {
+    return null;
+  }
+
+  return cached.expiresAt ?? null;
+}
+
+
+
+function stopThumbnailRenewal(imageElement) {
+  const state = thumbnailImageStates.get(imageElement);
+
+  if (!state) return;
+
+  state.stopped = true;
+
+  if (state.timer !== null) {
+    clearTimeout(state.timer);
+    state.timer = null;
+  }
+
+  thumbnailImageStates.delete(imageElement);
+}
+
+function scheduleThumbnailRenewal(imageElement, state) {
+  if (state.timer !== null) {
+    clearTimeout(state.timer);
+    state.timer = null;
+  }
+
+  if (
+    state.stopped ||
+    thumbnailImageStates.get(imageElement) !== state ||
+    !imageElement.isConnected
+  ) {
+    return;
+  }
+
+  const expiresAt = getVideoThumbnailExpiry(state.videoId);
+
+  if (!expiresAt) return;
+
+  const delay = Math.max(
+    1000,
+    expiresAt - Date.now() - THUMBNAIL_REFRESH_MARGIN_MS
+  );
+
+  state.timer = setTimeout(
+    () => renewThumbnailImage(imageElement, state),
+    delay
+  );
+}
+
+async function renewThumbnailImage(imageElement, state) {
+  if (
+    state.stopped ||
+    thumbnailImageStates.get(imageElement) !== state ||
+    !imageElement.isConnected
+  ) {
+    stopThumbnailRenewal(imageElement);
+    return;
+  }
+
+  try {
+    const url = await getVideoThumbnailUrl(
+      state.videoId,
+      true
+    );
+
+    if (
+      state.stopped ||
+      thumbnailImageStates.get(imageElement) !== state ||
+      !imageElement.isConnected
+    ) {
+      return;
+    }
+
+    if (imageElement.src !== url) {
+      imageElement.src = url;
+    }
+
+    scheduleThumbnailRenewal(imageElement, state);
+  } catch (error) {
+    console.warn(
+      "Unable to renew video thumbnail:",
+      state.videoId,
+      error.message
+    );
+
+    if (
+      !state.stopped &&
+      thumbnailImageStates.get(imageElement) === state &&
+      imageElement.isConnected
+    ) {
+      state.timer = setTimeout(
+        () => renewThumbnailImage(imageElement, state),
+        THUMBNAIL_RETRY_MS
+      );
+    }
+  }
+}
+
 
   /* ========================================================
      13. GET SECURE VIDEO PLAYBACK URL
@@ -484,9 +768,7 @@ const EmnetSecureMedia = (() => {
     }
 
     const data = await requestMedia(
-      `/media/videos/${encodeURIComponent(
-        videoId
-      )}/play`,
+     `/api/media/videos/${encodeURIComponent(videoId)}/play`,
       signal
     );
 
@@ -509,56 +791,68 @@ const EmnetSecureMedia = (() => {
      14. SET VIDEO THUMBNAIL
   ======================================================== */
 
-  async function setVideoThumbnail(
-    videoId,
-    imageElement,
-    fallbackUrl
-  ) {
-
-    if (!imageElement) {
-      return;
-    }
-
-    const videoKey =
-      videoId
-        ? String(videoId)
-        : "";
-
-    imageElement.dataset.emnetVideoId =
-      videoKey;
-
-    if (fallbackUrl) {
-      imageElement.src = fallbackUrl;
-    }
-
-    if (!videoKey) {
-      return;
-    }
-
-    try {
-
-      const url =
-        await getVideoThumbnailUrl(
-          videoKey
-        );
-
-      if (
-        imageElement.dataset.emnetVideoId ===
-        videoKey
-      ) {
-        imageElement.src = url;
-      }
-
-    } catch (error) {
-
-      console.warn(
-        "Unable to load video thumbnail:",
-        error.message
-      );
-
-    }
-
+ async function setVideoThumbnail(
+  videoId,
+  imageElement,
+  fallbackUrl
+) {
+  if (!imageElement) {
+    return;
   }
+
+  // Cancel any previous renewal for this image.
+  stopThumbnailRenewal(imageElement);
+
+  const videoKey = videoId
+    ? String(videoId)
+    : "";
+
+  imageElement.dataset.emnetVideoId = videoKey;
+
+  // Display a fallback while loading.
+  if (fallbackUrl) {
+    imageElement.src = fallbackUrl;
+  }
+
+  if (!videoKey) {
+    return;
+  }
+
+  // Create a renewal state for this image.
+  const state = {
+    videoId: videoKey,
+    timer: null,
+    stopped: false
+  };
+
+  thumbnailImageStates.set(imageElement, state);
+
+  try {
+    const url = await getVideoThumbnailUrl(videoKey);
+
+    // Prevent outdated requests from changing the image.
+    if (
+      state.stopped ||
+      thumbnailImageStates.get(imageElement) !== state ||
+      imageElement.dataset.emnetVideoId !== videoKey ||
+      !imageElement.isConnected
+    ) {
+      return;
+    }
+
+    imageElement.src = url;
+
+    // Automatically renew before the URL expires.
+    scheduleThumbnailRenewal(imageElement, state);
+
+  } catch (error) {
+    console.warn(
+      "Unable to load secure video thumbnail:",
+      videoKey,
+      error.message
+    );
+  }
+}
 
   /* ========================================================
      15. SCHEDULE AUDIO URL RENEWAL
@@ -950,21 +1244,294 @@ const EmnetSecureMedia = (() => {
 
   }
 
+
+  
+/* ========================================================
+   ARTIST PROFILE IMAGES — AUTOMATIC R2 URL RENEWAL
+======================================================== */
+
+const ARTIST_IMAGE_REFRESH_MARGIN_MS = 60 * 1000;
+const ARTIST_IMAGE_RETRY_MS = 30 * 1000;
+
+function isSafeArtistImageUrl(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value, window.location.href);
+
+    return (
+      url.protocol === "https:" ||
+      url.protocol === "http:"
+    );
+  } catch {
+    return false;
+  }
+}
+
+
+async function getArtistImageData(
+  artistId,
+  type = "profile",
+  forceRefresh = false
+) {
+  const imageType = type === "cover" ? "cover" : "profile";
+  const key = `${artistId}:${imageType}`;
+
+  const cached = artistImageCache.get(key);
+
+  if (
+    !forceRefresh &&
+    cached &&
+    (cached.expiresAt === null ||
+      cached.expiresAt > Date.now() + URL_EXPIRY_MARGIN_MS)
+  ) {
+    return cached;
+  }
+
+  if (pendingArtistImageRequests.has(key)) {
+    return pendingArtistImageRequests.get(key);
+  }
+
+ const controller = new AbortController();
+
+const generation = mediaCacheGeneration;
+
+pendingMediaControllers.add(controller);
+
+const request = (async () => {
+  const data = await requestMedia(
+    `/api/media/artists/${encodeURIComponent(
+      artistId
+    )}/${imageType}`,
+    controller.signal
+  );
+
+    const url = getMediaUrl(data);
+
+    if (!url || !isSafeArtistImageUrl(url)) {
+      throw new Error("Artist image URL is unavailable.");
+    }
+
+    const expiresIn = Number(data.expiresIn);
+
+    const expiresAt =
+      Number.isFinite(expiresIn) && expiresIn > 0
+        ? Date.now() + expiresIn * 1000
+        : null;
+
+    const entry = { url, expiresAt };
+
+   if (generation === mediaCacheGeneration) {
+  artistImageCache.set(key, entry);
+}
+    return entry;
+  })();
+
+  pendingArtistImageRequests.set(key, request);
+
+  try {
+    return await request;
+ } finally {
+
+  pendingMediaControllers.delete(controller);
+
+  if (pendingArtistImageRequests.get(key) === request) {
+    pendingArtistImageRequests.delete(key);
+  }
+
+}
+}
+
+
+function stopArtistImageRenewal(imageElement) {
+  const state = artistImageStates.get(imageElement);
+
+  if (!state) return;
+
+  state.stopped = true;
+
+  if (state.timer !== null) {
+    clearTimeout(state.timer);
+    state.timer = null;
+  }
+
+  artistImageStates.delete(imageElement);
+}
+
+async function renewArtistImage(imageElement, state) {
+  if (
+    state.stopped ||
+    artistImageStates.get(imageElement) !== state ||
+    !imageElement.isConnected
+  ) {
+    stopArtistImageRenewal(imageElement);
+    return;
+  }
+
+  try {
+   const entry = await getArtistImageData(
+  state.artistId,
+  state.type,
+  true
+);
+
+    if (
+      state.stopped ||
+      artistImageStates.get(imageElement) !== state ||
+      !imageElement.isConnected
+    ) {
+      return;
+    }
+
+    // Update the displayed image without refreshing the page.
+    if (imageElement.src !== entry.url) {
+      imageElement.src = entry.url;
+    }
+
+    scheduleArtistImageRenewal(
+      imageElement,
+      state,
+      entry.expiresAt
+    );
+
+  } catch (error) {
+    console.warn(
+      "Artist image renewal failed:",
+      state.artistId,
+      error.message
+    );
+
+    if (
+      !state.stopped &&
+      artistImageStates.get(imageElement) === state
+    ) {
+      state.timer = setTimeout(
+        () => renewArtistImage(imageElement, state),
+        ARTIST_IMAGE_RETRY_MS
+      );
+    }
+  }
+}
+
+function scheduleArtistImageRenewal(
+  imageElement,
+  state,
+  expiresAt
+) {
+  if (state.timer !== null) {
+    clearTimeout(state.timer);
+    state.timer = null;
+  }
+
+  // Legacy images do not have a signed URL expiry.
+  if (
+    !expiresAt ||
+    state.stopped ||
+    artistImageStates.get(imageElement) !== state
+  ) {
+    return;
+  }
+
+  const delay = Math.max(
+    1000,
+    expiresAt -
+      Date.now() -
+      ARTIST_IMAGE_REFRESH_MARGIN_MS
+  );
+
+  state.timer = setTimeout(
+    () => renewArtistImage(imageElement, state),
+    delay
+  );
+}
+
+
+async function setArtistImage(
+  artistId,
+  imageElement,
+  fallbackUrl = null,
+  type = "profile"
+) {
+  if (!imageElement) return;
+
+  stopArtistImageRenewal(imageElement);
+
+  if (isSafeArtistImageUrl(fallbackUrl)) {
+    imageElement.src = fallbackUrl;
+  }
+
+  if (!artistId) return;
+
+  const state = {
+    artistId: String(artistId),
+    type: type === "cover" ? "cover" : "profile",
+    timer: null,
+    stopped: false
+  };
+
+  artistImageStates.set(imageElement, state);
+
+  try {
+    const entry = await getArtistImageData(
+      state.artistId,
+      state.type
+    );
+
+    if (
+      state.stopped ||
+      artistImageStates.get(imageElement) !== state ||
+      !imageElement.isConnected
+    ) {
+      return;
+    }
+
+    imageElement.src = entry.url;
+
+    scheduleArtistImageRenewal(
+      imageElement,
+      state,
+      entry.expiresAt
+    );
+  } catch (error) {
+    console.warn(
+      "Unable to load secure artist image:",
+      state.artistId,
+      error.message
+    );
+  }
+}
+
+
+
   /* ========================================================
      20. CLEAR MEDIA CACHES
   ======================================================== */
 
-  function clearMediaCache() {
+function clearMediaCache() {
 
-    artworkCache.clear();
+  // Invalidate all requests started before this clearing.
+  mediaCacheGeneration += 1;
 
-    thumbnailCache.clear();
-
-    pendingArtworkRequests.clear();
-
-    pendingThumbnailRequests.clear();
-
+  // Cancel unfinished media API requests.
+  for (const controller of pendingMediaControllers) {
+    controller.abort();
   }
+
+  pendingMediaControllers.clear();
+
+  // Remove cached signed URLs.
+  artworkCache.clear();
+  thumbnailCache.clear();
+  artistImageCache.clear();
+
+  // Remove pending request references.
+  pendingArtworkRequests.clear();
+  pendingThumbnailRequests.clear();
+  pendingArtistImageRequests.clear();
+
+}
 
   /* ========================================================
      21. PUBLIC METHODS
@@ -986,6 +1553,11 @@ const EmnetSecureMedia = (() => {
     getVideoThumbnailUrl,
     getVideoPlaybackUrl,
     setVideoThumbnail,
+
+   // Artist images
+    getArtistImageData,
+    setArtistImage,
+    stopArtistImageRenewal,
 
     // Cache
     clearMediaCache

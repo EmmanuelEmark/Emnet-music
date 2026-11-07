@@ -13,6 +13,7 @@ const Song = require("../models/song");
 const Release = require("../models/Release");
 const Video = require("../models/video");
 const MediaUpload = require("../models/MediaUpload");
+const Artist = require("../models/Artist");
 
 const {
   getR2Client,
@@ -430,6 +431,97 @@ const getVideoPlaybackUrl = async (req, res) => {
 
 
 
+const getArtistImageUrl = async (req, res, imageType) => {
+  try {
+    const { artistId } = req.params;
+
+    if (!mongoose.isValidObjectId(artistId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid artist ID.",
+      });
+    }
+
+    const artist = await Artist.findOne({
+      _id: artistId,
+      approvalStatus: "approved",
+      ...visibleFilter,
+    });
+
+    if (!artist) {
+      return res.status(404).json({
+        success: false,
+        message: "Artist is unavailable.",
+      });
+    }
+
+    const isProfile = imageType === "profile";
+
+    const uploadId = isProfile
+      ? artist.profileImageUploadId
+      : artist.coverImageUploadId;
+
+    const kind = isProfile
+      ? "artistProfile"
+      : "artistCover";
+
+    const legacyUrl = isProfile
+      ? artist.profileImage
+      : artist.coverImage;
+
+    if (uploadId) {
+      const mediaUrl = await generateMediaUrl({
+        uploadId,
+        kind,
+        expiresIn: IMAGE_EXPIRY,
+      });
+
+      if (!mediaUrl) {
+        return res.status(404).json({
+          success: false,
+          message: "Artist image is unavailable.",
+        });
+      }
+
+      return sendMediaResponse(res, {
+        source: "r2",
+        mediaUrl,
+        expiresIn: IMAGE_EXPIRY,
+      });
+    }
+
+    if (legacyUrl) {
+      return sendMediaResponse(res, {
+        source: "legacy",
+        mediaUrl: legacyUrl,
+        expiresIn: null,
+      });
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: "Artist image is unavailable.",
+    });
+  } catch (error) {
+    console.error("Artist image delivery error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to retrieve artist image.",
+    });
+  }
+};
+
+const getArtistProfileImageUrl = (req, res) =>
+  getArtistImageUrl(req, res, "profile");
+
+const getArtistCoverImageUrl = (req, res) =>
+  getArtistImageUrl(req, res, "cover");
+
+
+
+
+
 // ========================================
 // EXPORTS
 // ========================================
@@ -439,4 +531,6 @@ module.exports = {
   getReleaseArtworkUrl,
   getVideoThumbnailUrl,
   getVideoPlaybackUrl,
+  getArtistProfileImageUrl,
+  getArtistCoverImageUrl,
 };
