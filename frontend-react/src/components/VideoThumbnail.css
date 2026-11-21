@@ -1,0 +1,22 @@
+
+.em-resolved-thumbnail {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    #254b31,
+    #101e16
+  );
+  color: #4be37b;
+}
+
+.em-resolved-thumbnail img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

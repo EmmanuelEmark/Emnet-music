@@ -1,0 +1,383 @@
+
+/* ==========================================
+   EMNET MUSIC — VIDEO ARTIST STUDIO
+========================================== */
+
+.em-video-page {
+  width: 100%;
+  max-width: 1150px;
+  margin: 0 auto;
+}
+
+/* ==========================================
+   BACK NAVIGATION
+========================================== */
+
+.em-video-back {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.em-video-back:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   STATISTICS
+========================================== */
+
+.em-video-stats {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.em-video-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 23px;
+  border: 1px solid #304e39;
+  border-radius: 16px;
+  background: #17281d;
+}
+
+.em-video-stat svg {
+  color: #4be37b;
+}
+
+.em-video-stat span {
+  color: #aac4b1;
+  font-size: 12px;
+}
+
+.em-video-stat strong {
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+/* ==========================================
+   VIDEO TABS
+========================================== */
+
+.em-video-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #314b38;
+}
+
+.em-video-tabs button {
+  padding: 11px 17px;
+  border: 1px solid #35533e;
+  border-radius: 24px;
+  background: #192b1f;
+  color: #afc7b5;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.em-video-tabs button:hover {
+  transform: translateY(-2px);
+}
+
+.em-video-tabs button.active {
+  border-color: #4be37b;
+  background: #4be37b;
+  color: #102017;
+}
+
+/* ==========================================
+   VIDEO LIST
+========================================== */
+
+.em-video-list-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 75px;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  background: #284d34;
+  color: #4be37b;
+}
+
+/* ==========================================
+   VIDEO MEDIA GRID
+========================================== */
+
+.em-video-media-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.em-video-media-column {
+  min-width: 0;
+}
+
+.em-video-media-column h3 {
+  margin: 0 0 16px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ==========================================
+   MEDIA PREVIEWS
+========================================== */
+
+.em-video-preview,
+.em-video-thumbnail,
+.em-video-preview-placeholder {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 13px;
+  background: #0c1510;
+  overflow: hidden;
+  border: 1px solid #385644;
+}
+
+.em-video-preview {
+  object-fit: contain;
+}
+
+.em-video-thumbnail {
+  object-fit: contain;
+}
+
+.em-video-preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 15px;
+  color: #4be37b;
+  text-align: center;
+}
+
+.em-video-preview-placeholder span {
+  color: #9fbca8;
+  font-size: 12px;
+}
+
+.em-video-media-column
+  .em-upload-file-box {
+  margin-top: 16px;
+  min-height: 145px;
+}
+
+.em-video-file-confirmed {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  color: #79e99b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ==========================================
+   VIDEO FORM
+========================================== */
+
+.em-video-full-width {
+  grid-column: 1 / -1;
+}
+
+.em-video-page textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  padding: 14px;
+  border: 1px solid #395640;
+  border-radius: 11px;
+  background: #0e1b13;
+  color: #ffffff;
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.em-video-page textarea:focus {
+  border-color: #4be37b;
+}
+
+.em-video-page textarea:disabled {
+  opacity: 0.65;
+}
+
+.em-video-field-help {
+  color: #9bb7a2;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.em-upload-card >
+.em-video-field-help {
+  margin: 0 0 20px;
+}
+
+/* ==========================================
+   COPYRIGHT CONFIRMATION
+========================================== */
+
+.em-video-rights {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid #365941;
+  border-radius: 12px;
+  background: #102016;
+  cursor: pointer;
+}
+
+.em-video-rights input {
+  flex-shrink: 0;
+  width: 19px;
+  height: 19px;
+  margin: 2px 0 0;
+  accent-color: #4be37b;
+  cursor: pointer;
+}
+
+.em-video-rights span {
+  color: #c8ded0;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* ==========================================
+   DELETE VIDEO DRAFT
+========================================== */
+
+.em-video-delete-draft {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 17px;
+  border: 1px solid #714545;
+  border-radius: 10px;
+  background: #322020;
+  color: #ffbaba;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.em-video-delete-draft:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.em-video-delete-draft:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   PUBLISHED VIDEO LINK
+========================================== */
+
+.em-video-watch-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 16px;
+  padding: 11px 15px;
+  border: 1px solid #4be37b;
+  border-radius: 9px;
+  background: #4be37b;
+  color: #112015;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+========================================== */
+
+@media (max-width: 850px) {
+  .em-video-media-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .em-video-stats {
+    gap: 8px;
+  }
+
+  .em-video-stat {
+    padding: 13px;
+    gap: 10px;
+  }
+
+  .em-video-stat span {
+    font-size: 10px;
+  }
+
+  .em-video-stat strong {
+    font-size: 25px;
+  }
+
+  .em-video-stat svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .em-video-tabs {
+    gap: 6px;
+  }
+
+  .em-video-tabs button {
+    padding: 10px 13px;
+    font-size: 11px;
+  }
+
+  .em-video-list-icon {
+    width: 52px;
+  }
+
+  .em-video-list-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .em-video-media-grid {
+    gap: 28px;
+  }
+
+  .em-video-rights {
+    padding: 14px;
+  }
+
+  .em-video-rights span {
+    font-size: 12px;
+  }
+}

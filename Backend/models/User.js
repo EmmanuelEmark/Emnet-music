@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       maxlength: 254,
+
       match: [
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         "Please enter a valid email address.",
@@ -42,6 +43,41 @@ const userSchema = new mongoose.Schema(
       minlength: 8,
     },
 
+    // Used to invalidate existing sessions
+    // after important security changes.
+
+    tokenVersion: {
+      type: Number,
+      default: 0,
+      min: 0,
+
+      validate: {
+        validator: function (value) {
+          return (
+            Number.isSafeInteger(value) &&
+            value >= 0
+          );
+        },
+
+        message:
+          "Invalid account token version.",
+      },
+    },
+
+    // Most recent successful authentication.
+
+    lastLoginAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Most recent password change.
+
+    passwordChangedAt: {
+      type: Date,
+      default: null,
+    },
+
     // ====================================
     // PROFILE
     // ====================================
@@ -49,15 +85,22 @@ const userSchema = new mongoose.Schema(
     dateOfBirth: {
       type: Date,
       required: true,
+
       validate: {
         validator: function (value) {
           return (
             value instanceof Date &&
-            !Number.isNaN(value.getTime()) &&
+
+            !Number.isNaN(
+              value.getTime()
+            ) &&
+
             value.getTime() <= Date.now()
           );
         },
-        message: "Date of birth cannot be in the future.",
+
+        message:
+          "Date of birth cannot be in the future.",
       },
     },
 
@@ -88,6 +131,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
+
       enum: [
         "listener",
         "artist",
@@ -95,7 +139,40 @@ const userSchema = new mongoose.Schema(
         "admin",
         "superadmin",
       ],
+
       default: "listener",
+
+      required: true,
+    },
+
+    // ====================================
+    // ADMINISTRATOR INFORMATION
+    // ====================================
+
+    // Identifies the Super Admin who
+    // created or invited an administrator.
+
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    // Date the administrator received
+    // administrative access.
+
+    roleAssignedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Identifies who assigned or
+    // last modified the user's role.
+
+    roleAssignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
 
     // ====================================
@@ -113,14 +190,50 @@ const userSchema = new mongoose.Schema(
 
     accountStatus: {
       type: String,
+
       enum: [
         "active",
         "suspended",
         "disabled",
       ],
+
       default: "active",
+
+      required: true,
+    },
+
+    // ====================================
+    // ACCOUNT MODERATION INFORMATION
+    // ====================================
+
+    accountStatusReason: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
+    },
+
+    // Date the account status was changed.
+
+    accountStatusUpdatedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Administrator responsible for
+    // changing the account status.
+
+    accountStatusUpdatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
+
+  // ======================================
+  // AUTOMATIC TIMESTAMPS
+  // ======================================
+
   {
     timestamps: true,
   }
@@ -131,15 +244,20 @@ const userSchema = new mongoose.Schema(
 // ========================================
 
 userSchema.pre("save", async function () {
-
   // Do not hash the password again
   // when updating unrelated fields.
+
   if (!this.isModified("password")) {
     return;
   }
 
+  // ======================================
+  // VALIDATE PASSWORD
+  // ======================================
+
   if (
     typeof this.password !== "string" ||
+
     this.password.length < 8
   ) {
     throw new Error(
@@ -148,32 +266,82 @@ userSchema.pre("save", async function () {
   }
 
   // bcrypt only processes the first 72 bytes.
-  if (Buffer.byteLength(this.password, "utf8") > 72) {
+
+  if (
+    Buffer.byteLength(
+      this.password,
+      "utf8"
+    ) > 72
+  ) {
     throw new Error(
       "Password must be 72 bytes or fewer."
     );
   }
 
-  const salt = await bcrypt.genSalt(10);
+  // ======================================
+  // HASH PASSWORD
+  // ======================================
 
-  this.password = await bcrypt.hash(
-    this.password,
-    salt
-  );
+  const salt =
+    await bcrypt.genSalt(10);
+
+  this.password =
+    await bcrypt.hash(
+      this.password,
+      salt
+    );
+
+  // ======================================
+  // RECORD PASSWORD CHANGE
+  // ======================================
+
+  if (!this.isNew) {
+    this.passwordChangedAt =
+      new Date();
+  }
 });
 
 // ========================================
-// REMOVE PASSWORD FROM JSON RESPONSES
+// REMOVE PRIVATE INFORMATION FROM JSON
 // ========================================
 
 userSchema.set("toJSON", {
   transform: function (doc, ret) {
-
     delete ret.password;
+
+    delete ret.tokenVersion;
+
     delete ret.__v;
 
     return ret;
   },
+});
+
+// ========================================
+// DATABASE INDEXES
+// ========================================
+
+// Supports administrator dashboard queries,
+// user management and role-based statistics.
+
+userSchema.index({
+  role: 1,
+  accountStatus: 1,
+  createdAt: -1,
+});
+
+// Supports account status management.
+
+userSchema.index({
+  accountStatus: 1,
+  createdAt: -1,
+});
+
+// Supports administrator creation tracking.
+
+userSchema.index({
+  createdBy: 1,
+  createdAt: -1,
 });
 
 // ========================================
@@ -182,6 +350,13 @@ userSchema.set("toJSON", {
 
 const User =
   mongoose.models.User ||
-  mongoose.model("User", userSchema);
+  mongoose.model(
+    "User",
+    userSchema
+  );
+
+// ========================================
+// EXPORT USER MODEL
+// ========================================
 
 module.exports = User;

@@ -51,51 +51,85 @@ if (process.env.NODE_ENV === "production") {
 
 app.use(helmet());
 
-/* ========================================
+//* ========================================
    3. CORS CONFIGURATION
 ======================================== */
 
-// FRONTEND_URL can contain one URL or
-// several comma-separated URLs.
-//
-// Example:
-// https://emnetmusic.netlify.app
+const isProduction =
+  process.env.NODE_ENV === "production";
 
-const productionOrigins = (
-  process.env.FRONTEND_URL || ""
-)
-  .split(",")
-  .map((origin) => origin.trim().replace(/\/$/, ""))
-  .filter(Boolean);
+// Development frontend addresses.
 
-const allowedOrigins = [
+const developmentOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
-  ...productionOrigins,
 ];
+
+// Primary frontend URL and additional
+// authorized frontend origins.
+
+const productionOrigins = [
+  process.env.FRONTEND_URL || "",
+
+  ...(process.env.CORS_ALLOWED_ORIGINS || "")
+    .split(","),
+]
+  .map((origin) =>
+    origin.trim().replace(/\/+$/, "")
+  )
+  .filter(Boolean);
+
+// Allow localhost only during development.
+
+const allowedOrigins = new Set([
+  ...productionOrigins,
+
+  ...(!isProduction
+    ? developmentOrigins
+    : []),
+]);
 
 app.use(
   cors({
     origin(origin, callback) {
-      // Requests without an Origin header
-      // include many server-to-server requests.
+      // Allow non-browser requests.
+      // Authentication still applies to
+      // protected API endpoints.
+
       if (!origin) {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.has(origin)) {
         return callback(null, true);
       }
 
-      return callback(
-        new Error("Origin not allowed by CORS")
+      const error = new Error(
+        "Origin not allowed by CORS."
       );
+
+      error.statusCode = 403;
+
+      return callback(error);
     },
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+      "HEAD",
+    ],
+
+    optionsSuccessStatus: 204,
   })
 );
-
 /* ========================================
    4. REQUEST BODY LIMIT
 ======================================== */
@@ -160,7 +194,7 @@ app.use("/api/notifications", notificationRoutes);
 
 app.use("/api/account", accountRoutes);
 
-app.use("/api/admins", adminRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use("/api/reports", reportRoutes);
 
@@ -201,6 +235,64 @@ app.get("/api/health", (req, res) => {
       : "disconnected",
   });
 });
+
+
+
+/* ========================================
+   GLOBAL ERROR HANDLING
+======================================== */
+
+// Handle unknown endpoints.
+
+app.use((req, res) => {
+  return res.status(404).json({
+    success: false,
+    message: "Endpoint not found.",
+  });
+});
+
+// Handle unexpected application errors.
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  const requestedStatus =
+    error.statusCode || error.status;
+
+  const statusCode =
+    Number.isInteger(requestedStatus) &&
+    requestedStatus >= 400 &&
+    requestedStatus <= 599
+      ? requestedStatus
+      : 500;
+
+  if (statusCode >= 500) {
+    console.error(
+      "Server error:",
+      error.name || "Error",
+      error.code || ""
+    );
+  }
+
+  return res.status(statusCode).json({
+    success: false,
+
+    message:
+      statusCode === 403
+        ? "Access denied."
+        : statusCode === 413
+          ? "Request body is too large."
+          : statusCode === 400
+            ? "Invalid request."
+            : statusCode >= 500
+              ? "An unexpected server error occurred."
+              : "Unable to complete the request.",
+  });
+});
+
+
 
 /* ========================================
    9. DATABASE CONNECTION

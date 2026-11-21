@@ -1,14 +1,23 @@
+
 const express = require("express");
+
 const router = express.Router();
 
 const {
   createVideo,
-  submitVideoForReview,
+
   getMyVideos,
+  getMyVideoById,
+
   updateMyVideo,
+  deleteVideoDraft,
+
+  submitVideoForReview,
+
   getPendingVideos,
   approveVideo,
   rejectVideo,
+
   getPublicVideos,
   getPublicVideoById,
 } = require("../controllers/videoController");
@@ -18,24 +27,19 @@ const {
   authorize,
 } = require("../middleware/authMiddleware");
 
+// ========================================
+// PUBLIC — GET PUBLISHED VIDEOS
+// ========================================
 
-// Public - all approved videos
 router.get(
   "/",
   getPublicVideos
 );
 
+// ========================================
+// ARTIST — CREATE VIDEO DRAFT
+// ========================================
 
-// Admin - pending videos
-router.get(
-  "/pending",
-  protect,
-  authorize("admin", "superadmin"),
-  getPendingVideos
-);
-
-
-// Artist - create video
 router.post(
   "/",
   protect,
@@ -43,8 +47,60 @@ router.post(
   createVideo
 );
 
+// ========================================
+// ARTIST — GET OWN VIDEOS
+// ========================================
 
-// Artist - submit video
+router.get(
+  "/mine",
+  protect,
+  authorize("artist"),
+  getMyVideos
+);
+
+// ========================================
+// ARTIST — GET ONE OWN VIDEO
+// ========================================
+
+router.get(
+  "/mine/:videoId",
+  protect,
+  authorize("artist"),
+  getMyVideoById
+);
+
+// ========================================
+// ADMIN — LEGACY PENDING VIDEOS
+// ========================================
+
+router.get(
+  "/pending",
+  protect,
+  authorize(
+    "admin",
+    "superadmin"
+  ),
+  getPendingVideos
+);
+
+// ========================================
+// ARTIST — PUBLISH VIDEO IMMEDIATELY
+// ========================================
+
+router.patch(
+  "/:videoId/publish",
+  protect,
+  authorize("artist"),
+  submitVideoForReview
+);
+
+// ========================================
+// LEGACY PUBLISH ENDPOINT
+//
+// Retained for existing integrations.
+// Both routes now publish immediately.
+// ========================================
+
 router.patch(
   "/:videoId/submit",
   protect,
@@ -52,23 +108,37 @@ router.patch(
   submitVideoForReview
 );
 
+// ========================================
+// ADMIN — APPROVE LEGACY PENDING VIDEO
+// ========================================
 
-// Admin - approve video
 router.patch(
   "/:videoId/approve",
   protect,
-  authorize("admin", "superadmin"),
+  authorize(
+    "admin",
+    "superadmin"
+  ),
   approveVideo
 );
 
+// ========================================
+// ADMIN — REJECT LEGACY PENDING VIDEO
+// ========================================
 
-// Admin - reject video
 router.patch(
   "/:videoId/reject",
   protect,
-  authorize("admin", "superadmin"),
+  authorize(
+    "admin",
+    "superadmin"
+  ),
   rejectVideo
 );
+
+// ========================================
+// ARTIST — UPDATE VIDEO DRAFT
+// ========================================
 
 router.patch(
   "/:videoId",
@@ -77,19 +147,24 @@ router.patch(
   updateMyVideo
 );
 
-// Artist - view own videos
-router.get(
-  "/mine",
+// ========================================
+// ARTIST — DELETE VIDEO DRAFT
+// ========================================
+
+router.delete(
+  "/:videoId",
   protect,
   authorize("artist"),
-  getMyVideos
+  deleteVideoDraft
 );
 
-// Public - one approved video
+// ========================================
+// PUBLIC — GET ONE PUBLISHED VIDEO
+// ========================================
+
 router.get(
   "/:videoId",
   getPublicVideoById
 );
-
 
 module.exports = router;

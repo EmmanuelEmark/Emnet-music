@@ -1,0 +1,323 @@
+
+/* ==========================================
+   EMNET MUSIC — ARTIST SELECTOR
+========================================== */
+
+.em-artist-selector {
+  width: 100%;
+  min-width: 0;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #365640;
+  border-radius: 13px;
+  background: #122219;
+  box-sizing: border-box;
+}
+
+.em-selector-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.em-selector-heading label {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.em-selector-heading > span {
+  color: #9fbea8;
+  font-size: 11px;
+}
+
+.em-selector-description {
+  margin: 0 0 17px;
+  color: #a5bfae;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ==========================================
+   SEARCH INPUT
+========================================== */
+
+.em-selector-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #395a44;
+  border-radius: 10px;
+  background: #0d1b12;
+  color: #70df91;
+  transition: border-color 0.2s ease;
+}
+
+.em-selector-search:focus-within {
+  border-color: #4be37b;
+}
+
+.em-selector-search > input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: 13px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 13px;
+}
+
+.em-selector-search > input::placeholder {
+  color: #829c8b;
+}
+
+.em-selector-search > input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.em-selector-search > svg {
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   ARTIST PROFILE PICTURE
+========================================== */
+
+.em-selector-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 43px;
+  height: 43px;
+  overflow: hidden;
+  border: 1px solid #396648;
+  border-radius: 50%;
+  background: #244932;
+  color: #73e795;
+}
+
+.em-selector-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================
+   SELECTED ARTISTS
+========================================== */
+
+.em-selector-selected {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.em-selector-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  gap: 8px;
+  padding: 7px 10px 7px 7px;
+  border: 1px solid #3b684a;
+  border-radius: 24px;
+  background: #254330;
+  color: #d9f8e2;
+  font-size: 12px;
+}
+
+.em-selector-chip > span {
+  overflow-wrap: anywhere;
+}
+
+.em-selector-chip .em-selector-avatar {
+  width: 27px;
+  height: 27px;
+}
+
+.em-selector-chip .em-selector-avatar svg {
+  width: 15px;
+  height: 15px;
+}
+
+.em-selector-chip button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #b9e2c6;
+  cursor: pointer;
+}
+
+.em-selector-chip button:hover {
+  background: #456a50;
+  color: #ffffff;
+}
+
+/* ==========================================
+   SEARCH RESULTS
+========================================== */
+
+.em-selector-results {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 330px;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding-right: 3px;
+}
+
+.em-selector-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #2b4734;
+  border-radius: 10px;
+  background: #172d20;
+}
+
+.em-selector-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 6px;
+}
+
+.em-selector-info strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.em-selector-info small {
+  color: #9cb8a5;
+  font-size: 11px;
+}
+
+.em-selector-verified {
+  flex-shrink: 0;
+  color: #4be37b;
+}
+
+/* ==========================================
+   ADD ARTIST BUTTON
+========================================== */
+
+.em-selector-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border: 1px solid #4be37b;
+  border-radius: 8px;
+  background: #285336;
+  color: #c7f7d5;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.em-selector-add:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.em-selector-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   SEARCH STATUS
+========================================== */
+
+.em-selector-hint,
+.em-selector-error {
+  margin: 13px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.em-selector-hint {
+  color: #9cb9a6;
+}
+
+.em-selector-error {
+  color: #ffb5b5;
+}
+
+.em-selector-spinner {
+  animation: em-selector-spin 0.8s linear infinite;
+}
+
+@keyframes em-selector-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVENESS
+========================================== */
+
+@media (max-width: 600px) {
+  .em-artist-selector {
+    padding: 13px;
+  }
+
+  .em-selector-result {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .em-selector-avatar {
+    width: 35px;
+    height: 35px;
+  }
+
+  .em-selector-info strong {
+    font-size: 12px;
+  }
+
+  .em-selector-add {
+    padding: 8px;
+  }
+
+  .em-selector-chip {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .em-selector-add {
+    transition: none;
+  }
+
+  .em-selector-spinner {
+    animation-duration: 2s;
+  }
+}

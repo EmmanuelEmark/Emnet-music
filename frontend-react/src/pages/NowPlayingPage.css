@@ -1,0 +1,297 @@
+
+/* ==========================================
+   EMNET MUSIC — NOW PLAYING
+========================================== */
+
+.em-now-page {
+  min-height: 75vh;
+  padding-bottom: 75px;
+}
+
+.em-now-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 30px;
+  color: #b4c8b9;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.em-now-back:hover {
+  color: #4be37b;
+}
+
+.em-now-container {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 420px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 75px);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid #2c4834;
+  background:
+    radial-gradient(
+      circle at 18% 25%,
+      rgba(75, 227, 123, .15),
+      transparent 50%
+    ),
+    linear-gradient(125deg, #17261c, #0e1812);
+}
+
+.em-now-artwork {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #284632;
+  box-shadow: 0 22px 65px rgba(0, 0, 0, .3);
+}
+
+.em-now-artwork img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.em-now-artwork-empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: #91eaaa;
+  background: linear-gradient(
+    145deg,
+    #345f3f,
+    #13261b
+  );
+}
+
+.em-now-information {
+  min-width: 0;
+}
+
+.em-now-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #4be37b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.em-now-song-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-top: 18px;
+}
+
+.em-now-song-heading h1 {
+  margin: 0 0 9px;
+  color: #fff;
+  font-size: clamp(26px, 3.5vw, 44px);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.em-now-song-heading p {
+  margin: 0;
+  color: #b4c9b9;
+  font-size: 15px;
+}
+
+.em-now-like {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 49px;
+  height: 49px;
+  color: #b4c9b9;
+  border: 1px solid #34513c;
+  border-radius: 50%;
+  background: #1c3022;
+  cursor: pointer;
+  transition: transform .2s, color .2s;
+}
+
+.em-now-like:hover {
+  transform: scale(1.08);
+  color: #4be37b;
+}
+
+.em-now-like.is-liked {
+  color: #4be37b;
+}
+
+.em-now-like:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.em-now-login-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #4be37b;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.em-now-genre {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: #24412d;
+  color: #8deaab;
+  font-size: 11px;
+}
+
+.em-now-progress {
+  margin-top: 34px;
+}
+
+.em-now-progress input {
+  width: 100%;
+  accent-color: #4be37b;
+  cursor: pointer;
+}
+
+.em-now-time {
+  display: flex;
+  justify-content: space-between;
+  color: #a4b9aa;
+  font-size: 12px;
+  margin-top: 9px;
+}
+
+.em-now-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 35px;
+  margin-top: 28px;
+}
+
+.em-now-controls button,
+.em-now-volume button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.em-now-controls .em-now-main-play {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #4be37b;
+  color: #102014;
+  transition: transform .2s;
+}
+
+.em-now-main-play:hover {
+  transform: scale(1.06);
+}
+
+.em-now-volume {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  max-width: 235px;
+  margin: 30px auto 0;
+}
+
+.em-now-volume input {
+  flex: 1;
+  min-width: 0;
+  accent-color: #4be37b;
+}
+
+.em-now-error {
+  color: #ffaaaa;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.em-now-empty {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  min-height: 480px;
+  padding: 35px;
+  text-align: center;
+  color: #4be37b;
+}
+
+.em-now-empty h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 29px;
+}
+
+.em-now-empty p {
+  max-width: 400px;
+  color: #b4c8b9;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.em-now-back-button {
+  display: inline-flex;
+  padding: 13px 20px;
+  background: #4be37b;
+  color: #102014;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (max-width: 850px) {
+  .em-now-container {
+    grid-template-columns: 1fr;
+    max-width: 570px;
+    gap: 30px;
+  }
+
+  .em-now-artwork {
+    max-width: 430px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .em-now-page {
+    padding-bottom: 85px;
+  }
+
+  .em-now-container {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .em-now-song-heading h1 {
+    font-size: 27px;
+  }
+
+  .em-now-song-heading p {
+    font-size: 13px;
+  }
+
+  .em-now-artwork {
+    border-radius: 12px;
+  }
+}

@@ -69,6 +69,16 @@ artistCover: {
 },
 
 
+  thumbnail: {
+    maxSize: 10 * MB,
+    formats: {
+      "image/jpeg": ["jpg", "jpeg"],
+      "image/png": ["png"],
+      "image/webp": ["webp"],
+    },
+  },
+
+
   video: {
     maxSize: 500 * MB,
     formats: {

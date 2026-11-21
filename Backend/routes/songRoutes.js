@@ -1,9 +1,12 @@
 
 const express = require("express");
+
 const router = express.Router();
 
 const {
   addSongToRelease,
+  updateSongDraft,
+  deleteSongDraft,
   getPublicSongs,
   getPublicSongById,
   getSongsByReleaseForArtist,
@@ -14,21 +17,29 @@ const {
   authorize,
 } = require("../middleware/authMiddleware");
 
+// ========================================
+// PUBLIC — ALL PUBLISHED SONGS
+// ========================================
 
-// Public - get all approved songs
 router.get(
   "/",
   getPublicSongs
 );
 
+// ========================================
+// ARTIST — CREATE A SONG DRAFT
+// ========================================
 
-// Artist - add song to release
 router.post(
   "/release/:releaseId",
   protect,
   authorize("artist"),
   addSongToRelease
 );
+
+// ========================================
+// ARTIST — VIEW SONGS IN OWN RELEASE
+// ========================================
 
 router.get(
   "/release/:releaseId",
@@ -37,12 +48,35 @@ router.get(
   getSongsByReleaseForArtist
 );
 
+// ========================================
+// ARTIST — UPDATE A SONG DRAFT
+// ========================================
 
-// Public - get one approved song
+router.patch(
+  "/release/:releaseId/:songId",
+  protect,
+  authorize("artist"),
+  updateSongDraft
+);
+
+// ========================================
+// ARTIST — DELETE A SONG DRAFT
+// ========================================
+
+router.delete(
+  "/release/:releaseId/:songId",
+  protect,
+  authorize("artist"),
+  deleteSongDraft
+);
+
+// ========================================
+// PUBLIC — ONE PUBLISHED SONG
+// ========================================
+
 router.get(
   "/:songId",
   getPublicSongById
 );
-
 
 module.exports = router;

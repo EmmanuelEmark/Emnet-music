@@ -1,0 +1,570 @@
+
+/* ==========================================
+   EMNET MUSIC — ARTIST APPLICATION
+========================================== */
+
+.em-artist-apply-page {
+  max-width: 940px;
+  width: 100%;
+  margin: 0 auto;
+  padding-bottom: 90px;
+  color: #f3f8f4;
+}
+
+/* BACK LINK */
+
+.em-artist-apply-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 24px;
+  color: #b3cbb9;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.em-artist-apply-back:hover {
+  color: #4be37b;
+}
+
+/* INTRODUCTION HERO */
+
+.em-artist-apply-hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+  padding: clamp(28px, 5vw, 52px);
+  border: 1px solid #31583d;
+  border-radius: 22px;
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(75, 227, 123, 0.17),
+      transparent 47%
+    ),
+    linear-gradient(
+      135deg,
+      #1b3d27,
+      #101b15
+    );
+}
+
+.em-artist-apply-hero-icon {
+  display: grid;
+  place-items: center;
+  width: 65px;
+  height: 65px;
+  margin-bottom: 23px;
+  border: 1px solid #4be37b;
+  border-radius: 18px;
+  background: #285b39;
+  color: #88f4a9;
+}
+
+.em-artist-apply-kicker {
+  display: inline-block;
+  color: #76eb99;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.em-artist-apply-hero h1 {
+  margin: 14px 0;
+  color: #fff;
+  font-size: clamp(29px, 4.5vw, 45px);
+  letter-spacing: -1px;
+  line-height: 1.15;
+}
+
+.em-artist-apply-hero p {
+  max-width: 620px;
+  margin: 0;
+  color: #c1d7c7;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+/* APPLICATION PANELS */
+
+.em-artist-apply-panel {
+  margin-bottom: 22px;
+  padding: clamp(20px, 3vw, 31px);
+  border: 1px solid #2d4835;
+  border-radius: 18px;
+  background: #152119;
+}
+
+.em-artist-apply-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 26px;
+  color: #4be37b;
+}
+
+.em-artist-apply-panel-heading h2 {
+  margin: 0 0 6px;
+  color: #fff;
+  font-size: 19px;
+}
+
+.em-artist-apply-panel-heading p {
+  margin: 0;
+  color: #a9c0b0;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+/* FORM FIELDS */
+
+.em-artist-apply-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 24px;
+}
+
+.em-artist-apply-field:last-child {
+  margin-bottom: 0;
+}
+
+.em-artist-apply-field label {
+  color: #e8f1ea;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.em-required {
+  color: #4be37b;
+}
+
+.em-artist-apply-field input,
+.em-artist-apply-field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 14px 15px;
+  border: 1px solid #375441;
+  border-radius: 11px;
+  background: #0d1911;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.65;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.em-artist-apply-field textarea {
+  min-height: 135px;
+  resize: vertical;
+}
+
+.em-artist-apply-field input::placeholder,
+.em-artist-apply-field textarea::placeholder {
+  color: #78917e;
+}
+
+.em-artist-apply-field input:focus,
+.em-artist-apply-field textarea:focus {
+  border-color: #4be37b;
+  box-shadow:
+    0 0 0 3px rgba(75, 227, 123, 0.11);
+}
+
+.em-artist-apply-field input:disabled,
+.em-artist-apply-field textarea:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.em-artist-apply-field small {
+  color: #94ad9c;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* INFORMATION PANEL */
+
+.em-artist-apply-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 20px 0;
+  padding: 21px;
+  border: 1px solid #346043;
+  border-radius: 14px;
+  background: #1b3423;
+  color: #75e899;
+}
+
+.em-artist-apply-note > svg {
+  flex-shrink: 0;
+}
+
+.em-artist-apply-note strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #e6f4e9;
+  font-size: 14px;
+}
+
+.em-artist-apply-note p {
+  margin: 0;
+  color: #b8d3bf;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* ACTION BUTTONS */
+
+.em-artist-apply-actions,
+.em-artist-status-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: 27px;
+}
+
+.em-artist-primary-button,
+.em-artist-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 13px 20px;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.em-artist-primary-button {
+  border: 1px solid #4be37b;
+  background: #4be37b;
+  color: #102014;
+}
+
+.em-artist-primary-button:hover {
+  background: #7bee9e;
+  transform: translateY(-2px);
+}
+
+.em-artist-secondary-button {
+  border: 1px solid #47624d;
+  background: #223228;
+  color: #d7e7dc;
+}
+
+.em-artist-secondary-button:hover {
+  background: #2d4232;
+  border-color: #83b68e;
+}
+
+.em-artist-primary-button:disabled,
+.em-artist-secondary-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+.em-artist-primary-button:focus-visible,
+.em-artist-secondary-button:focus-visible {
+  outline: 2px solid #d5ffdf;
+  outline-offset: 3px;
+}
+
+/* FEEDBACK */
+
+.em-artist-apply-error,
+.em-artist-apply-success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 17px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.em-artist-apply-error {
+  border: 1px solid #75443d;
+  background: #37201e;
+  color: #ffc0b9;
+}
+
+.em-artist-apply-success {
+  border: 1px solid #32613c;
+  background: #1a3824;
+  color: #a4f4b6;
+}
+
+/* EXISTING APPLICATION STATUS */
+
+.em-artist-status-card {
+  padding: clamp(24px, 5vw, 50px);
+  border: 1px solid #345a3d;
+  border-radius: 22px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(75, 227, 123, 0.1),
+      transparent 48%
+    ),
+    #152119;
+  text-align: center;
+}
+
+.em-artist-status-symbol {
+  display: grid;
+  place-items: center;
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
+  background: #294c32;
+  color: #81eca0;
+}
+
+.em-artist-status-symbol.approved {
+  background: #245137;
+  color: #8af5b3;
+}
+
+.em-artist-status-symbol.rejected {
+  background: #4b2929;
+  color: #ffc0b9;
+}
+
+.em-artist-status-symbol.pending {
+  background: #3d3824;
+  color: #f4d98b;
+}
+
+.em-artist-status-card h1 {
+  margin: 16px 0;
+  color: #fff;
+  font-size: clamp(27px, 4.5vw, 40px);
+  letter-spacing: -1px;
+}
+
+.em-artist-status-description {
+  max-width: 620px;
+  margin: 0 auto 23px;
+  color: #c0d2c4;
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.em-artist-status-badge {
+  display: inline-block;
+  padding: 8px 17px;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.em-artist-status-badge.pending {
+  background: #4b422b;
+  color: #f9df9d;
+}
+
+.em-artist-status-badge.approved {
+  background: #235038;
+  color: #8eecb0;
+}
+
+.em-artist-status-badge.rejected {
+  background: #542c2c;
+  color: #ffc0b9;
+}
+
+.em-artist-status-badge.suspended {
+  background: #52332b;
+  color: #f5c1a6;
+}
+
+/* APPLICATION DETAILS */
+
+.em-artist-application-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  margin-top: 29px;
+  text-align: left;
+}
+
+.em-artist-application-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 19px;
+  border: 1px solid #31503a;
+  border-radius: 12px;
+  background: #1d3023;
+}
+
+.em-artist-application-summary span,
+.em-artist-summary-bio span {
+  color: #a4bdaa;
+  font-size: 11px;
+}
+
+.em-artist-application-summary strong {
+  color: #fff;
+  font-size: 14px;
+  text-transform: capitalize;
+  overflow-wrap: anywhere;
+}
+
+.em-artist-summary-bio {
+  margin-top: 14px;
+  padding: 20px;
+  border: 1px solid #31503a;
+  border-radius: 12px;
+  background: #1d3023;
+  text-align: left;
+}
+
+.em-artist-summary-bio p {
+  margin: 9px 0 0;
+  color: #e3f0e6;
+  font-size: 13px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.em-artist-status-actions {
+  justify-content: center;
+}
+
+/* LOADING AND ERROR STATE */
+
+.em-artist-apply-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 370px;
+  padding: 30px;
+  border: 1px solid #31503a;
+  border-radius: 20px;
+  background: #152119;
+  text-align: center;
+  color: #4be37b;
+}
+
+.em-artist-apply-state h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 23px;
+}
+
+.em-artist-apply-state p {
+  max-width: 440px;
+  margin: 0;
+  color: #bacdbf;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.em-artist-apply-state button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 19px;
+  border: none;
+  border-radius: 10px;
+  background: #4be37b;
+  color: #102014;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* FOOTER */
+
+.em-artist-apply-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 28px;
+  color: #90b69b;
+  font-size: 12px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 650px) {
+  .em-artist-apply-page {
+    padding-bottom: 70px;
+  }
+
+  .em-artist-apply-back {
+    font-size: 12px;
+  }
+
+  .em-artist-apply-panel {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  .em-artist-apply-panel-heading h2 {
+    font-size: 17px;
+  }
+
+  .em-artist-application-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .em-artist-apply-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .em-artist-apply-actions > * {
+    width: 100%;
+    padding: 11px;
+    text-align: center;
+  }
+
+  .em-artist-status-actions {
+    flex-direction: column;
+  }
+
+  .em-artist-status-actions > * {
+    width: 100%;
+  }
+
+  .em-artist-status-card {
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .em-artist-apply-page *,
+  .em-artist-apply-page *::before,
+  .em-artist-apply-page *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

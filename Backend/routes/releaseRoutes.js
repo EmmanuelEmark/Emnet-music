@@ -22,6 +22,7 @@ const {
   approveRelease,
 
   rejectRelease,
+  updateReleaseDraft,
 
 } = require(
   "../controllers/releaseController"
@@ -86,6 +87,16 @@ router.get(
 );
 
 
+// ========================================
+// ARTIST — SAVE RELEASE DRAFT
+// ========================================
+
+router.patch(
+  "/mine/:releaseId",
+  protect,
+  authorize("artist"),
+  updateReleaseDraft
+);
 
 
 /* ========================================

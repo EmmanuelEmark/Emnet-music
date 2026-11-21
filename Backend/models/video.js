@@ -1,12 +1,34 @@
 
 const mongoose = require("mongoose");
 
+// ==========================================
+// EMNET MUSIC — VIDEO MODEL
+//
+// Incomplete drafts are allowed.
+// Completed videos publish immediately.
+// ==========================================
+
 const videoSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
+      maxlength: 200,
+    },
+
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 5000,
+    },
+
+    genre: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 100,
     },
 
     videoType: {
@@ -20,37 +42,51 @@ const videoSchema = new mongoose.Schema(
       default: "music_video",
     },
 
-    // Existing URL-based videos remain supported.
+    // ======================================
+    // VIDEO MEDIA
+    // ======================================
+
+    // Legacy URL-based videos remain supported.
     videoUrl: {
       type: String,
       default: "",
     },
 
-    // Verified R2 video upload.
+    // Verified Cloudflare R2 video upload.
     videoUploadId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "MediaUpload",
       default: null,
     },
 
-    // Existing thumbnail URLs remain supported.
+    // ======================================
+    // VIDEO THUMBNAIL
+    // ======================================
+
+    // Legacy thumbnail URLs.
     thumbnailUrl: {
       type: String,
       default: "",
     },
 
-    // Verified R2 thumbnail upload.
+    // Verified Cloudflare R2 thumbnail.
     thumbnailUploadId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "MediaUpload",
       default: null,
     },
 
+    // Duration in seconds.
+    // Zero means duration is not yet available.
     duration: {
       type: Number,
-      required: true,
-      min: 1,
+      default: 0,
+      min: 0,
     },
+
+    // ======================================
+    // ARTIST INFORMATION
+    // ======================================
 
     primaryArtists: [
       {
@@ -67,6 +103,10 @@ const videoSchema = new mongoose.Schema(
       },
     ],
 
+    // ======================================
+    // LINKED MUSIC
+    // ======================================
+
     linkedSong: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Song",
@@ -79,6 +119,10 @@ const videoSchema = new mongoose.Schema(
       default: null,
     },
 
+    // ======================================
+    // DUPLICATE MEDIA DETECTION
+    // ======================================
+
     videoHash: {
       type: String,
       default: "",
@@ -89,11 +133,19 @@ const videoSchema = new mongoose.Schema(
       default: "",
     },
 
+    // ======================================
+    // VIDEO ANALYTICS
+    // ======================================
+
     viewCount: {
       type: Number,
       default: 0,
       min: 0,
     },
+
+    // ======================================
+    // COPYRIGHT CONFIRMATION
+    // ======================================
 
     rightsConfirmed: {
       type: Boolean,
@@ -105,6 +157,10 @@ const videoSchema = new mongoose.Schema(
       default: null,
     },
 
+    // ======================================
+    // PUBLISHING STATUS
+    // ======================================
+
     status: {
       type: String,
       enum: [
@@ -115,6 +171,15 @@ const videoSchema = new mongoose.Schema(
       ],
       default: "draft",
     },
+
+    publishedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // ======================================
+    // CONTENT VISIBILITY
+    // ======================================
 
     visibilityStatus: {
       type: String,
@@ -143,31 +208,213 @@ const videoSchema = new mongoose.Schema(
       default: null,
     },
 
+    // ======================================
+    // VIDEO OWNERSHIP
+    // ======================================
+
     submittedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
   },
+
   {
     timestamps: true,
   }
 );
 
-// Prevent an R2 video upload from being
-// attached to multiple video records.
+// ==========================================
+// VALIDATE COMPLETED VIDEOS
+//
+// Draft videos can contain incomplete
+// information.
+//
+// Published videos must be complete.
+// ==========================================
+
+videoSchema.pre("validate", function () {
+  if (this.status !== "approved") {
+    return;
+  }
+
+  // VIDEO TITLE
+
+  if (
+    typeof this.title !== "string" ||
+    !this.title.trim()
+  ) {
+    this.invalidate(
+      "title",
+      "A published video requires a title."
+    );
+  }
+
+  // VIDEO GENRE
+
+  // Require genre for newly published videos.
+  // Previously approved videos remain compatible.
+  if (
+    this.isModified("status") ||
+    this.isNew
+  ) {
+    if (
+      typeof this.genre !== "string" ||
+      !this.genre.trim()
+    ) {
+      this.invalidate(
+        "genre",
+        "Select a genre before publishing."
+      );
+    }
+  }
+
+  // VIDEO TYPE
+
+  if (
+    ![
+      "music_video",
+      "live_performance",
+      "interview",
+      "other",
+    ].includes(this.videoType)
+  ) {
+    this.invalidate(
+      "videoType",
+      "Invalid video type."
+    );
+  }
+
+  // VIDEO FILE
+
+  if (
+    !this.videoUploadId &&
+    !(
+      typeof this.videoUrl === "string" &&
+      this.videoUrl.trim()
+    )
+  ) {
+    this.invalidate(
+      "videoUrl",
+      "Upload a video before publishing."
+    );
+  }
+
+  // VIDEO THUMBNAIL
+
+  if (
+    !this.thumbnailUploadId &&
+    !(
+      typeof this.thumbnailUrl === "string" &&
+      this.thumbnailUrl.trim()
+    )
+  ) {
+    this.invalidate(
+      "thumbnailUrl",
+      "Upload a thumbnail before publishing."
+    );
+  }
+
+  // VIDEO DURATION
+
+  if (
+    !Number.isFinite(this.duration) ||
+    this.duration < 1
+  ) {
+    this.invalidate(
+      "duration",
+      "A published video requires a valid duration."
+    );
+  }
+
+  // PRIMARY ARTISTS
+
+  if (
+    !Array.isArray(this.primaryArtists) ||
+    this.primaryArtists.length === 0
+  ) {
+    this.invalidate(
+      "primaryArtists",
+      "A published video requires a primary artist."
+    );
+  }
+
+  // COPYRIGHT CONFIRMATION
+
+  if (
+    this.isModified("status") ||
+    this.isNew
+  ) {
+    if (this.rightsConfirmed !== true) {
+      this.invalidate(
+        "rightsConfirmed",
+        "Confirm your publishing rights before publishing."
+      );
+    }
+  }
+});
+
+// ==========================================
+// PREVENT REUSING VIDEO UPLOADS
+// ==========================================
+
 videoSchema.index(
   { videoUploadId: 1 },
   {
     unique: true,
     partialFilterExpression: {
-      videoUploadId: { $type: "objectId" },
+      videoUploadId: {
+        $type: "objectId",
+      },
     },
   }
 );
 
+// ==========================================
+// PREVENT REUSING THUMBNAIL UPLOADS
+// ==========================================
+
+videoSchema.index(
+  { thumbnailUploadId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      thumbnailUploadId: {
+        $type: "objectId",
+      },
+    },
+  }
+);
+
+// ==========================================
+// ARTIST VIDEO MANAGEMENT INDEX
+// ==========================================
+
+videoSchema.index({
+  submittedBy: 1,
+  status: 1,
+  updatedAt: -1,
+});
+
+// ==========================================
+// PUBLIC VIDEO CATALOGUE INDEX
+// ==========================================
+
+videoSchema.index({
+  status: 1,
+  visibilityStatus: 1,
+  publishedAt: -1,
+});
+
+// ==========================================
+// EXPORT MODEL
+// ==========================================
+
 const Video =
   mongoose.models.Video ||
-  mongoose.model("Video", videoSchema);
+  mongoose.model(
+    "Video",
+    videoSchema
+  );
 
 module.exports = Video;

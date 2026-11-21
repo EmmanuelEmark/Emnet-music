@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const {
@@ -20,517 +19,1607 @@ const {
   getR2BucketName,
 } = require("../config/r2");
 
-// ========================================
+// ==========================================
 // CONFIGURATION
-// ========================================
+// ==========================================
 
-// Audio: 5 minutes
+// Public audio URL: 5 minutes.
+
 const AUDIO_EXPIRY = 300;
 
-// Artwork and thumbnails: 15 minutes
+// Public image URL: 15 minutes.
+
 const IMAGE_EXPIRY = 900;
 
-const visibleFilter = {
-  $or: [
-    { visibilityStatus: "visible" },
-    { visibilityStatus: { $exists: false } },
-    { visibilityStatus: null },
-  ],
-};
+// Public video URL: 15 minutes.
 
-// ========================================
-// HELPER: GENERATE SIGNED R2 URL
-// ========================================
+const VIDEO_EXPIRY = 900;
 
-const generateMediaUrl = async ({
-  uploadId,
-  kind,
-  expiresIn,
-}) => {
-  const upload = await MediaUpload.findOne({
-    _id: uploadId,
-    kind,
-    status: "ready",
+// Private artist preview URL: 5 minutes.
+
+const PREVIEW_EXPIRY = 300;
+
+// ==========================================
+// PUBLIC VISIBILITY FILTER
+//
+// Older records without visibilityStatus
+// remain supported.
+//
+// Hidden and takedown content are excluded.
+// ==========================================
+
+function publicVisibilityFilter() {
+  return {
+    $or: [
+      {
+        visibilityStatus: "visible",
+      },
+
+      {
+        visibilityStatus: {
+          $exists: false,
+        },
+      },
+
+      {
+        visibilityStatus: null,
+      },
+    ],
+  };
+}
+
+// ==========================================
+// CUSTOM MEDIA DELIVERY ERROR
+// ==========================================
+
+class MediaDeliveryError extends Error {
+  constructor(message, status = 400) {
+    super(message);
+
+    this.name = "MediaDeliveryError";
+
+    this.status = status;
+  }
+}
+
+// ==========================================
+// VALIDATE MONGODB ID
+// ==========================================
+
+function isValidId(value) {
+  return (
+    typeof value === "string" &&
+    /^[a-f0-9]{24}$/i.test(value)
+  );
+}
+
+// ==========================================
+// VERIFY REQUEST RESOURCE ID
+// ==========================================
+
+function validateResourceId(
+  value,
+  resourceName
+) {
+  if (!isValidId(value)) {
+    throw new MediaDeliveryError(
+      `Invalid ${resourceName} ID.`,
+      400
+    );
+  }
+}
+
+// ==========================================
+// VALIDATE LEGACY MEDIA URL
+//
+// Preserve valid HTTP and HTTPS URLs.
+//
+// Reject malformed URLs, embedded
+// credentials and unsafe URL protocols.
+// ==========================================
+
+function isValidLegacyUrl(value) {
+  if (
+    typeof value !== "string" ||
+    !value.trim()
+  ) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+
+    return (
+      ["http:", "https:"].includes(
+        url.protocol
+      ) &&
+
+      Boolean(url.hostname) &&
+
+      !url.username &&
+
+      !url.password
+    );
+
+  } catch {
+    return false;
+  }
+}
+
+// ==========================================
+// PREVENT RESPONSE CACHING
+// ==========================================
+
+function preventCaching(res) {
+  res.set(
+    "Cache-Control",
+    "private, no-store, max-age=0"
+  );
+
+  res.set(
+    "Pragma",
+    "no-cache"
+  );
+
+  res.set(
+    "Referrer-Policy",
+    "no-referrer"
+  );
+}
+
+// ==========================================
+// CENTRALIZED ERROR HANDLING
+// ==========================================
+
+function sendError(
+  res,
+  error,
+  context,
+  fallbackMessage
+) {
+  preventCaching(res);
+
+  if (
+    error instanceof MediaDeliveryError
+  ) {
+    return res.status(error.status).json({
+      success: false,
+
+      message: error.message,
+    });
+  }
+
+  if (error.name === "CastError") {
+    return res.status(400).json({
+      success: false,
+
+      message:
+        "Invalid media reference.",
+    });
+  }
+
+  console.error(
+    context,
+    error.name,
+    error.code || ""
+  );
+
+  return res.status(500).json({
+    success: false,
+
+    message:
+      fallbackMessage ||
+      "Unable to retrieve media.",
   });
+}
 
-  if (!upload || !upload.objectKey) {
+// ==========================================
+// GENERATE SIGNED CLOUDFLARE R2 URL
+//
+// Requirements:
+// - Valid upload ID
+// - Confirmed upload
+// - Correct media kind
+// - Correct media owner
+// - Available object key
+// ==========================================
+
+async function generateMediaUrl({
+  uploadId,
+
+  kind,
+
+  expiresIn,
+
+  userId,
+}) {
+  // ========================================
+  // VALIDATE MEDIA UPLOAD ID
+  // ========================================
+
+  if (
+    !uploadId ||
+
+    !mongoose.isValidObjectId(
+      uploadId
+    )
+  ) {
     return null;
   }
 
-  const command = new GetObjectCommand({
-    Bucket: getR2BucketName(),
-    Key: upload.objectKey,
-  });
+  // ========================================
+  // VALIDATE MEDIA OWNER
+  // ========================================
 
-  const url = await getSignedUrl(
-    getR2Client(),
-    command,
-    { expiresIn }
-  );
+  if (
+    !userId ||
 
-  return url;
-};
+    !mongoose.isValidObjectId(
+      userId
+    )
+  ) {
+    return null;
+  }
 
-// ========================================
-// HELPER: SEND RESPONSE
-// ========================================
+  // ========================================
+  // VALIDATE MEDIA KIND
+  // ========================================
 
-const sendMediaResponse = (
+  const kindFilter =
+    Array.isArray(kind)
+      ? {
+          $in: kind,
+        }
+      : kind;
+
+  // ========================================
+  // FIND CONFIRMED MEDIA UPLOAD
+  //
+  // Public and private media must belong
+  // to the appropriate content owner.
+  // ========================================
+
+  const upload =
+    await MediaUpload.findOne({
+      _id: uploadId,
+
+      userId,
+
+      kind: kindFilter,
+
+      status: "ready",
+    })
+      .select(
+        "_id objectKey userId kind status"
+      )
+      .lean();
+
+  if (
+    !upload ||
+
+    typeof upload.objectKey !==
+      "string" ||
+
+    !upload.objectKey.trim()
+  ) {
+    return null;
+  }
+
+  // ========================================
+  // PREVENT DELIVERY OF TEMPORARY FILES
+  // ========================================
+
+  if (
+    upload.objectKey.startsWith(
+      "temporary/"
+    )
+  ) {
+    return null;
+  }
+
+  // ========================================
+  // CREATE R2 GET OBJECT COMMAND
+  // ========================================
+
+  const command =
+    new GetObjectCommand({
+      Bucket:
+        getR2BucketName(),
+
+      Key:
+        upload.objectKey,
+
+      ResponseCacheControl:
+        "private, no-store",
+    });
+
+  // ========================================
+  // GENERATE SIGNED MEDIA URL
+  // ========================================
+
+  const mediaUrl =
+    await getSignedUrl(
+      getR2Client(),
+
+      command,
+
+      {
+        expiresIn,
+      }
+    );
+
+  return mediaUrl;
+}
+
+// ==========================================
+// SEND MEDIA RESPONSE
+//
+// Preserve existing response structure.
+// ==========================================
+
+function sendMediaResponse(
   res,
   {
     source,
+
     mediaUrl,
+
     expiresIn,
+
+    extra = {},
   }
-) => {
-  res.set("Cache-Control", "no-store");
+) {
+  preventCaching(res);
 
   return res.status(200).json({
     success: true,
+
     source,
+
     mediaUrl,
+
     expiresIn,
+
+    ...extra,
   });
-};
+}
 
-// ========================================
-// SECURE AUDIO PLAYBACK
-// GET /api/media/songs/:songId/play
-// ========================================
+// ==========================================
+// FIND PUBLIC SONG
+// ==========================================
 
-const getSongPlaybackUrl = async (req, res) => {
-  try {
-    const { songId } = req.params;
-
-    if (!mongoose.isValidObjectId(songId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid song ID.",
-      });
-    }
-
-    const song = await Song.findOne({
+async function findPublicSong(songId) {
+  const song =
+    await Song.findOne({
       _id: songId,
+
       status: "approved",
-      ...visibleFilter,
-    });
 
-    if (!song) {
-      return res.status(404).json({
-        success: false,
-        message: "Song is unavailable.",
-      });
-    }
+      ...publicVisibilityFilter(),
+    }).lean();
 
-    const release = await Release.findOne({
-      _id: song.releaseId,
-      status: "approved",
-      ...visibleFilter,
-    });
-
-    if (!release) {
-      return res.status(404).json({
-        success: false,
-        message: "Song is unavailable.",
-      });
-    }
-
-    if (song.audioUploadId) {
-      const mediaUrl = await generateMediaUrl({
-        uploadId: song.audioUploadId,
-        kind: "audio",
-        expiresIn: AUDIO_EXPIRY,
-      });
-
-      if (!mediaUrl) {
-        return res.status(404).json({
-          success: false,
-          message: "Audio file is unavailable.",
-        });
-      }
-
-      res.set("Cache-Control", "no-store");
-
-      return res.status(200).json({
-        success: true,
-        source: "r2",
-        songId: song._id,
-        playbackUrl: mediaUrl,
-        mediaUrl,
-        expiresIn: AUDIO_EXPIRY,
-      });
-    }
-
-    if (song.audioUrl) {
-      res.set("Cache-Control", "no-store");
-
-      return res.status(200).json({
-        success: true,
-        source: "legacy",
-        songId: song._id,
-        playbackUrl: song.audioUrl,
-        mediaUrl: song.audioUrl,
-        expiresIn: null,
-      });
-    }
-
-    return res.status(404).json({
-      success: false,
-      message: "Audio file is unavailable.",
-    });
-  } catch (error) {
-    console.error(
-      "Audio playback error:",
-      error
+  if (!song) {
+    throw new MediaDeliveryError(
+      "Song is unavailable.",
+      404
     );
-
-    return res.status(500).json({
-      success: false,
-      message: "Unable to prepare audio playback.",
-    });
   }
-};
 
-// ========================================
-// SECURE RELEASE ARTWORK
-// GET /api/media/releases/:releaseId/artwork
-// ========================================
+  return song;
+}
 
-const getReleaseArtworkUrl = async (req, res) => {
-  try {
-    const { releaseId } = req.params;
+// ==========================================
+// FIND PUBLIC RELEASE
+// ==========================================
 
-    if (!mongoose.isValidObjectId(releaseId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid release ID.",
-      });
-    }
-
-    const release = await Release.findOne({
+async function findPublicRelease(
+  releaseId,
+  unavailableMessage =
+    "Release is unavailable."
+) {
+  const release =
+    await Release.findOne({
       _id: releaseId,
+
       status: "approved",
-      ...visibleFilter,
-    });
 
-    if (!release) {
-      return res.status(404).json({
-        success: false,
-        message: "Release artwork is unavailable.",
-      });
-    }
+      ...publicVisibilityFilter(),
+    }).lean();
 
-    if (release.coverUploadId) {
-      const mediaUrl = await generateMediaUrl({
-        uploadId: release.coverUploadId,
-        kind: "artwork",
-        expiresIn: IMAGE_EXPIRY,
-      });
-
-      if (!mediaUrl) {
-        return res.status(404).json({
-          success: false,
-          message: "Release artwork is unavailable.",
-        });
-      }
-
-      return sendMediaResponse(res, {
-        source: "r2",
-        mediaUrl,
-        expiresIn: IMAGE_EXPIRY,
-      });
-    }
-
-    if (release.coverImage) {
-      return sendMediaResponse(res, {
-        source: "legacy",
-        mediaUrl: release.coverImage,
-        expiresIn: null,
-      });
-    }
-
-    return res.status(404).json({
-      success: false,
-      message: "Release artwork is unavailable.",
-    });
-  } catch (error) {
-    console.error(
-      "Release artwork error:",
-      error
+  if (!release) {
+    throw new MediaDeliveryError(
+      unavailableMessage,
+      404
     );
-
-    return res.status(500).json({
-      success: false,
-      message: "Unable to retrieve artwork.",
-    });
   }
-};
 
-// ========================================
-// SECURE VIDEO THUMBNAIL
-// GET /api/media/videos/:videoId/thumbnail
-// ========================================
+  return release;
+}
 
-const getVideoThumbnailUrl = async (req, res) => {
-  try {
-    const { videoId } = req.params;
+// ==========================================
+// FIND PUBLIC VIDEO
+// ==========================================
 
-    if (!mongoose.isValidObjectId(videoId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid video ID.",
-      });
-    }
-
-    const video = await Video.findOne({
+async function findPublicVideo(
+  videoId,
+  unavailableMessage =
+    "Video is unavailable."
+) {
+  const video =
+    await Video.findOne({
       _id: videoId,
+
       status: "approved",
-      ...visibleFilter,
-    });
 
-    if (!video) {
-      return res.status(404).json({
-        success: false,
-        message: "Video thumbnail is unavailable.",
-      });
-    }
+      ...publicVisibilityFilter(),
+    }).lean();
 
-    if (video.thumbnailUploadId) {
-      const mediaUrl = await generateMediaUrl({
-        uploadId: video.thumbnailUploadId,
-        kind: "artwork",
-        expiresIn: IMAGE_EXPIRY,
-      });
-
-      if (!mediaUrl) {
-        return res.status(404).json({
-          success: false,
-          message: "Video thumbnail is unavailable.",
-        });
-      }
-
-      return sendMediaResponse(res, {
-        source: "r2",
-        mediaUrl,
-        expiresIn: IMAGE_EXPIRY,
-      });
-    }
-
-    if (video.thumbnailUrl) {
-      return sendMediaResponse(res, {
-        source: "legacy",
-        mediaUrl: video.thumbnailUrl,
-        expiresIn: null,
-      });
-    }
-
-    return res.status(404).json({
-      success: false,
-      message: "Video thumbnail is unavailable.",
-    });
-  } catch (error) {
-    console.error(
-      "Video thumbnail error:",
-      error
+  if (!video) {
+    throw new MediaDeliveryError(
+      unavailableMessage,
+      404
     );
-
-    return res.status(500).json({
-      success: false,
-      message: "Unable to retrieve thumbnail.",
-    });
   }
-};
 
+  return video;
+}
 
+// ==========================================
+// FIND PUBLIC ARTIST
+// ==========================================
 
+async function findPublicArtist(
+  artistId
+) {
+  const artist =
+    await Artist.findOne({
+      _id: artistId,
 
- // ========================================
- // SECURE VIDEO PLAYBACK
- // GET /api/media/videos/:videoId/play
- // ========================================
+      approvalStatus:
+        "approved",
 
-const getVideoPlaybackUrl = async (req, res) => {
-  try {
-    const { videoId } = req.params;
+      ...publicVisibilityFilter(),
+    }).lean();
 
-    if (!mongoose.isValidObjectId(videoId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid video ID.",
+  if (!artist) {
+    throw new MediaDeliveryError(
+      "Artist is unavailable.",
+      404
+    );
+  }
+
+  return artist;
+}
+
+// ==========================================
+// PREPARE PUBLIC MEDIA
+//
+// Prefer confirmed R2 media.
+//
+// Legacy media is accepted only when
+// no R2 upload is attached.
+//
+// Never fall back to an older URL when
+// an attached R2 upload fails validation.
+// ==========================================
+
+async function preparePublicMedia({
+  uploadId,
+
+  legacyUrl,
+
+  kind,
+
+  userId,
+
+  expiresIn,
+
+  unavailableMessage,
+}) {
+  // ========================================
+  // CLOUDFLARE R2 MEDIA
+  // ========================================
+
+  if (uploadId) {
+    const mediaUrl =
+      await generateMediaUrl({
+        uploadId,
+
+        kind,
+
+        userId,
+
+        expiresIn,
       });
-    }
-
-    // Only approved, publicly visible videos.
-    const video = await Video.findOne({
-      _id: videoId,
-      status: "approved",
-      ...visibleFilter,
-    });
-
-    if (!video) {
-      return res.status(404).json({
-        success: false,
-        message: "Video is unavailable.",
-      });
-    }
-
-    // Support existing legacy video URLs.
-    if (!video.videoUploadId) {
-      if (!video.videoUrl) {
-        return res.status(404).json({
-          success: false,
-          message: "Video file is unavailable.",
-        });
-      }
-
-      res.set("Cache-Control", "no-store");
-
-      return res.status(200).json({
-        success: true,
-        source: "legacy",
-        videoId: video._id,
-        playbackUrl: video.videoUrl,
-        expiresIn: null,
-      });
-    }
-
-    // Confirm that the R2 upload is ready.
-    const mediaUrl = await generateMediaUrl({
-      uploadId: video.videoUploadId,
-      kind: "video",
-      expiresIn: 900,
-    });
 
     if (!mediaUrl) {
-      return res.status(404).json({
-        success: false,
-        message: "Video file is unavailable.",
-      });
+      throw new MediaDeliveryError(
+        unavailableMessage,
+        404
+      );
     }
 
-    res.set("Cache-Control", "no-store");
-
-    return res.status(200).json({
-      success: true,
+    return {
       source: "r2",
-      videoId: video._id,
-      playbackUrl: mediaUrl,
-      expiresIn: 900,
-    });
-  } catch (error) {
-    console.error("Video playback error:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Unable to prepare video playback.",
-    });
+      mediaUrl,
+
+      expiresIn,
+    };
   }
-};
 
+  // ========================================
+  // LEGACY MEDIA
+  // ========================================
 
+  if (isValidLegacyUrl(legacyUrl)) {
+    return {
+      source: "legacy",
 
+      mediaUrl:
+        legacyUrl,
 
+      expiresIn:
+        null,
+    };
+  }
 
-const getArtistImageUrl = async (req, res, imageType) => {
-  try {
-    const { artistId } = req.params;
+  throw new MediaDeliveryError(
+    unavailableMessage,
+    404
+  );
+}
 
-    if (!mongoose.isValidObjectId(artistId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid artist ID.",
-      });
+// ==========================================
+// PUBLIC AUDIO PLAYBACK
+//
+// GET /api/media/songs/:songId/play
+//
+// Both the song and parent release must
+// be published and publicly visible.
+// ==========================================
+
+const getSongPlaybackUrl =
+  async (req, res) => {
+    try {
+      preventCaching(res);
+
+      const { songId } =
+        req.params;
+
+      validateResourceId(
+        songId,
+        "song"
+      );
+
+      // ====================================
+      // VERIFY SONG
+      // ====================================
+
+      const song =
+        await findPublicSong(
+          songId
+        );
+
+      // ====================================
+      // VERIFY PARENT RELEASE
+      // ====================================
+
+      const release =
+        await findPublicRelease(
+          song.releaseId,
+
+          "Song is unavailable."
+        );
+
+      // ====================================
+      // PREPARE AUDIO PLAYBACK
+      //
+      // The audio upload must belong
+      // to the release submitter.
+      // ====================================
+
+      const media =
+        await preparePublicMedia({
+          uploadId:
+            song.audioUploadId,
+
+          legacyUrl:
+            song.audioUrl,
+
+          kind:
+            "audio",
+
+          userId:
+            release.submittedBy,
+
+          expiresIn:
+            AUDIO_EXPIRY,
+
+          unavailableMessage:
+            "Audio file is unavailable.",
+        });
+
+      return sendMediaResponse(
+        res,
+
+        {
+          ...media,
+
+          extra: {
+            songId:
+              song._id,
+
+            playbackUrl:
+              media.mediaUrl,
+          },
+        }
+      );
+
+    } catch (error) {
+      return sendError(
+        res,
+
+        error,
+
+        "Audio playback error:",
+
+        "Unable to prepare audio playback."
+      );
     }
+  };
 
-    const artist = await Artist.findOne({
-      _id: artistId,
-      approvalStatus: "approved",
-      ...visibleFilter,
+// ==========================================
+// PUBLIC RELEASE ARTWORK
+//
+// GET /api/media/releases/:releaseId/artwork
+// ==========================================
+
+const getReleaseArtworkUrl =
+  async (req, res) => {
+    try {
+      preventCaching(res);
+
+      const { releaseId } =
+        req.params;
+
+      validateResourceId(
+        releaseId,
+
+        "release"
+      );
+
+      const release =
+        await findPublicRelease(
+          releaseId,
+
+          "Release artwork is unavailable."
+        );
+
+      const media =
+        await preparePublicMedia({
+          uploadId:
+            release.coverUploadId,
+
+          legacyUrl:
+            release.coverImage,
+
+          kind:
+            "artwork",
+
+          userId:
+            release.submittedBy,
+
+          expiresIn:
+            IMAGE_EXPIRY,
+
+          unavailableMessage:
+            "Release artwork is unavailable.",
+        });
+
+      return sendMediaResponse(
+        res,
+        media
+      );
+
+    } catch (error) {
+      return sendError(
+        res,
+
+        error,
+
+        "Release artwork error:",
+
+        "Unable to retrieve artwork."
+      );
+    }
+  };
+
+// ==========================================
+// PUBLIC VIDEO THUMBNAIL
+//
+// GET /api/media/videos/:videoId/thumbnail
+// ==========================================
+
+const getVideoThumbnailUrl =
+  async (req, res) => {
+    try {
+      preventCaching(res);
+
+      const { videoId } =
+        req.params;
+
+      validateResourceId(
+        videoId,
+
+        "video"
+      );
+
+      const video =
+        await findPublicVideo(
+          videoId,
+
+          "Video thumbnail is unavailable."
+        );
+
+      const media =
+        await preparePublicMedia({
+          uploadId:
+            video.thumbnailUploadId,
+
+          legacyUrl:
+            video.thumbnailUrl,
+
+          kind: [
+            "thumbnail",
+
+            "artwork",
+          ],
+
+          userId:
+            video.submittedBy,
+
+          expiresIn:
+            IMAGE_EXPIRY,
+
+          unavailableMessage:
+            "Video thumbnail is unavailable.",
+        });
+
+      return sendMediaResponse(
+        res,
+        media
+      );
+
+    } catch (error) {
+      return sendError(
+        res,
+
+        error,
+
+        "Video thumbnail error:",
+
+        "Unable to retrieve thumbnail."
+      );
+    }
+  };
+
+// ==========================================
+// PUBLIC VIDEO PLAYBACK
+//
+// GET /api/media/videos/:videoId/play
+// ==========================================
+
+const getVideoPlaybackUrl =
+  async (req, res) => {
+    try {
+      preventCaching(res);
+
+      const { videoId } =
+        req.params;
+
+      validateResourceId(
+        videoId,
+
+        "video"
+      );
+
+      const video =
+        await findPublicVideo(
+          videoId
+        );
+
+      const media =
+        await preparePublicMedia({
+          uploadId:
+            video.videoUploadId,
+
+          legacyUrl:
+            video.videoUrl,
+
+          kind:
+            "video",
+
+          userId:
+            video.submittedBy,
+
+          expiresIn:
+            VIDEO_EXPIRY,
+
+          unavailableMessage:
+            "Video file is unavailable.",
+        });
+
+      return sendMediaResponse(
+        res,
+
+        {
+          ...media,
+
+          extra: {
+            videoId:
+              video._id,
+
+            playbackUrl:
+              media.mediaUrl,
+          },
+        }
+      );
+
+    } catch (error) {
+      return sendError(
+        res,
+
+        error,
+
+        "Video playback error:",
+
+        "Unable to prepare video playback."
+      );
+    }
+  };
+
+// ==========================================
+// PUBLIC ARTIST IMAGE DELIVERY
+//
+// Handles both artist profile and cover
+// image delivery.
+// ==========================================
+
+async function getArtistImageUrl(
+  req,
+
+  res,
+
+  imageType
+) {
+  try {
+    preventCaching(res);
+
+    const { artistId } =
+      req.params;
+
+    validateResourceId(
+      artistId,
+
+      "artist"
+    );
+
+    const artist =
+      await findPublicArtist(
+        artistId
+      );
+
+    const isProfile =
+      imageType === "profile";
+
+    // ======================================
+    // SELECT IMAGE UPLOAD
+    // ======================================
+
+    const uploadId =
+      isProfile
+        ? artist.profileImageUploadId
+        : artist.coverImageUploadId;
+
+    // ======================================
+    // SELECT LEGACY IMAGE
+    // ======================================
+
+    const legacyUrl =
+      isProfile
+        ? artist.profileImage
+        : artist.coverImage;
+
+    // ======================================
+    // SELECT MEDIA KIND
+    // ======================================
+
+    const kind =
+      isProfile
+        ? "artistProfile"
+        : "artistCover";
+
+    const media =
+      await preparePublicMedia({
+        uploadId,
+
+        legacyUrl,
+
+        kind,
+
+        userId:
+          artist.userId,
+
+        expiresIn:
+          IMAGE_EXPIRY,
+
+        unavailableMessage:
+          "Artist image is unavailable.",
+      });
+
+    return sendMediaResponse(
+      res,
+      media
+    );
+
+  } catch (error) {
+    return sendError(
+      res,
+
+      error,
+
+      "Artist image delivery error:",
+
+      "Unable to retrieve artist image."
+    );
+  }
+}
+
+// ==========================================
+// PUBLIC ARTIST PROFILE IMAGE
+// ==========================================
+
+const getArtistProfileImageUrl =
+  (req, res) =>
+    getArtistImageUrl(
+      req,
+
+      res,
+
+      "profile"
+    );
+
+// ==========================================
+// PUBLIC ARTIST COVER IMAGE
+// ==========================================
+
+const getArtistCoverImageUrl =
+  (req, res) =>
+    getArtistImageUrl(
+      req,
+
+      res,
+
+      "cover"
+    );
+
+// ==========================================
+// VERIFY AUTHENTICATED ARTIST
+//
+// Private previews are only available to
+// active, approved and visible artists.
+// ==========================================
+
+async function requireApprovedArtist(
+  req
+) {
+  const userId =
+    req.user?._id;
+
+  if (!userId) {
+    throw new MediaDeliveryError(
+      "Please sign in to preview your media.",
+
+      401
+    );
+  }
+
+  if (
+    req.user.role !==
+    "artist"
+  ) {
+    throw new MediaDeliveryError(
+      "Only artists can access private media previews.",
+
+      403
+    );
+  }
+
+  if (
+    req.user.accountStatus !==
+    "active"
+  ) {
+    throw new MediaDeliveryError(
+      "Your account is unavailable.",
+
+      403
+    );
+  }
+
+  const artist =
+    await Artist.findOne({
+      userId,
+
+      approvalStatus:
+        "approved",
+
+      visibilityStatus:
+        "visible",
+    })
+      .select(
+        "_id userId approvalStatus visibilityStatus"
+      )
+      .lean();
+
+  if (!artist) {
+    throw new MediaDeliveryError(
+      "Your artist account is not eligible to access private previews.",
+
+      403
+    );
+  }
+
+  return {
+    userId,
+
+    artistId:
+      artist._id,
+  };
+}
+
+// ==========================================
+// VERIFY OWNED PREVIEW RELEASE
+//
+// Allows:
+// - Visible drafts
+// - Visible published releases
+//
+// Blocks:
+// - Hidden releases
+// - Releases under takedown
+// - Pending releases
+// - Rejected releases
+// - Releases belonging to other artists
+// ==========================================
+
+async function findOwnedPreviewRelease({
+  releaseId,
+
+  userId,
+}) {
+  const release =
+    await Release.findOne({
+      _id: releaseId,
+
+      submittedBy:
+        userId,
+
+      status: {
+        $in: [
+          "draft",
+
+          "approved",
+        ],
+      },
+
+      visibilityStatus:
+        "visible",
+    }).lean();
+
+  if (!release) {
+    throw new MediaDeliveryError(
+      "Release not found or access denied.",
+
+      404
+    );
+  }
+
+  return release;
+}
+
+// ==========================================
+// VERIFY OWNED PREVIEW VIDEO
+// ==========================================
+
+async function findOwnedPreviewVideo({
+  videoId,
+
+  userId,
+}) {
+  const video =
+    await Video.findOne({
+      _id: videoId,
+
+      submittedBy:
+        userId,
+
+      status: {
+        $in: [
+          "draft",
+
+          "approved",
+        ],
+      },
+
+      visibilityStatus:
+        "visible",
+    }).lean();
+
+  if (!video) {
+    throw new MediaDeliveryError(
+      "Video not found or access denied.",
+
+      404
+    );
+  }
+
+  return video;
+}
+
+// ==========================================
+// GENERATE PRIVATE ARTIST MEDIA PREVIEW
+//
+// Never return arbitrary legacy URLs
+// through private preview endpoints.
+// ==========================================
+
+async function generatePrivatePreview({
+  uploadId,
+
+  kind,
+
+  userId,
+}) {
+  if (!uploadId) {
+    throw new MediaDeliveryError(
+      "No confirmed media file is attached.",
+
+      404
+    );
+  }
+
+  const mediaUrl =
+    await generateMediaUrl({
+      uploadId,
+
+      kind,
+
+      userId,
+
+      expiresIn:
+        PREVIEW_EXPIRY,
     });
 
-    if (!artist) {
-      return res.status(404).json({
-        success: false,
-        message: "Artist is unavailable.",
-      });
-    }
+  if (!mediaUrl) {
+    throw new MediaDeliveryError(
+      "Media file is unavailable or access is denied.",
 
-    const isProfile = imageType === "profile";
+      404
+    );
+  }
 
-    const uploadId = isProfile
-      ? artist.profileImageUploadId
-      : artist.coverImageUploadId;
+  return mediaUrl;
+}
 
-    const kind = isProfile
-      ? "artistProfile"
-      : "artistCover";
+// ==========================================
+// PRIVATE ARTIST SONG PREVIEW
+//
+// GET /api/media/artist/songs/:songId/preview
+// ==========================================
 
-    const legacyUrl = isProfile
-      ? artist.profileImage
-      : artist.coverImage;
+const getArtistSongPreviewUrl =
+  async (req, res) => {
+    try {
+      preventCaching(res);
 
-    if (uploadId) {
-      const mediaUrl = await generateMediaUrl({
-        uploadId,
-        kind,
-        expiresIn: IMAGE_EXPIRY,
-      });
+      const { songId } =
+        req.params;
 
-      if (!mediaUrl) {
-        return res.status(404).json({
-          success: false,
-          message: "Artist image is unavailable.",
-        });
+      validateResourceId(
+        songId,
+
+        "song"
+      );
+
+      // ====================================
+      // VERIFY ARTIST ACCOUNT
+      // ====================================
+
+      const { userId } =
+        await requireApprovedArtist(
+          req
+        );
+
+      // ====================================
+      // FIND ELIGIBLE SONG
+      // ====================================
+
+      const song =
+        await Song.findOne({
+          _id: songId,
+
+          status: {
+            $in: [
+              "draft",
+
+              "approved",
+            ],
+          },
+
+          visibilityStatus:
+            "visible",
+        }).lean();
+
+      if (!song) {
+        throw new MediaDeliveryError(
+          "Song not found or access denied.",
+
+          404
+        );
       }
 
-      return sendMediaResponse(res, {
-        source: "r2",
-        mediaUrl,
-        expiresIn: IMAGE_EXPIRY,
+      // ====================================
+      // VERIFY PARENT RELEASE
+      //
+      // The parent release must belong
+      // to the authenticated artist.
+      // ====================================
+
+      await findOwnedPreviewRelease({
+        releaseId:
+          song.releaseId,
+
+        userId,
       });
+
+      // ====================================
+      // GENERATE PRIVATE AUDIO URL
+      // ====================================
+
+      const mediaUrl =
+        await generatePrivatePreview({
+          uploadId:
+            song.audioUploadId,
+
+          kind:
+            "audio",
+
+          userId,
+        });
+
+      return sendMediaResponse(
+        res,
+
+        {
+          source:
+            "r2",
+
+          mediaUrl,
+
+          expiresIn:
+            PREVIEW_EXPIRY,
+
+          extra: {
+            songId:
+              song._id,
+
+            preview:
+              true,
+
+            previewUrl:
+              mediaUrl,
+
+            playbackUrl:
+              mediaUrl,
+          },
+        }
+      );
+
+    } catch (error) {
+      return sendError(
+        res,
+
+        error,
+
+        "Private song preview error:",
+
+        "Unable to prepare your audio preview."
+      );
     }
+  };
 
-    if (legacyUrl) {
-      return sendMediaResponse(res, {
-        source: "legacy",
-        mediaUrl: legacyUrl,
-        expiresIn: null,
-      });
+// ==========================================
+// PRIVATE RELEASE ARTWORK PREVIEW
+//
+// GET /api/media/artist/releases/
+//     :releaseId/artwork
+// ==========================================
+
+const getArtistReleaseArtworkPreviewUrl =
+  async (req, res) => {
+    try {
+      preventCaching(res);
+
+      const { releaseId } =
+        req.params;
+
+      validateResourceId(
+        releaseId,
+
+        "release"
+      );
+
+      const { userId } =
+        await requireApprovedArtist(
+          req
+        );
+
+      const release =
+        await findOwnedPreviewRelease({
+          releaseId,
+
+          userId,
+        });
+
+      const mediaUrl =
+        await generatePrivatePreview({
+          uploadId:
+            release.coverUploadId,
+
+          kind:
+            "artwork",
+
+          userId,
+        });
+
+      return sendMediaResponse(
+        res,
+
+        {
+          source:
+            "r2",
+
+          mediaUrl,
+
+          expiresIn:
+            PREVIEW_EXPIRY,
+
+          extra: {
+            releaseId:
+              release._id,
+
+            preview:
+              true,
+
+            previewUrl:
+              mediaUrl,
+          },
+        }
+      );
+
+    } catch (error) {
+      return sendError(
+        res,
+
+        error,
+
+        "Private artwork preview error:",
+
+        "Unable to retrieve your artwork preview."
+      );
     }
+  };
 
-    return res.status(404).json({
-      success: false,
-      message: "Artist image is unavailable.",
-    });
-  } catch (error) {
-    console.error("Artist image delivery error:", error);
+// ==========================================
+// PRIVATE ARTIST VIDEO PREVIEW
+//
+// GET /api/media/artist/videos/:videoId/preview
+// ==========================================
 
-    return res.status(500).json({
-      success: false,
-      message: "Unable to retrieve artist image.",
-    });
-  }
-};
+const getArtistVideoPreviewUrl =
+  async (req, res) => {
+    try {
+      preventCaching(res);
 
-const getArtistProfileImageUrl = (req, res) =>
-  getArtistImageUrl(req, res, "profile");
+      const { videoId } =
+        req.params;
 
-const getArtistCoverImageUrl = (req, res) =>
-  getArtistImageUrl(req, res, "cover");
+      validateResourceId(
+        videoId,
 
+        "video"
+      );
 
+      const { userId } =
+        await requireApprovedArtist(
+          req
+        );
 
+      const video =
+        await findOwnedPreviewVideo({
+          videoId,
 
+          userId,
+        });
 
-// ========================================
-// EXPORTS
-// ========================================
+      const mediaUrl =
+        await generatePrivatePreview({
+          uploadId:
+            video.videoUploadId,
+
+          kind:
+            "video",
+
+          userId,
+        });
+
+      return sendMediaResponse(
+        res,
+
+        {
+          source:
+            "r2",
+
+          mediaUrl,
+
+          expiresIn:
+            PREVIEW_EXPIRY,
+
+          extra: {
+            videoId:
+              video._id,
+
+            preview:
+              true,
+
+            previewUrl:
+              mediaUrl,
+
+            playbackUrl:
+              mediaUrl,
+          },
+        }
+      );
+
+    } catch (error) {
+      return sendError(
+        res,
+
+        error,
+
+        "Private video preview error:",
+
+        "Unable to prepare your video preview."
+      );
+    }
+  };
+
+// ==========================================
+// PRIVATE VIDEO THUMBNAIL PREVIEW
+//
+// GET /api/media/artist/videos/
+//     :videoId/thumbnail
+// ==========================================
+
+const getArtistVideoThumbnailPreviewUrl =
+  async (req, res) => {
+    try {
+      preventCaching(res);
+
+      const { videoId } =
+        req.params;
+
+      validateResourceId(
+        videoId,
+
+        "video"
+      );
+
+      const { userId } =
+        await requireApprovedArtist(
+          req
+        );
+
+      const video =
+        await findOwnedPreviewVideo({
+          videoId,
+
+          userId,
+        });
+
+      const mediaUrl =
+        await generatePrivatePreview({
+          uploadId:
+            video.thumbnailUploadId,
+
+          kind: [
+            "thumbnail",
+
+            "artwork",
+          ],
+
+          userId,
+        });
+
+      return sendMediaResponse(
+        res,
+
+        {
+          source:
+            "r2",
+
+          mediaUrl,
+
+          expiresIn:
+            PREVIEW_EXPIRY,
+
+          extra: {
+            videoId:
+              video._id,
+
+            preview:
+              true,
+
+            previewUrl:
+              mediaUrl,
+          },
+        }
+      );
+
+    } catch (error) {
+      return sendError(
+        res,
+
+        error,
+
+        "Private thumbnail preview error:",
+
+        "Unable to retrieve your thumbnail preview."
+      );
+    }
+  };
+
+// ==========================================
+// EXPORT ALL MEDIA DELIVERY CONTROLLERS
+// ==========================================
 
 module.exports = {
+  // ========================================
+  // PUBLIC MEDIA DELIVERY
+  // ========================================
+
   getSongPlaybackUrl,
+
   getReleaseArtworkUrl,
+
   getVideoThumbnailUrl,
+
   getVideoPlaybackUrl,
+
   getArtistProfileImageUrl,
+
   getArtistCoverImageUrl,
+
+  // ========================================
+  // PRIVATE ARTIST MEDIA PREVIEWS
+  // ========================================
+
+  getArtistSongPreviewUrl,
+
+  getArtistReleaseArtworkPreviewUrl,
+
+  getArtistVideoPreviewUrl,
+
+  getArtistVideoThumbnailPreviewUrl,
 };
