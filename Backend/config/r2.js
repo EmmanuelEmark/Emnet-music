@@ -22,11 +22,26 @@ function getR2Config() {
     );
   }
 
+  const accountId = R2_ACCOUNT_ID.trim();
+  const bucketName = R2_BUCKET_NAME.trim();
+
+  // Cloudflare R2 account IDs are 32 hexadecimal characters.
+  if (!/^[a-f0-9]{32}$/i.test(accountId)) {
+    throw new Error(
+      "Invalid R2_ACCOUNT_ID. Use the 32-character " +
+      "Cloudflare account ID, not an endpoint URL."
+    );
+  }
+
+  if (!bucketName) {
+    throw new Error("R2_BUCKET_NAME is empty.");
+  }
+
   return {
-    accountId: R2_ACCOUNT_ID,
-    accessKeyId: R2_ACCESS_KEY_ID,
-    secretAccessKey: R2_SECRET_ACCESS_KEY,
-    bucketName: R2_BUCKET_NAME,
+    accountId,
+    accessKeyId: R2_ACCESS_KEY_ID.trim(),
+    secretAccessKey: R2_SECRET_ACCESS_KEY.trim(),
+    bucketName,
   };
 }
 
@@ -46,6 +61,8 @@ function getR2Client() {
       },
 
       requestChecksumCalculation: "WHEN_REQUIRED",
+
+      forcePathStyle: true,
     });
   }
 
