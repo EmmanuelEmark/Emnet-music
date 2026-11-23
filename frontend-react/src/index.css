@@ -117,17 +117,22 @@ main {
   padding: 4px 9px;
   margin-bottom: 55px;
 }
-
 .brand-icon {
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 43px;
-  height: 43px;
-  border-radius: 13px;
-  background: var(--green);
-  color: #07140b;
+  background: transparent;
+  border: none;
   flex-shrink: 0;
+}
+
+.brand-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-name {

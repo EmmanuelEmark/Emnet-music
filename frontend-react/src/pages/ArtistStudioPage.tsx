@@ -653,9 +653,7 @@ export default function ArtistStudioPage() {
             <h3>Music & Releases</h3>
 
             <p>
-              Create singles, EPs and albums,
-              add songs and submit music
-              for review.
+              Create singles, EPs or albums.
             </p>
 
             <Link to="/artist/studio/music">
@@ -672,13 +670,16 @@ export default function ArtistStudioPage() {
             <h3>Music Videos</h3>
 
             <p>
-              Upload music videos and track
-              their approval status.
+              Upload music videos.
             </p>
 
-            <span className="em-studio-workspace-note">
-              Management page comes next
-            </span>
+            <Link
+          to="/artist/studio/videos"
+          className="em-studio-card-link"
+        >
+          Manage music videos
+          <ArrowRight size={17} />
+        </Link>
           </div>
 
           <div className="em-studio-workspace-card">

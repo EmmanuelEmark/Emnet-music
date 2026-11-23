@@ -14,6 +14,7 @@ import {
   NavLink,
   Navigate,
   useLocation,
+  useParams,
 } from "react-router";
 
 import {
@@ -221,11 +222,12 @@ function Brand() {
       aria-label="Emnet Music Home"
     >
       <span className="brand-icon">
-        <Music2
-          size={25}
-          strokeWidth={2.6}
-        />
-      </span>
+  <img
+    src="/emnet-header-logo-transparent.png"
+    alt=""
+    className="brand-logo-image"
+  />
+</span>
 
       <span className="brand-name">
         EMNET <strong>MUSIC</strong>
@@ -415,15 +417,14 @@ function HeaderProfilePhoto({
 
 function Header({
   openMenu,
+  artistProfileId,
 }: {
   openMenu: () => void;
+  artistProfileId: string;
 }) {
   const location = useLocation();
 
-  const {
-    user,
-    logout,
-  } = useAuth();
+  const { user } = useAuth();
 
   const pageNames: Record<string, string> = {
     "/": "Home",
@@ -546,25 +547,22 @@ function Header({
 
         {/* ARTIST AND STAFF HEADER */}
 
-        {user &&
-          user.role !== "listener" && (
-            <div className="account-header">
-              <span className="account-name">
-                {user.fullName}
-                <small>{user.role}</small>
-              </span>
+        {/* ARTIST PROFILE ICON */}
 
-              {/* Artist and staff logout is retained
-                  until their account pages are built. */}
-              <button
-                type="button"
-                className="logout-btn"
-                onClick={logout}
-              >
-                Log out
-              </button>
-            </div>
-          )}
+{user?.role === "artist" && (
+  <Link
+    to={
+      artistProfileId
+        ? `/artists/${artistProfileId}`
+        : "/artist/studio"
+    }
+    className="artist-header-profile-link"
+    title="My artist profile"
+    aria-label="Open my artist profile"
+  >
+    <UserRound size={22} />
+  </Link>
+)}
 
         {/* GUEST LOGIN */}
 
@@ -1357,9 +1355,125 @@ function ArtistOnlyPage({
 }
 
 
+function ArtistProfileWithLogout({
+  onPlay,
+  currentSongId,
+  isPlaying,
+  ownArtistId,
+  isArtist,
+  onLogout,
+}: {
+  onPlay: (song: Song) => void;
+  currentSongId?: string;
+  isPlaying: boolean;
+  ownArtistId: string;
+  isArtist: boolean;
+  onLogout: () => void;
+}) {
+  const { artistId } = useParams();
+
+  const isOwnProfile =
+    isArtist &&
+    Boolean(ownArtistId) &&
+    artistId === ownArtistId;
+
+  return (
+    <>
+      <ArtistProfilePage
+        onPlay={onPlay}
+        currentSongId={currentSongId}
+        isPlaying={isPlaying}
+      />
+
+      {isOwnProfile && (
+        <div className="artist-profile-account-footer">
+          <button
+            type="button"
+            className="artist-profile-logout"
+            onClick={onLogout}
+          >
+            Log out
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 
 
 function MusicApplication() {
+
+ 
+const { user, logout } = useAuth();
+
+const [artistProfileId, setArtistProfileId] =
+  useState("");
+
+useEffect(() => {
+  if (user?.role !== "artist") {
+    setArtistProfileId("");
+    return;
+  }
+
+  const controller = new AbortController();
+
+  async function loadArtistProfile() {
+    try {
+      const token = sessionStorage.getItem(
+        "emnet_session_token"
+      );
+
+      if (!token) return;
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/artists/me`,
+        {
+          signal: controller.signal,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Unable to retrieve artist profile."
+        );
+      }
+
+      const payload = asObject(
+        await response.json()
+      );
+
+      const data = asObject(payload.data);
+
+      const artist = asObject(
+        payload.artist || data.artist || payload.data
+      );
+
+      const id = String(
+        artist._id || artist.id || ""
+      );
+
+      if (!controller.signal.aborted) {
+        setArtistProfileId(id);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error(
+          "Artist profile lookup failed:",
+          error
+        );
+      }
+    }
+  }
+
+  void loadArtistProfile();
+
+  return () => controller.abort();
+}, [user?.id, user?.role]);
+
   // ========================================
   // APPLICATION STATE
   // ========================================
@@ -1807,10 +1921,11 @@ async function togglePlayback() {
 
       <div className="main-area">
         <Header
-          openMenu={() =>
-            setMobileMenuOpen(true)
-          }
-        />
+        openMenu={() =>
+      setMobileMenuOpen(true)
+      }
+     artistProfileId={artistProfileId}
+      />
 
         <main>
           <Routes>
@@ -2017,17 +2132,18 @@ async function togglePlayback() {
             {/* ARTIST PROFILE */}
 
             <Route
-              path="/artists/:artistId"
-              element={
-                <ArtistProfilePage
-                  onPlay={playSong}
-                  currentSongId={
-                    currentSong?.id
-                  }
-                  isPlaying={isPlaying}
-                />
-              }
-            />
+  path="/artists/:artistId"
+  element={
+    <ArtistProfileWithLogout
+      onPlay={playSong}
+      currentSongId={currentSong?.id}
+      isPlaying={isPlaying}
+      ownArtistId={artistProfileId}
+      isArtist={user?.role === "artist"}
+      onLogout={logout}
+    />
+  }
+/>
 
             {/* LOGIN */}
 
