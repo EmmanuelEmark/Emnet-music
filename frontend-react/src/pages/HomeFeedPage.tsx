@@ -31,6 +31,10 @@ import {
   type HomeVideo,
 } from "../services/homeApi";
 
+import {
+  getReleaseArtworkUrl,
+} from "../services/audioMediaApi";
+
 import type { LibrarySong } from "../services/libraryApi";
 
 import VideoThumbnail from "../components/VideoThumbnail";
@@ -45,25 +49,77 @@ function Artwork({
   src,
   alt,
   variant = "square",
+  releaseId = "",
 }: {
   src: string;
   alt: string;
   variant?: "square" | "circle" | "video";
+  releaseId?: string;
 }) {
+  const [resolvedSrc, setResolvedSrc] = useState(src);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+
+    setResolvedSrc(src);
     setFailed(false);
-  }, [src]);
+
+    // Artist profile pictures and other images
+    // continue using their existing URLs.
+    if (!releaseId) {
+      return () => controller.abort();
+    }
+
+    async function loadArtwork() {
+      try {
+        const url = await getReleaseArtworkUrl(
+          releaseId,
+          controller.signal
+        );
+
+        if (!controller.signal.aborted) {
+          setResolvedSrc(url);
+          setFailed(false);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error(
+            "Home artwork retrieval failed:",
+            releaseId,
+            error
+          );
+
+          setResolvedSrc(src);
+          setFailed(false);
+        }
+      }
+    }
+
+    void loadArtwork();
+
+    return () => controller.abort();
+  }, [src, releaseId]);
 
   return (
     <div className={`home-art home-art-${variant}`}>
-      {src && !failed ? (
+      {resolvedSrc && !failed ? (
         <img
-          src={src}
+          src={resolvedSrc}
           alt={alt}
           loading="lazy"
-          onError={() => setFailed(true)}
+          onError={() => {
+            console.error(
+              "Home artwork image failed to load:",
+              releaseId
+            );
+
+            if (resolvedSrc !== src && src) {
+              setResolvedSrc(src);
+            } else {
+              setFailed(true);
+            }
+          }}
         />
       ) : (
         <Music2 size={34} />
@@ -127,16 +183,17 @@ function SongCard({
 }) {
   return (
     <button
-      type="button"
-      className="home-feed-song-card"
-      onClick={() => onPlay(song)}
-      disabled={!song.audioUrl}
-      aria-label={`Play ${song.title} by ${song.artist}`}
-    >
+  type="button"
+  className="home-feed-song-card"
+  onClick={() => onPlay(song)}
+  disabled={!song.id}
+  aria-label={`Play ${song.title} by ${song.artist}`}
+>
       <Artwork
-        src={song.cover}
-        alt={`${song.title} cover`}
-      />
+  src={song.cover}
+  alt={`${song.title} cover`}
+  releaseId={song.releaseId}
+/>
 
       <div className="home-feed-song-info">
         <strong title={song.title}>
@@ -159,9 +216,10 @@ function ReleaseCard({
   return (
     <article className="home-feed-release-card">
       <Artwork
-        src={release.coverImage}
-        alt={`${release.title} artwork`}
-      />
+  src={release.coverImage}
+  alt={`${release.title} artwork`}
+  releaseId={release.id}
+/>
 
       <div className="home-feed-release-info">
         <span className="home-feed-type">
@@ -260,20 +318,21 @@ function TrendingRow({
 }) {
   return (
     <button
-      type="button"
-      className="home-feed-trending-row"
-      onClick={() => onPlay(song)}
-      disabled={!song.audioUrl}
-      aria-label={`Play ${song.title}`}
-    >
+  type="button"
+  className="home-feed-trending-row"
+  onClick={() => onPlay(song)}
+  disabled={!song.id}
+  aria-label={`Play ${song.title}`}
+>
       <span className="home-feed-rank">
         {String(position).padStart(2, "0")}
       </span>
 
       <Artwork
-        src={song.cover}
-        alt={`${song.title} artwork`}
-      />
+  src={song.cover}
+  alt={`${song.title} artwork`}
+  releaseId={song.releaseId}
+/>
 
       <div className="home-feed-trending-info">
         <strong>{song.title}</strong>

@@ -1396,18 +1396,23 @@ function ArtistMusicEditor({
 
     busyRef.current = true;
 
-    const key = songId || "artwork";
+   const key = songId || "artwork";
 
-    try {
-      setError("");
-      setMessage("");
+try {
+  setError("");
+  setMessage("");
 
-      setUpload({
-        key,
-        progress: 0,
-      });
+  // Show the selected file immediately.
+  if (mountedRef.current) {
+    setLocalPreview(key, file);
+  }
 
-      await saveDraft();
+  setUpload({
+    key,
+    progress: 0,
+  });
+
+  await saveDraft();
 
       const duration =
         kind === "audio"
@@ -1473,13 +1478,11 @@ function ArtistMusicEditor({
         }
       }
 
-      if (mountedRef.current) {
-        setLocalPreview(key, file);
-
-        setMessage(
-          `${file.name} uploaded and saved successfully.`
-        );
-      }
+        if (mountedRef.current) {
+      setMessage(
+        `${file.name} uploaded and saved successfully.`
+      );
+    }
 
     } catch (err) {
       if (mountedRef.current) {

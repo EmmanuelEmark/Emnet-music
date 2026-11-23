@@ -772,25 +772,32 @@ function CoverArt({
       return () => controller.abort();
     }
 
-    async function loadArtwork() {
-      try {
-        const url =
-          await getReleaseArtworkUrl(
-            releaseId,
-            controller.signal
-          );
+    
+async function loadArtwork() {
+  try {
+    const url = await getReleaseArtworkUrl(
+      releaseId,
+      controller.signal
+    );
 
-        if (!controller.signal.aborted) {
-          setResolvedSrc(url);
-          setFailed(false);
-        }
-      } catch {
-        if (!controller.signal.aborted) {
-          setResolvedSrc(src);
-          setFailed(false);
-        }
-      }
+    if (!controller.signal.aborted) {
+      setResolvedSrc(url);
+      setFailed(false);
     }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(
+        "Unable to load release artwork:",
+        releaseId,
+        error
+      );
+
+      setResolvedSrc(src);
+      setFailed(false);
+    }
+  }
+}
+
 
     void loadArtwork();
 
@@ -1391,6 +1398,9 @@ function MusicApplication() {
   // Tracks the latest request to play music.
   const playbackRequestRef = useRef(0);
 
+  // Remember the position when a media URL needs refreshing.
+const resumePositionRef = useRef<number | null>(null);
+
   // Stores errors for the Now Playing page.
   const [audioError, setAudioError] =
     useState("");
@@ -1568,6 +1578,7 @@ function MusicApplication() {
         ...song,
         audioUrl: playbackUrl,
       });
+      resumePositionRef.current = null;
 
       setCurrentTime(0);
       setDuration(0);
@@ -1598,38 +1609,81 @@ function MusicApplication() {
   // PLAY / PAUSE
   // ========================================
 
-  function togglePlayback() {
-    const audio = audioRef.current;
+  
+async function togglePlayback() {
+  const audio = audioRef.current;
 
-    if (!audio || !currentSong) {
+  if (!audio || !currentSong) return;
+
+  // Pause normally. Do not discard the source or position.
+  if (!audio.paused) {
+    audio.pause();
+    setIsPlaying(false);
+    return;
+  }
+
+  setAudioError("");
+
+  try {
+    // First attempt to resume the current audio source.
+    await audio.play();
+    setIsPlaying(true);
+    return;
+  } catch (firstError) {
+    console.warn(
+      "Current audio source could not resume:",
+      firstError
+    );
+  }
+
+  // The existing source failed. Request a fresh URL.
+  const requestId = ++playbackRequestRef.current;
+  const song = currentSong;
+
+  try {
+    const savedPosition = Number.isFinite(audio.currentTime)
+      ? audio.currentTime
+      : 0;
+
+    const freshUrl = await getSongPlaybackUrl(song.id);
+
+    // Ignore a refresh superseded by a newer song selection.
+    if (requestId !== playbackRequestRef.current) {
       return;
     }
 
-    if (audio.paused) {
-      setAudioError("");
+    resumePositionRef.current = savedPosition;
 
-      audio.play().then(
-        () => {
-          setIsPlaying(true);
-        },
-        (err) => {
-          console.error(
-            "Unable to play audio:",
-            err
-          );
+    // Updating this URL triggers our existing audio-loading effect.
+    setCurrentSong({
+      ...song,
+      audioUrl: freshUrl,
+    });
 
-          setIsPlaying(false);
-
-          setAudioError(
-            "Unable to play this song."
-          );
-        }
-      );
-    } else {
-      audio.pause();
-      setIsPlaying(false);
+    // If the URL is unchanged, explicitly reload the source.
+    if (freshUrl === song.audioUrl) {
+      audio.load();
+      audio.play().catch((error) => {
+        console.error("Playback retry failed:", error);
+        setIsPlaying(false);
+        setAudioError("Unable to resume this song.");
+      });
     }
+  } catch (error) {
+    if (requestId !== playbackRequestRef.current) {
+      return;
+    }
+
+    console.error("Playback URL refresh failed:", error);
+
+    setIsPlaying(false);
+    setAudioError(
+      error instanceof Error
+        ? error.message
+        : "Unable to refresh audio playback."
+    );
   }
+}
 
   // ========================================
   // NEXT / PREVIOUS SONG
@@ -2038,6 +2092,19 @@ function MusicApplication() {
               ? metadataDuration
               : 0
           );
+
+          const resumePosition = resumePositionRef.current;
+
+        if (resumePosition !== null) {
+          if (Number.isFinite(metadataDuration)) {
+            event.currentTarget.currentTime = Math.min(
+              resumePosition,
+              Math.max(0, metadataDuration - 0.1)
+            );
+          }
+
+          resumePositionRef.current = null;
+        }
         }}
 
         onPlay={() => {

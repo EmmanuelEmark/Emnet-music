@@ -252,15 +252,16 @@ async function generateMediaUrl({
   // ========================================
 
   if (
-    !userId ||
+  !userId ||
+  !mongoose.isValidObjectId(userId)
+) {
+  console.warn(
+    "[MediaDelivery] Invalid or missing media owner",
+    { kind }
+  );
 
-    !mongoose.isValidObjectId(
-      userId
-    )
-  ) {
-    return null;
-  }
-
+  return null;
+}
   // ========================================
   // VALIDATE MEDIA KIND
   // ========================================
@@ -294,16 +295,30 @@ async function generateMediaUrl({
       )
       .lean();
 
-  if (
-    !upload ||
+  if (!upload) {
+  console.warn(
+    "[MediaDelivery] Confirmed media lookup failed",
+    {
+      kind,
+      hasUploadId: Boolean(uploadId),
+      hasUserId: Boolean(userId),
+    }
+  );
 
-    typeof upload.objectKey !==
-      "string" ||
+  return null;
+}
 
-    !upload.objectKey.trim()
-  ) {
-    return null;
-  }
+if (
+  typeof upload.objectKey !== "string" ||
+  !upload.objectKey.trim()
+) {
+  console.warn(
+    "[MediaDelivery] Media object key is missing",
+    { kind }
+  );
+
+  return null;
+}
 
   // ========================================
   // PREVENT DELIVERY OF TEMPORARY FILES

@@ -121,8 +121,9 @@ function SavedMediaPreview({
 
         if (controller.signal.aborted) return;
 
-        setPreview(result);
-        setStatus("ready");
+       setPreview(result);
+      automaticRetryRef.current = false;
+      setStatus("ready");
 
       } catch (err) {
         if (controller.signal.aborted) return;

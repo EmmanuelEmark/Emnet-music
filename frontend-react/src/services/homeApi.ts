@@ -13,6 +13,7 @@ const TOKEN_KEY = "emnet_session_token";
 
 export type HomeSong = LibrarySong & {
   recentPlays: number;
+  releaseId?: string;
 };
 
 export type HomeRelease = {
@@ -84,16 +85,33 @@ function artistNames(value: unknown): string {
     .join(", ");
 }
 
+
 function normalizeHomeSong(value: unknown): HomeSong {
   const raw = asObject(value);
+
   const song = normalizeLibrarySong(value);
+
+  // The backend may return the release as
+  // a MongoDB ID or a populated release object.
+  const releaseValue =
+    raw.releaseId || raw.release;
+
+  const releaseId =
+    typeof releaseValue === "string"
+      ? releaseValue
+      : getId(asObject(releaseValue));
 
   return {
     ...song,
+
+    // Store the release ID for artwork retrieval.
+    releaseId,
+
     recentPlays:
       Number(raw.recentPlays) || 0,
   };
 }
+
 
 function normalizeHomeRelease(
   value: unknown
