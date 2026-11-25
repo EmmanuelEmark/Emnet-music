@@ -2213,10 +2213,12 @@ function ArtistVideoEditor({
 
         setSaveStatus("saved");
 
-        setMessage(
-          result.message ||
-          "Your video is now live on Emnet Music."
-        );
+              navigate("/artist/studio", {
+        replace: true,
+        state: {
+          publication: "video",
+        },
+      });
       }
 
     } catch (err) {

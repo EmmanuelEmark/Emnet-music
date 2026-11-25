@@ -1,0 +1,141 @@
+
+.emnet-notification-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.emnet-notification-trigger {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #17251b;
+  border: 1px solid #294832;
+  border-radius: 12px;
+  color: #f5fff6;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.emnet-notification-trigger:hover {
+  background: #23432d;
+}
+
+.emnet-notification-count {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  background: #4be37b;
+  color: #07110a;
+  border-radius: 50px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.emnet-notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 1000;
+  width: min(370px, calc(100vw - 24px));
+  max-height: 460px;
+  overflow-y: auto;
+  background: #101a13;
+  border: 1px solid #294832;
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+}
+
+.emnet-notification-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border-bottom: 1px solid #26392b;
+}
+
+.emnet-notification-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.emnet-notification-heading button {
+  background: none;
+  border: none;
+  color: #4be37b;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.emnet-notification-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.emnet-notification-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  padding: 16px 18px;
+  border: none;
+  border-bottom: 1px solid #26392b;
+  background: transparent;
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.emnet-notification-item.unread {
+  background: #182d1d;
+}
+
+.emnet-notification-item:hover {
+  background: #213d29;
+}
+
+.emnet-notification-item strong {
+  font-size: 13px;
+}
+
+.emnet-notification-item span {
+  color: #c0d0c4;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.emnet-notification-item small {
+  color: #87998c;
+  font-size: 11px;
+}
+
+.emnet-notification-empty,
+.emnet-notification-error {
+  margin: 0;
+  padding: 20px 18px;
+  font-size: 13px;
+  color: #adbeb2;
+}
+
+.emnet-notification-error {
+  color: #ff9b9b;
+}
+
+@media (max-width: 480px) {
+  .emnet-notification-panel {
+    position: fixed;
+    top: 75px;
+    right: 12px;
+  }
+}

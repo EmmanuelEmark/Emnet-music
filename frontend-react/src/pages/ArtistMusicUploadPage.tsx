@@ -1650,25 +1650,53 @@ try {
       return;
     }
 
-    const incompleteSong = tracks.find(
-      (song) =>
-        !song.title.trim() ||
-        !song.genre.trim() ||
-        !Number.isFinite(song.duration) ||
-        song.duration < 1 ||
-        song.trackNumber === null ||
-        !Number.isSafeInteger(song.trackNumber) ||
-        song.trackNumber < 1 ||
-        !song.audioUploadId
+   
+const incompleteSong = tracks.find(
+  (song) =>
+    !song.title.trim() ||
+    !song.genre.trim() ||
+    !Number.isFinite(song.duration) ||
+    song.duration < 1 ||
+    song.trackNumber === null ||
+    !Number.isSafeInteger(song.trackNumber) ||
+    song.trackNumber < 1 ||
+    !song.audioUploadId
+);
+
+if (incompleteSong) {
+  const songName =
+    incompleteSong.title || "Untitled song";
+
+  if (!incompleteSong.title.trim()) {
+    setError("Please enter the song title.");
+  } else if (!incompleteSong.genre.trim()) {
+    setError(
+      `Please select a genre for "${songName}".`
     );
+  } else if (!incompleteSong.audioUploadId) {
+    setError(
+      `The audio file for "${songName}" has not been confirmed. Please upload the audio again.`
+    );
+  } else if (
+    !Number.isFinite(incompleteSong.duration) ||
+    incompleteSong.duration < 1
+  ) {
+    setError(
+      `The audio duration for "${songName}" is missing or invalid. Please upload the audio again.`
+    );
+  } else if (
+    incompleteSong.trackNumber === null ||
+    !Number.isSafeInteger(incompleteSong.trackNumber) ||
+    incompleteSong.trackNumber < 1
+  ) {
+    setError(
+      `Please enter a valid track number for "${songName}".`
+    );
+  }
 
-    if (incompleteSong) {
-      setError(
-        `Complete all information and upload the audio for "${incompleteSong.title || "Untitled song"}".`
-      );
+  return;
+}
 
-      return;
-    }
 
     const invalidArtistSong = tracks.find(
       (song) =>
@@ -1741,11 +1769,14 @@ try {
         result.release
       );
 
-      if (publishedRelease.status !== "approved") {
-        throw new Error(
-          "The server has not confirmed publication."
-        );
-      }
+      if (
+  publishedRelease.status !== "approved" ||
+  publishedRelease.visibilityStatus !== "visible"
+) {
+  throw new Error(
+    "The server has not confirmed public publication."
+  );
+}
 
       setRelease(publishedRelease);
 
@@ -1765,10 +1796,12 @@ try {
 
       setSaveState("saved");
 
-      setMessage(
-        result.message ||
-        "Your music is now live on Emnet Music."
-      );
+      navigate("/artist/studio", {
+  replace: true,
+  state: {
+    publication: "music",
+  },
+});
 
     } catch (err) {
       setError(errorMessage(err));

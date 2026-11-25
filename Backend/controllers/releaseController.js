@@ -23,6 +23,11 @@ const {
   recordAdminActivity,
 } = require("../utils/adminActivityService");
 
+const {
+  createNotificationOnce,
+  createNotificationsOnce,
+} = require("../utils/notificationDeliveryService");
+
 // ==========================================
 // CONFIGURATION
 // ==========================================
@@ -1851,15 +1856,12 @@ async function notifyPublishedRelease(
       ...publicVisibilityFilter(),
     })
       .populate({
-        path:
-          "primaryArtists",
+        path: "primaryArtists",
 
-        select:
-          "stageName",
+        select: "stageName",
 
         match: {
-          approvalStatus:
-            "approved",
+          approvalStatus: "approved",
 
           ...publicVisibilityFilter(),
         },
@@ -1871,33 +1873,39 @@ async function notifyPublishedRelease(
   }
 
   // ========================================
+  // UNIQUE PUBLICATION EVENT
+  // ========================================
+
+  const eventKey =
+    `release:published:${release._id}`;
+
+  // ========================================
   // NOTIFY UPLOADING ARTIST
   // ========================================
 
   if (release.submittedBy) {
     try {
-      await Notification.create({
-        userId:
-          release.submittedBy,
+      await createNotificationOnce({
+        eventKey,
 
-        type:
-          "release_approved",
+        userId: release.submittedBy,
 
-        title:
-          "Release Published",
+        type: "release_approved",
+
+        title: "Release Published",
 
         message:
           `Your release "${release.title}" is now live on Emnet Music.`,
 
         link:
-          `/release?id=${release._id}`,
+          `/artist/studio/music/${release._id}`,
       });
 
     } catch (error) {
       console.error(
         "Artist publication notification failed:",
-
-        error.name
+        error.name,
+        error.message
       );
     }
   }
@@ -1912,8 +1920,7 @@ async function notifyPublishedRelease(
 
   const artistIds =
     primaryArtists.map(
-      (artist) =>
-        artist._id
+      (artist) => artist._id
     );
 
   if (artistIds.length === 0) {
@@ -1921,7 +1928,7 @@ async function notifyPublishedRelease(
   }
 
   // ========================================
-  // FIND FOLLOWERS WHO ENABLED NOTIFICATIONS
+  // FIND FOLLOWERS WITH NOTIFICATIONS ENABLED
   // ========================================
 
   const followers =
@@ -1930,35 +1937,29 @@ async function notifyPublishedRelease(
         $in: artistIds,
       },
 
-      notificationsEnabled:
-        true,
+      notificationsEnabled: true,
     })
       .select("userId")
       .lean();
 
   // ========================================
-  // REMOVE DUPLICATE FOLLOWER IDS
+  // REMOVE DUPLICATE FOLLOWERS
   // ========================================
 
   const ownerUserId =
-    String(
-      release.submittedBy || ""
-    );
+    String(release.submittedBy || "");
 
   const followerIds = [
     ...new Set(
       followers
         .filter(
-          (follow) =>
-            Boolean(follow.userId)
+          (follow) => Boolean(follow.userId)
         )
         .map(
-          (follow) =>
-            String(follow.userId)
+          (follow) => String(follow.userId)
         )
         .filter(
-          (userId) =>
-            userId !== ownerUserId
+          (userId) => userId !== ownerUserId
         )
     ),
   ];
@@ -1967,11 +1968,14 @@ async function notifyPublishedRelease(
     return 0;
   }
 
+  // ========================================
+  // FORMAT ARTIST NAMES
+  // ========================================
+
   const artistNames =
     primaryArtists
       .map(
-        (artist) =>
-          artist.stageName
+        (artist) => artist.stageName
       )
       .filter(Boolean)
       .join(" & ") ||
@@ -1987,13 +1991,10 @@ async function notifyPublishedRelease(
 
   for (
     let offset = 0;
-
     offset < followerIds.length;
-
     offset += batchSize
   ) {
-    // Stop sending if the release has
-    // subsequently been restricted.
+    // Verify release is still public.
 
     const stillPublic =
       await Release.exists({
@@ -2014,8 +2015,9 @@ async function notifyPublishedRelease(
         offset + batchSize
       );
 
-    // Notify active listener accounts
-    // and active artist accounts only.
+    // ======================================
+    // FIND ACTIVE ACCOUNTS
+    // ======================================
 
     const activeUsers =
       await User.find({
@@ -2030,44 +2032,45 @@ async function notifyPublishedRelease(
           ],
         },
 
-        accountStatus:
-          "active",
+        accountStatus: "active",
       })
         .select("_id")
         .lean();
 
+    // ======================================
+    // BUILD FOLLOWER NOTIFICATIONS
+    // ======================================
+
     const notifications =
       activeUsers.map(
         (user) => ({
-          userId:
-            user._id,
+          userId: user._id,
 
-          type:
-            "new_release",
+          eventKey,
 
-          title:
-            "New Release",
+          type: "new_release",
+
+          title: "New Release",
 
           message:
             `${artistNames} just released "${release.title}".`,
 
-          link:
-            `/release?id=${release._id}`,
+          link: "/explore",
         })
       );
 
-    if (
-      notifications.length === 0
-    ) {
+    if (notifications.length === 0) {
       continue;
     }
 
-    await Notification.insertMany(
-      notifications
-    );
+    // ======================================
+    // SAVE WITHOUT DUPLICATES
+    // ======================================
 
     notifiedFollowers +=
-      notifications.length;
+      await createNotificationsOnce(
+        notifications
+      );
   }
 
   return notifiedFollowers;

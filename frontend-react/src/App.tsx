@@ -14,6 +14,7 @@ import {
   NavLink,
   Navigate,
   useLocation,
+  useNavigate,
   useParams,
 } from "react-router";
 
@@ -59,6 +60,7 @@ import ArtistVideoUploadPage from "./pages/ArtistVideoUploadPage";
 import ArtistApplicationPage from "./pages/ArtistApplicationPage";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminSignupPage from "./pages/AdminSignupPage";
+import NotificationBell from "./components/NotificationBell";
 
 import {
   getSongPlaybackUrl,
@@ -502,6 +504,10 @@ function Header({
               <span>Search</span>
             </Link>
           )}
+
+          {user &&
+  (user.role === "listener" ||
+    user.role === "artist") && <NotificationBell />}
 
         {/* LISTENER ICONS */}
 
@@ -1401,6 +1407,110 @@ function ArtistProfileWithLogout({
 }
 
 
+ 
+function ArtistStudioPublicationNotice() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // 1. Get the publication notification
+  const [publication, setPublication] = useState<
+    "music" | "video" | null
+  >(() => {
+    const state = asObject(location.state);
+
+    if (state.publication === "music") {
+      return "music";
+    }
+
+    if (state.publication === "video") {
+      return "video";
+    }
+
+    return null;
+  });
+
+  // 2. Automatically remove the message after 30 seconds
+  useEffect(() => {
+    if (!publication) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setPublication(null);
+    }, 30000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [publication]);
+
+  // 3. Clear the navigation state to prevent repeat messages
+  useEffect(() => {
+    if (!publication) return;
+
+    navigate(location.pathname, {
+      replace: true,
+      state: null,
+    });
+  }, [publication, location.pathname, navigate]);
+
+  if (!publication) return null;
+
+  const isVideo = publication === "video";
+
+  return (
+    <div
+      role="status"
+      style={{
+        margin: "24px 24px 0",
+        padding: "20px 24px",
+        background: "#163923",
+        border: "1px solid #4be37b",
+        borderRadius: 14,
+        color: "#ffffff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 16,
+        flexWrap: "wrap",
+      }}
+    >
+      <div>
+        <strong
+          style={{
+            display: "block",
+            color: "#4be37b",
+            fontSize: 17,
+            marginBottom: 6,
+          }}
+        >
+          Publication successful!
+        </strong>
+
+        <p style={{ margin: 0 }}>
+          {isVideo
+            ? "Your video is now live on Emnet Music."
+            : "Your music is now live on Emnet Music."}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setPublication(null)}
+        aria-label="Dismiss notification"
+        style={{
+          background: "transparent",
+          border: "none",
+          color: "#ffffff",
+          fontSize: 24,
+          cursor: "pointer",
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+
 
 function MusicApplication() {
 
@@ -2048,14 +2158,15 @@ async function togglePlayback() {
 
             {/* ARTIST STUDIO DASHBOARD */}
 
-            <Route
-              path="/artist/studio"
-              element={
-                <ArtistOnlyPage>
-                  <ArtistStudioPage />
-                </ArtistOnlyPage>
-              }
-            />
+                <Route
+        path="/artist/studio"
+        element={
+          <ArtistOnlyPage>
+            <ArtistStudioPublicationNotice />
+            <ArtistStudioPage />
+          </ArtistOnlyPage>
+        }
+      />
 
 
             {/* LISTENER PROFILE */}

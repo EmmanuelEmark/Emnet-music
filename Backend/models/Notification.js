@@ -80,6 +80,29 @@ const notificationSchema = new mongoose.Schema(
     },
 
     // ======================================
+    // UNIQUE NOTIFICATION EVENT
+    //
+    // Identifies the action that generated
+    // this notification.
+    //
+    // Examples:
+    // release:published:RELEASE_ID
+    // video:published:VIDEO_ID
+    // artist:follow:FOLLOW_ID
+    //
+    // Optional for compatibility with
+    // historical notification records.
+    // ======================================
+
+    eventKey: {
+      type: String,
+
+      trim: true,
+
+      immutable: true,
+    },
+
+    // ======================================
     // NOTIFICATION READ STATUS
     // ======================================
 
@@ -124,6 +147,39 @@ notificationSchema.index({
 
   createdAt: -1,
 });
+
+// ==========================================
+// DUPLICATE NOTIFICATION PROTECTION
+//
+// Each user can receive only one notification
+// for the same eventKey.
+//
+// Different users can receive notifications
+// for the same event.
+//
+// The partial index excludes old records
+// without an eventKey.
+// ==========================================
+
+notificationSchema.index(
+  {
+    userId: 1,
+
+    eventKey: 1,
+  },
+
+  {
+    unique: true,
+
+    name: "unique_notification_per_user_event",
+
+    partialFilterExpression: {
+      eventKey: {
+        $type: "string",
+      },
+    },
+  }
+);
 
 // ==========================================
 // CREATE NOTIFICATION MODEL

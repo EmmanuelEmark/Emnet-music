@@ -5,7 +5,10 @@ const Artist = require("../models/Artist");
 
 const Follow = require("../models/follow");
 
-const Notification = require("../models/Notification");
+const {
+  createNotificationOnce,
+  createNotificationsOnce,
+} = require("./notificationDeliveryService");
 
 // ==========================================
 // CONFIGURATION
@@ -23,21 +26,34 @@ async function notifyUploadingArtist(video) {
   }
 
   try {
-    await Notification.create({
-      userId: video.submittedBy,
+    // ======================================
+    // UNIQUE VIDEO PUBLICATION EVENT
+    //
+    // Prevents multiple notifications
+    // for the same published video.
+    // ======================================
 
-      type: "video_approved",
+    const eventKey =
+      `video:published:${video._id}`;
 
-      title: "Video Published",
+    const created =
+      await createNotificationOnce({
+        userId: video.submittedBy,
 
-      message:
-        `Your video "${video.title}" is now live on Emnet Music.`,
+        eventKey,
 
-      link:
-        `/videos/${video._id}`,
-    });
+        type: "video_approved",
 
-    return true;
+        title: "Video Published",
+
+        message:
+          `Your video "${video.title}" is now live on Emnet Music.`,
+
+        link:
+          `/videos/${video._id}`,
+      });
+
+    return created;
 
   } catch (error) {
     console.error(
@@ -188,6 +204,16 @@ async function notifyVideoFollowers(video) {
   const notificationMessage =
     `${displayName} just published a new video, "${video.title}".`;
 
+  // ========================================
+  // UNIQUE VIDEO PUBLICATION EVENT
+  //
+  // The combination of userId and eventKey
+  // is unique in the Notification model.
+  // ========================================
+
+  const eventKey =
+    `video:published:${video._id}`;
+
   let batch = [];
 
   let notifiedFollowers = 0;
@@ -223,17 +249,20 @@ async function notifyVideoFollowers(video) {
       return;
     }
 
-    const inserted =
-      await Notification.insertMany(
-        currentBatch,
+    // ======================================
+    // INSERT ONLY NEW NOTIFICATIONS
+    //
+    // Existing notifications are preserved.
+    // Their read status is never reset.
+    // ======================================
 
-        {
-          ordered: false,
-        }
+    const insertedCount =
+      await createNotificationsOnce(
+        currentBatch
       );
 
     notifiedFollowers +=
-      inserted.length;
+      insertedCount;
   }
 
   // ========================================
@@ -257,6 +286,8 @@ async function notifyVideoFollowers(video) {
 
       batch.push({
         userId: follower._id,
+
+        eventKey,
 
         type: "new_video",
 

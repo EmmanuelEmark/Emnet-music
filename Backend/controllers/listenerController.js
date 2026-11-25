@@ -6,7 +6,9 @@ const Song = require("../models/song");
 const Release = require("../models/Release");
 const Artist = require("../models/Artist");
 const User = require("../models/User");
-const Notification = require("../models/Notification");
+const {
+  createNotificationOnce,
+} = require("../utils/notificationDeliveryService");
 
 // ==========================================
 // CONFIGURATION
@@ -956,6 +958,7 @@ const getLikedSongs =
 // a successful follow operation to fail.
 // ==========================================
 
+
 async function notifyArtistOfFollow({
   artistId,
 
@@ -964,6 +967,8 @@ async function notifyArtistOfFollow({
   followerId,
 
   followerName,
+
+  followId,
 }) {
   try {
     if (
@@ -986,10 +991,14 @@ async function notifyArtistOfFollow({
       return false;
     }
 
-    // Verify the follow still exists.
+    // Verify that the exact follow
+    // which triggered the notification
+    // still exists.
 
     const followExists =
       await Follow.exists({
+        _id: followId,
+
         userId:
           followerId,
 
@@ -1000,8 +1009,8 @@ async function notifyArtistOfFollow({
       return false;
     }
 
-    // Verify the artist account remains
-    // active and eligible for notifications.
+    // Verify that the receiving artist
+    // account is active.
 
     const recipient =
       await User.exists({
@@ -1019,9 +1028,15 @@ async function notifyArtistOfFollow({
       return false;
     }
 
-    await Notification.create({
+    // Send one notification for this
+    // particular follow event.
+
+    return await createNotificationOnce({
       userId:
         artistUserId,
+
+      eventKey:
+        `artist:follow:${followId}`,
 
       type:
         "artist_follow",
@@ -1036,9 +1051,10 @@ async function notifyArtistOfFollow({
         `/artists/${artistId}`,
     });
 
-    return true;
-
   } catch (error) {
+    // Notification failure must never
+    // undo a successful follow.
+
     console.error(
       "Artist follow notification failed:",
 
@@ -1050,6 +1066,7 @@ async function notifyArtistOfFollow({
     return false;
   }
 }
+
 
 // ==========================================
 // FOLLOW ARTIST
@@ -1203,6 +1220,9 @@ const followArtist =
             }
 
             return {
+              followId:
+              follow._id,
+
               artistId:
                 updatedArtist._id,
 
@@ -1225,7 +1245,10 @@ const followArtist =
       // SEND NOTIFICATION AFTER COMMIT
       // ====================================
 
-      await notifyArtistOfFollow({
+          await notifyArtistOfFollow({
+        followId:
+          result.followId,
+
         artistId:
           result.artistId,
 

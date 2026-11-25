@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Notification = require("../models/Notification");
 
 
@@ -38,6 +39,13 @@ const markNotificationAsRead = async (
 ) => {
   try {
     const { notificationId } = req.params;
+
+    if (!mongoose.isValidObjectId(notificationId)) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid notification ID.",
+  });
+}
 
     const notification =
       await Notification.findOne({
