@@ -99,6 +99,81 @@ const FILE_TYPES: Record<
 };
 
 // ========================================
+// BROWSER MIME TYPE COMPATIBILITY
+//
+// Some mobile browsers use alternative
+// MIME types for the same file format.
+//
+// Always send the canonical MIME type
+// expected by the backend.
+//
+// This is compatibility checking,
+// not verification of file contents.
+// ========================================
+
+const COMPATIBLE_TYPES: Record<
+  string,
+  string[]
+> = {
+  mp3: [
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/x-mp3",
+    "audio/mpeg3",
+    "audio/x-mpeg-3",
+  ],
+
+  wav: [
+    "audio/wav",
+    "audio/x-wav",
+    "audio/wave",
+    "audio/vnd.wave",
+  ],
+
+  flac: [
+    "audio/flac",
+    "audio/x-flac",
+  ],
+
+  m4a: [
+    "audio/mp4",
+    "audio/x-m4a",
+    "audio/m4a",
+  ],
+
+  jpg: [
+    "image/jpeg",
+    "image/jpg",
+  ],
+
+  jpeg: [
+    "image/jpeg",
+    "image/jpg",
+  ],
+
+  png: [
+    "image/png",
+  ],
+
+  webp: [
+    "image/webp",
+  ],
+
+  mp4: [
+    "video/mp4",
+  ],
+
+  webm: [
+    "video/webm",
+  ],
+};
+
+const API_TIMEOUT_MS = 60000;
+
+const R2_TIMEOUT_MS =
+  30 * 60 * 1000;
+
+// ========================================
 // AUTHENTICATION
 // ========================================
 
@@ -123,9 +198,9 @@ function validateFile(
   file: File,
   kind: ArtistMediaKind
 ): string {
-  if (file.size <= 0) {
+  if (!file || file.size <= 0) {
     throw new Error(
-      "The selected file is empty."
+      "The selected file is empty or unavailable."
     );
   }
 
@@ -139,6 +214,7 @@ function validateFile(
   }
 
   const extension = file.name
+    .trim()
     .split(".")
     .pop()
     ?.toLowerCase();
@@ -158,33 +234,32 @@ function validateFile(
     );
   }
 
-  // A browser may report an empty MIME type.
-  // If it reports one, it must match an
-  // allowed value for that file extension.
-  const compatibleTypes: Record<
-    string,
-    string[]
-  > = {
-    wav: [
-      "audio/wav",
-      "audio/x-wav",
-    ],
-    m4a: [
-      "audio/mp4",
-      "audio/x-m4a",
-    ],
-  };
+  // Browsers may return an empty MIME
+  // type or a generic binary MIME type.
+  // Neither proves that the file is invalid.
 
-  const allowedTypes =
-    compatibleTypes[extension] ||
+  const browserType = (
+    file.type || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const genericTypes = [
+    "",
+    "application/octet-stream",
+    "binary/octet-stream",
+  ];
+
+  const compatibleTypes =
+    COMPATIBLE_TYPES[extension] ||
     [expectedType];
 
   if (
-    file.type &&
-    !allowedTypes.includes(file.type)
+    !genericTypes.includes(browserType) &&
+    !compatibleTypes.includes(browserType)
   ) {
     throw new Error(
-      "The file format does not match its extension."
+      `The selected ${kind} file has an incompatible format. Please choose a valid ${extension.toUpperCase()} file.`
     );
   }
 
@@ -193,41 +268,85 @@ function validateFile(
 
 // ========================================
 // JSON API REQUEST
+//
+// Used only for the backend:
+// - Request signed URL
+// - Confirm uploaded file
+//
+// JWT must never be sent to R2.
 // ========================================
 
 async function postJSON<T>(
   path: string,
   body: unknown
 ): Promise<T> {
-  const response = await fetch(
-    `${API_BASE_URL}${path}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization:
-          `Bearer ${getToken()}`,
-        "Content-Type":
-          "application/json",
-      },
-      body: JSON.stringify(body),
-    }
+  const controller =
+    new AbortController();
+
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    API_TIMEOUT_MS
   );
 
-  const payload = await response
-    .json()
-    .catch(() => null);
+  try {
+    let response: Response;
 
-  if (
-    !response.ok ||
-    !payload?.success
-  ) {
-    throw new Error(
-      payload?.message ||
-      `Request failed (${response.status}).`
-    );
+    try {
+      response = await fetch(
+        `${API_BASE_URL}${path}`,
+        {
+          method: "POST",
+
+          headers: {
+            Authorization:
+              `Bearer ${getToken()}`,
+
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify(body),
+
+          cache: "no-store",
+
+          signal: controller.signal,
+        }
+      );
+
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.name === "AbortError"
+      ) {
+        throw new Error(
+          "The server took too long to respond. Check your connection."
+        );
+      }
+
+      throw new Error(
+        "Unable to connect to the upload server. Check your internet connection."
+      );
+    }
+
+    const payload = await response
+      .json()
+      .catch(() => null);
+
+    if (
+      !response.ok ||
+      !payload?.success
+    ) {
+      throw new Error(
+        payload?.message ||
+        `Upload server request failed (${response.status}).`
+      );
+    }
+
+    return payload as T;
+
+  } finally {
+    window.clearTimeout(timeout);
   }
-
-  return payload as T;
 }
 
 // ========================================
@@ -243,18 +362,22 @@ async function requestUpload(
     "/api/uploads/request",
     {
       kind,
+
       fileName: file.name,
+
       mimeType,
+
       size: file.size,
     }
   );
 }
 
 // ========================================
-// UPLOAD FILE DIRECTLY TO R2
+// UPLOAD FILE DIRECTLY TO CLOUDFLARE R2
 //
-// XHR is used to track upload progress.
-// Never send the JWT to the signed R2 URL.
+// XHR is used for upload progress.
+//
+// No JWT is sent to Cloudflare R2.
 // ========================================
 
 function uploadFileToR2(
@@ -265,7 +388,32 @@ function uploadFileToR2(
 ): Promise<void> {
   return new Promise(
     (resolve, reject) => {
-      const xhr = new XMLHttpRequest();
+      const xhr =
+        new XMLHttpRequest();
+
+      let settled = false;
+
+      function finish(
+        error?: Error
+      ) {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+
+        xhr.onload = null;
+        xhr.onerror = null;
+        xhr.ontimeout = null;
+        xhr.onabort = null;
+        xhr.upload.onprogress = null;
+
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      }
 
       xhr.open(
         "PUT",
@@ -273,12 +421,16 @@ function uploadFileToR2(
         true
       );
 
+      xhr.timeout = R2_TIMEOUT_MS;
+
       xhr.setRequestHeader(
         "Content-Type",
         contentType
       );
 
-      xhr.timeout = 30 * 60 * 1000;
+      // ====================================
+      // TRACK PROGRESS
+      // ====================================
 
       xhr.upload.onprogress = (
         event
@@ -296,51 +448,86 @@ function uploadFileToR2(
             100
         );
 
+        // 100% is reserved for
+        // successful backend confirmation.
+
         onProgress(
-          Math.min(percent, 99)
+          Math.min(
+            Math.max(percent, 0),
+            99
+          )
         );
       };
+
+      // ====================================
+      // UPLOAD FINISHED
+      // ====================================
 
       xhr.onload = () => {
         if (
           xhr.status >= 200 &&
           xhr.status < 300
         ) {
-          resolve();
+          finish();
         } else {
-          reject(
+          finish(
             new Error(
-              `Cloudflare R2 upload failed (${xhr.status}).`
+              `Cloudflare R2 rejected the upload (HTTP ${xhr.status}).`
             )
           );
         }
       };
 
+      // ====================================
+      // NETWORK FAILURE
+      // ====================================
+
       xhr.onerror = () => {
-        reject(
+        finish(
           new Error(
-            "Network error during media upload. Check your connection and R2 CORS settings."
+            "Network error during Cloudflare R2 upload. Check your connection and R2 CORS configuration."
           )
         );
       };
+
+      // ====================================
+      // UPLOAD TIMEOUT
+      // ====================================
 
       xhr.ontimeout = () => {
-        reject(
+        finish(
           new Error(
-            "Media upload timed out."
+            "The Cloudflare R2 upload timed out. Please check your connection and try again."
           )
         );
       };
+
+      // ====================================
+      // UPLOAD CANCELLED
+      // ====================================
 
       xhr.onabort = () => {
-        reject(
+        finish(
           new Error(
-            "Media upload was cancelled."
+            "The media upload was interrupted or cancelled."
           )
         );
       };
 
-      xhr.send(file);
+      // ====================================
+      // SEND FILE
+      // ====================================
+
+      try {
+        xhr.send(file);
+
+      } catch {
+        finish(
+          new Error(
+            "Unable to start the media upload on this device."
+          )
+        );
+      }
     }
   );
 }
@@ -366,8 +553,8 @@ async function confirmUpload(
 // 1. Validate file
 // 2. Request signed URL
 // 3. Upload to Cloudflare R2
-// 4. Confirm file exists
-// 5. Return ID for draft database record
+// 4. Confirm on backend
+// 5. Return ID for song attachment
 // ========================================
 
 export async function uploadArtistMedia(
@@ -375,49 +562,122 @@ export async function uploadArtistMedia(
   kind: ArtistMediaKind,
   onProgress?: UploadProgressHandler
 ): Promise<ArtistUploadedMedia> {
-  const mimeType = validateFile(
-    file,
-    kind
-  );
+  // ======================================
+  // STEP 1: VALIDATE THE FILE
+  // ======================================
+
+  const mimeType =
+    validateFile(
+      file,
+      kind
+    );
 
   onProgress?.(0);
 
-  const signedUpload =
-    await requestUpload(
-      file,
-      kind,
-      mimeType
+  // ======================================
+  // STEP 2: REQUEST SIGNED URL
+  // ======================================
+
+  let signedUpload:
+    UploadRequestResponse;
+
+  try {
+    signedUpload =
+      await requestUpload(
+        file,
+        kind,
+        mimeType
+      );
+
+  } catch (error) {
+    throw new Error(
+      `Unable to prepare ${kind} upload: ${
+        error instanceof Error
+          ? error.message
+          : "Unknown error."
+      }`
     );
+  }
 
   if (
     !signedUpload.uploadId ||
-    !signedUpload.uploadUrl
+    !signedUpload.uploadUrl ||
+    signedUpload.method !== "PUT" ||
+    !signedUpload.contentType
   ) {
     throw new Error(
-      "Server did not return a valid upload URL."
+      "The server returned incomplete upload information."
     );
   }
 
-  await uploadFileToR2(
-    file,
-    signedUpload.uploadUrl,
-    signedUpload.contentType,
-    onProgress
-  );
+  // ======================================
+  // STEP 3: UPLOAD FILE TO R2
+  // ======================================
 
-  const confirmation =
-    await confirmUpload(
-      signedUpload.uploadId
+  try {
+    await uploadFileToR2(
+      file,
+
+      signedUpload.uploadUrl,
+
+      signedUpload.contentType,
+
+      onProgress
     );
+
+  } catch (error) {
+    throw new Error(
+      `Unable to upload ${kind} file: ${
+        error instanceof Error
+          ? error.message
+          : "Unknown error."
+      }`
+    );
+  }
+
+  // ======================================
+  // STEP 4: CONFIRM UPLOAD
+  // ======================================
+
+  let confirmation:
+    ConfirmUploadResponse;
+
+  try {
+    confirmation =
+      await confirmUpload(
+        signedUpload.uploadId
+      );
+
+  } catch (error) {
+    throw new Error(
+      `File transfer completed, but upload confirmation failed: ${
+        error instanceof Error
+          ? error.message
+          : "Unknown error."
+      }`
+    );
+  }
+
+  // ======================================
+  // STEP 5: VERIFY CONFIRMED MEDIA
+  // ======================================
 
   if (
-    confirmation.media.status !==
-    "ready"
+    !confirmation?.media ||
+    confirmation.media.status !== "ready" ||
+    confirmation.media.uploadId !==
+      signedUpload.uploadId ||
+    !confirmation.media.objectKey ||
+    confirmation.media.kind !== kind
   ) {
     throw new Error(
-      "The media upload has not been confirmed."
+      "The uploaded file was not confirmed correctly by the server."
     );
   }
+
+  // ======================================
+  // STEP 6: RETURN UPLOADED MEDIA
+  // ======================================
 
   onProgress?.(100);
 
@@ -427,11 +687,13 @@ export async function uploadArtistMedia(
 
     kind,
 
-    fileName: file.name,
+    fileName:
+      file.name,
 
     objectKey:
       confirmation.media.objectKey,
 
-    size: file.size,
+    size:
+      file.size,
   };
 }

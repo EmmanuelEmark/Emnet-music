@@ -1385,118 +1385,284 @@ function ArtistMusicEditor({
   // UPLOAD ARTWORK OR AUDIO TO CLOUDFLARE R2
   // ========================================
 
-  async function uploadFile(
-    file: File,
-    kind: "artwork" | "audio",
-    songId?: string
-  ) {
-    if (!editable || busyRef.current) return;
-
-    if (kind === "audio" && !songId) return;
-
-    busyRef.current = true;
-
-   const key = songId || "artwork";
-
-try {
-  setError("");
-  setMessage("");
-
-  // Show the selected file immediately.
-  if (mountedRef.current) {
-    setLocalPreview(key, file);
+  
+async function uploadFile(
+  file: File,
+  kind: "artwork" | "audio",
+  songId?: string
+) {
+  if (!editable || busyRef.current) {
+    return;
   }
 
-  setUpload({
-    key,
-    progress: 0,
-  });
+  if (kind === "audio" && !songId) {
+    return;
+  }
 
-  await saveDraft();
+  busyRef.current = true;
 
-      const duration =
-        kind === "audio"
-          ? await detectAudioDuration(file)
-          : 0;
+  const key = songId || "artwork";
 
-      const media = await uploadArtistMedia(
+  let stage =
+    "preparing your upload";
+
+  try {
+    setError("");
+    setMessage("");
+
+    // Do not show a new local preview yet.
+    // Selecting a file does not mean that
+    // the upload has succeeded.
+
+    if (mountedRef.current) {
+      setUpload({
+        key,
+        progress: 0,
+      });
+    }
+
+    // ======================================
+    // STEP 1: SAVE EXISTING DRAFT CHANGES
+    // ======================================
+
+    stage = "saving draft information";
+
+    await saveDraft();
+
+    // ======================================
+    // STEP 2: DETECT AUDIO DURATION
+    // ======================================
+
+    stage = "reading audio information";
+
+    const duration =
+      kind === "audio"
+        ? await detectAudioDuration(file)
+        : 0;
+
+    if (
+      kind === "audio" &&
+      (
+        !Number.isFinite(duration) ||
+        duration < 1
+      )
+    ) {
+      throw new Error(
+        "The audio duration could not be detected correctly."
+      );
+    }
+
+    // ======================================
+    // STEP 3: UPLOAD AND CONFIRM IN R2
+    // ======================================
+
+    stage =
+      "uploading and confirming the file";
+
+    const media =
+      await uploadArtistMedia(
         file,
         kind,
         (progress) => {
           if (mountedRef.current) {
             setUpload({
               key,
-              progress,
+
+              // Reserve 100% for successful
+              // attachment to the draft.
+
+              progress: Math.min(
+                progress,
+                99
+              ),
             });
           }
         }
       );
 
-      // SAVE UPLOADED AUDIO REFERENCE
+    if (!media.uploadId) {
+      throw new Error(
+        "The upload service did not return a confirmed upload ID."
+      );
+    }
 
-      if (songId) {
-        const result = await enqueue(() =>
+    // ======================================
+    // STEP 4: ATTACH UPLOADED AUDIO
+    // ======================================
+
+    if (songId) {
+      stage =
+        "saving uploaded audio to the song";
+
+      const result =
+        await enqueue(() =>
           apiRequest<SongResponse>(
             `/api/songs/release/${releaseId}/${songId}`,
             "PATCH",
             {
-              audioUploadId: media.uploadId,
+              audioUploadId:
+                media.uploadId,
+
               duration,
             }
           )
         );
 
-        const updatedSong = normalizeSong(result.song);
+      if (!result.song) {
+        throw new Error(
+          "The server did not return the updated song."
+        );
+      }
 
-        const next = songsRef.current.map(
+      const updatedSong =
+        normalizeSong(result.song);
+
+      // Verify the returned record
+      // belongs to the correct song.
+
+      if (
+        updatedSong._id !== songId
+      ) {
+        throw new Error(
+          "The server returned information for a different song."
+        );
+      }
+
+      // Do not report upload success
+      // unless the returned song contains
+      // the confirmed media reference.
+
+      if (
+        updatedSong.audioUploadId !==
+        media.uploadId
+      ) {
+        throw new Error(
+          "The audio reached storage, but the song did not confirm the new audio reference."
+        );
+      }
+
+      if (
+        !Number.isFinite(
+          updatedSong.duration
+        ) ||
+        updatedSong.duration < 1
+      ) {
+        throw new Error(
+          "The server did not save a valid audio duration."
+        );
+      }
+
+      const next =
+        songsRef.current.map(
           (song) =>
-            song._id === songId ? updatedSong : song
+            song._id === songId
+              ? updatedSong
+              : song
         );
 
-        songsRef.current = next;
+      songsRef.current = next;
 
-        if (mountedRef.current) {
-          setSongs(next);
-        }
+      if (mountedRef.current) {
+        setSongs(next);
+      }
 
-      } else {
+    } else {
+      // ====================================
+      // STEP 4: ATTACH COVER ARTWORK
+      // ====================================
 
-        // SAVE UPLOADED ARTWORK REFERENCE
+      stage =
+        "saving uploaded release artwork";
 
-        const result = await enqueue(() =>
+      const result =
+        await enqueue(() =>
           apiRequest<ReleaseResponse>(
             `/api/releases/mine/${releaseId}`,
             "PATCH",
             {
-              coverUploadId: media.uploadId,
+              coverUploadId:
+                media.uploadId,
             }
           )
         );
 
-        if (mountedRef.current) {
-          setRelease(normalizeRelease(result.release));
-        }
+      if (!result.release) {
+        throw new Error(
+          "The server did not return the updated release."
+        );
       }
 
-        if (mountedRef.current) {
+      const updatedRelease =
+        normalizeRelease(result.release);
+
+      if (
+        updatedRelease._id !== releaseId
+      ) {
+        throw new Error(
+          "The server returned information for a different release."
+        );
+      }
+
+      if (
+        updatedRelease.coverUploadId !==
+        media.uploadId
+      ) {
+        throw new Error(
+          "The artwork reached storage, but the release did not confirm the new artwork reference."
+        );
+      }
+
+      if (mountedRef.current) {
+        setRelease(updatedRelease);
+      }
+    }
+
+    // ======================================
+    // STEP 5: SHOW CONFIRMED SUCCESS
+    // ======================================
+
+    // Only create a new local preview
+    // after the backend has returned
+    // the updated record successfully.
+
+    if (mountedRef.current) {
+      setLocalPreview(
+        key,
+        file
+      );
+
+      setUpload({
+        key,
+        progress: 100,
+      });
+
       setMessage(
-        `${file.name} uploaded and saved successfully.`
+        `${file.name} uploaded, confirmed and saved successfully.`
       );
     }
 
-    } catch (err) {
-      if (mountedRef.current) {
-        setError(errorMessage(err));
-      }
+  } catch (err) {
+    if (mountedRef.current) {
+      setError(
+        `Upload failed while ${stage}: ${errorMessage(err)}`
+      );
 
-    } finally {
-      busyRef.current = false;
+      setMessage("");
+    }
 
-      if (mountedRef.current) {
-        setUpload(null);
-      }
+    // A failed upload must not replace
+    // the existing audio preview or
+    // claim that the new file was saved.
+
+  } finally {
+    busyRef.current = false;
+
+    if (mountedRef.current) {
+      setUpload(null);
     }
   }
+}
+
 
   // ========================================
   // MANUAL SAVE DRAFT
